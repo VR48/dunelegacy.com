@@ -74,6 +74,11 @@ header .container {
     color: var(--light);
 }
 
+.logo-text h1 a {
+    color: inherit;
+    text-decoration: none;
+}
+
 .logo-text .tagline {
     color: var(--gray);
     font-size: 0.85em;
@@ -157,6 +162,14 @@ nav a:hover {
 
 .hero a:hover {
     color: #f0c040;
+}
+
+.dunecity-hero {
+    background:
+        linear-gradient(135deg, rgba(56, 33, 18, 0.92) 0%, rgba(11, 18, 16, 0.95) 100%),
+        url('../img/dunecity/dunecity-01.png');
+    background-size: cover;
+    background-position: center;
 }
 
 .version-info {
@@ -592,6 +605,27 @@ footer .legacy-links {
     background: rgba(212, 175, 55, 0.05);
 }
 
+.dunecity-systems {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+    margin-top: 50px;
+}
+
+.dunecity-gallery {
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+}
+
+.dunecity-gallery .screenshot a {
+    display: block;
+    color: inherit;
+}
+
+.dunecity-gallery .screenshot img {
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     header .container {
@@ -625,7 +659,8 @@ footer .legacy-links {
     .highlights,
     .download-grid,
     .feature-list,
-    .screenshot-gallery {
+    .screenshot-gallery,
+    .dunecity-systems {
         grid-template-columns: 1fr;
     }
     
@@ -638,4 +673,3 @@ footer .legacy-links {
         font-size: 1.5em;
     }
 }
-

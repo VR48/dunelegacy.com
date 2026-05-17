@@ -51,8 +51,8 @@
             "priceCurrency": "USD"
         },
         "description": "Free open-source remake of the classic 1992 RTS game Dune II by Westwood Studios. Features multiplayer, HD graphics, and modern controls.",
-        "softwareVersion": "0.99.5",
-        "downloadUrl": "https://dunelegacy.com/#download",
+        "softwareVersion": "1.0.0",
+        "downloadUrl": "https://github.com/svan058/dunecity/releases/latest",
         "screenshot": "https://dunelegacy.com/img/screenshot1.png",
         "author": {
             "@type": "Organization",
@@ -76,6 +76,7 @@
             <nav>
                 <a href="#about">About</a>
                 <a href="#screenshots">Screenshots</a>
+                <a href="dune-city.html">DuneCity</a>
                 <a href="#download">Download</a>
                 <a href="#features">Features</a>
                 <a href="#multiplayer">Multiplayer</a>
@@ -97,7 +98,7 @@
                     <a href="#download" class="button primary">Download Free</a>
                     <a href="#screenshots" class="button secondary">See Epic Battles</a>
                 </div>
-                <p class="version-info">Latest Version: 0.99.5 | Windows, macOS, Linux</p>
+                <p class="version-info">Latest Version: Dune City 1.0.0 | Windows, macOS, Linux</p>
             </div>
         </div>
     </section>
@@ -128,6 +129,12 @@
                     <h3>HD Graphics Pack</h3>
                     <p>Enjoy optional high-resolution graphics while maintaining the classic art style</p>
                 </div>
+                <div class="highlight-card">
+                    <div class="icon">🏙️</div>
+                    <h3>DuneCity</h3>
+                    <p>A new city-builder experiment is growing inside Dune Legacy: zone districts, power a colony, and make Arrakis work for you</p>
+                    <p><a href="dune-city.html">Preview DuneCity</a></p>
+                </div>
             </div>
         </div>
     </section>
@@ -157,46 +164,63 @@
     <section id="download" class="section alt">
         <div class="container">
             <h2>Download</h2>
-            <p>Current Version: <strong>0.99.5</strong> (December 21, 2025)</p>
-            
+            <p>Current Release: <strong>Dune City 1.0.0</strong></p>
+
             <div class="download-grid">
                 <div class="download-card">
                     <h3>🪟 Windows</h3>
                     <p>Windows 10/11 (64-bit)</p>
-                    <a href="https://sourceforge.net/projects/dunelegacy/files/dunelegacy/0.98.0aplpha/DuneLegacy-0.99.5-Windows-x64.exe/download" class="button">Download Installer</a>
-                    <p class="small-text">7.5 MB • All PAK files included!</p>
+                    <a href="https://github.com/svan058/dunecity/releases/download/v1.0.0/DuneCity-1.0.0-Windows-x64.zip" class="button">Download ZIP</a>
+                    <p class="small-text">All PAK files included</p>
                 </div>
                 <div class="download-card">
                     <h3>🍎 macOS</h3>
-                    <p>macOS 14.0+ (Apple Silicon & Intel)</p>
-                    <a href="https://sourceforge.net/projects/dunelegacy/files/dunelegacy/0.98.0aplpha/DuneLegacy-0.99.5-macOS.dmg/download" class="button">Download DMG</a>
-                    <p class="small-text">13 MB</p>
+                    <p>macOS 14.0+ (Apple Silicon)</p>
+                    <a href="https://github.com/svan058/dunecity/releases/download/v1.0.0/DuneCity-1.0.0-macOS.dmg" class="button">Download DMG</a>
+                    <p class="small-text">Drag the .app into Applications</p>
                 </div>
                 <div class="download-card">
                     <h3>🐧 Linux</h3>
                     <p>Ubuntu, Fedora, Debian (64-bit)</p>
-                    <a href="https://sourceforge.net/projects/dunelegacy/files/dunelegacy/0.98.0aplpha/DuneLegacy-0.99.5-Linux-x64.tar.gz/download" class="button">Download Tarball</a>
-                    <p class="small-text">7.3 MB</p>
+                    <a href="https://github.com/svan058/dunecity/releases/download/v1.0.0/DuneCity-1.0.0-Linux-x64.deb" class="button">.deb</a>
+                    <a href="https://github.com/svan058/dunecity/releases/download/v1.0.0/DuneCity-1.0.0-Linux-x64.rpm" class="button">.rpm</a>
+                    <a href="https://github.com/svan058/dunecity/releases/download/v1.0.0/DuneCity-1.0.0-Linux-x64.tar.gz" class="button">.tar.gz</a>
                 </div>
             </div>
-            
-            <p class="note"><strong>🎉 New!</strong> v0.99.5 - Play multiplayer over the internet without port forwarding! NAT hole punching makes hosting and joining games easier than ever.</p>
-            
+
+            <p class="note"><strong>🏙️ New!</strong> Dune City 1.0.0 turns Dune Legacy into a city-builder: zone Residential / Commercial / Industrial districts, build roads, manage power and police budgets, and grow a colony on Arrakis. <a href="dune-city.html">How to play →</a></p>
+
             <div class="release-notes">
-                <h3>📝 What's New in 0.99.5</h3>
+                <h3>📝 What's New in Dune City 1.0.0</h3>
                 <ul>
-                    <li>🌐 <strong>No Port Forwarding Required:</strong> Automatic NAT hole punching for internet games - just host or join!</li>
-                    <li>🔗 <strong>Improved Connections:</strong> Smart NAT detection for same-network players, keep-alive for stable connections</li>
-                    <li>⚡ <strong>Smoother Gameplay:</strong> Reduced lag spikes during network stalls</li>
-                    <li>💡 <strong>Tip:</strong> If you experience lag, try reducing game speed in Options (20-24 works well for high latency)</li>
+                    <li>🏗️ <strong>City Simulation:</strong> RCI zoning, land-value gradients, crime, police coverage, traffic across roads</li>
+                    <li>⚡ <strong>Power Grid:</strong> Wind traps and nuclear plants feed the colony — without enough power, zones decay</li>
+                    <li>🛣️ <strong>Roads:</strong> Player-built roads connect industrial supply to residential and commercial demand</li>
+                    <li>💰 <strong>Per-House Budgets:</strong> Every player pays for their own police coverage and collects taxes annually</li>
+                    <li>🤖 <strong>Smarter AI:</strong> QuantBot builds nuclear plants aggressively in city mode to keep the grid alive</li>
+                    <li>🗺️ <strong>New Bundled Map:</strong> "2P - 192x192 - SimCity" — twin-city sandbox layout designed for city-sim play</li>
                 </ul>
-                <h4>From 0.99.4:</h4>
-                <ul>
-                    <li>📢 <strong>Discord Notifications:</strong> Game Starting notifications with player details posted to Discord channel</li>
-                    <li>🎮 <strong>Discord Rich Presence:</strong> Shows lobby status, in-game activity, and player counts</li>
-                    <li>🔧 <strong>Vanilla Mod Sync:</strong> Fixed mod sync when host uses vanilla - clients now switch correctly</li>
-                </ul>
-                <p><a href="https://dunelegacy.sourceforge.net/website/dune-legacy-0.99-released.html">View full release notes</a></p>
+                <p><a href="https://github.com/svan058/dunecity/releases/tag/v1.0.0">View full release notes on GitHub</a> · <a href="dune-city.html">DuneCity feature page</a></p>
+            </div>
+
+            <h3 style="margin-top: 2.5em;">Legacy Version</h3>
+            <p>Looking for the classic Dune II remake without the city-builder? Dune Legacy 0.99.5 is still available.</p>
+            <div class="download-grid">
+                <div class="download-card">
+                    <h3>🪟 Windows</h3>
+                    <p>Dune Legacy 0.99.5</p>
+                    <a href="https://sourceforge.net/projects/dunelegacy/files/dunelegacy/0.98.0aplpha/DuneLegacy-0.99.5-Windows-x64.exe/download" class="button">Download Installer</a>
+                </div>
+                <div class="download-card">
+                    <h3>🍎 macOS</h3>
+                    <p>Dune Legacy 0.99.5</p>
+                    <a href="https://sourceforge.net/projects/dunelegacy/files/dunelegacy/0.98.0aplpha/DuneLegacy-0.99.5-macOS.dmg/download" class="button">Download DMG</a>
+                </div>
+                <div class="download-card">
+                    <h3>🐧 Linux</h3>
+                    <p>Dune Legacy 0.99.5</p>
+                    <a href="https://sourceforge.net/projects/dunelegacy/files/dunelegacy/0.98.0aplpha/DuneLegacy-0.99.5-Linux-x64.tar.gz/download" class="button">Download Tarball</a>
+                </div>
             </div>
         </div>
     </section>
@@ -282,6 +306,7 @@
             <p>Dune II &copy; 1992 Westwood Studios</p>
             <p>
                 <a href="https://github.com/dunelegacy/dunelegacy">GitHub</a> |
+                <a href="dune-city.html">DuneCity</a> |
                 <a href="/metaserver/">Metaserver Status</a> |
                 <a href="https://github.com/dunelegacy/dunelegacy/wiki">Wiki</a>
             </p>
@@ -298,5 +323,4 @@
     <script src="js/main.js"></script>
 </body>
 </html>
-
 
