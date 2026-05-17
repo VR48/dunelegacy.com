@@ -62,14 +62,14 @@
         <div class="hero-overlay"></div>
         <div class="container">
             <div class="hero-content">
-                <h2>Dune City 1.0.0</h2>
+                <h2>Dune City 1.0.2</h2>
                 <p class="hero-subtitle">Arrakis is not just a battlefield. It is a city you have to keep alive.</p>
                 <p>Dune City is a city-builder fused with Dune II. It keeps the sand, spice, vehicles, houses, and survival pressure of the original, then adds zoning, power grids, roads, budgets, civic services, and colony growth. Less "capture the base", more "make the desert pay rent".</p>
                 <div class="cta-buttons">
-                    <a href="#download" class="button primary">Download 1.0.0</a>
+                    <a href="#download" class="button primary">Download 1.0.2</a>
                     <a href="#how-to-play" class="button secondary">How to Play</a>
                 </div>
-                <p class="version-info">Latest: 1.0.0 | Windows · macOS · Linux</p>
+                <p class="version-info">Latest: 1.0.2 | Windows · macOS · Linux</p>
             </div>
         </div>
     </section>
@@ -144,26 +144,26 @@
 
     <section id="download" class="section">
         <div class="container">
-            <h2>Download Dune City 1.0.0</h2>
-            <p>Released from <a href="https://github.com/svan058/dunecity/releases/tag/v1.0.0">GitHub Releases</a>. The in-game updater will flag new versions automatically.</p>
+            <h2>Download Dune City 1.0.2</h2>
+            <p>Released from <a href="https://github.com/svan058/dunecity/releases/tag/v1.0.2">GitHub Releases</a>. The in-game updater will flag new versions automatically.</p>
 
             <div class="download-grid">
                 <div class="download-card">
                     <h3>🪟 Windows</h3>
                     <p>Windows 10/11 (64-bit)</p>
-                    <a href="https://github.com/svan058/dunecity/releases/download/v1.0.0/DuneCity-1.0.0-Windows-x64.zip" class="button">Download ZIP</a>
+                    <a href="https://github.com/svan058/dunecity/releases/download/v1.0.2/DuneCity-1.0.2-Windows-x64.zip" class="button">Download ZIP</a>
                 </div>
                 <div class="download-card">
                     <h3>🍎 macOS</h3>
                     <p>macOS 14.0+ (Apple Silicon)</p>
-                    <a href="https://github.com/svan058/dunecity/releases/download/v1.0.0/DuneCity-1.0.0-macOS.dmg" class="button">Download DMG</a>
+                    <a href="https://github.com/svan058/dunecity/releases/download/v1.0.2/DuneCity-1.0.2-macOS.dmg" class="button">Download DMG</a>
                 </div>
                 <div class="download-card">
                     <h3>🐧 Linux</h3>
                     <p>Ubuntu, Fedora, Debian (64-bit)</p>
-                    <a href="https://github.com/svan058/dunecity/releases/download/v1.0.0/DuneCity-1.0.0-Linux-x64.deb" class="button">.deb</a>
-                    <a href="https://github.com/svan058/dunecity/releases/download/v1.0.0/DuneCity-1.0.0-Linux-x64.rpm" class="button">.rpm</a>
-                    <a href="https://github.com/svan058/dunecity/releases/download/v1.0.0/DuneCity-1.0.0-Linux-x64.tar.gz" class="button">.tar.gz</a>
+                    <a href="https://github.com/svan058/dunecity/releases/download/v1.0.2/DuneCity-1.0.2-Linux-x64.deb" class="button">.deb</a>
+                    <a href="https://github.com/svan058/dunecity/releases/download/v1.0.2/DuneCity-1.0.2-Linux-x64.rpm" class="button">.rpm</a>
+                    <a href="https://github.com/svan058/dunecity/releases/download/v1.0.2/DuneCity-1.0.2-Linux-x64.tar.gz" class="button">.tar.gz</a>
                 </div>
             </div>
         </div>
@@ -214,10 +214,28 @@
         </div>
     </section>
 
-    <section class="section">
+    <section id="macos-fix" class="section">
+        <div class="container">
+            <h2>Troubleshooting: macOS "damaged" warning</h2>
+            <p>The first time you download the macOS build, macOS may refuse to open it with the message <strong><em>"dunecity.app is damaged and can't be opened. You should move it to the Bin."</em></strong></p>
+            <p>The app is <strong>not</strong> damaged. The GitHub-built bundle is ad-hoc signed (no paid Apple Developer ID yet), and any file downloaded by a browser is also tagged with a <code>com.apple.quarantine</code> attribute. macOS Gatekeeper refuses to run ad-hoc-signed apps that carry that flag.</p>
+            <p><strong>One-line fix in Terminal:</strong></p>
+            <pre style="background: rgba(0,0,0,0.4); padding: 12px 16px; border-radius: 4px; overflow-x: auto;"><code>xattr -cr /Applications/dunecity.app</code></pre>
+            <p>After running that once, the app opens normally and keeps working across reboots. You only need to repeat it when you drag in a new version.</p>
+            <p>If you'd rather not touch Terminal:</p>
+            <ol>
+                <li>Right-click <code>dunecity.app</code> → <strong>Open</strong></li>
+                <li>macOS will refuse the first time — close the dialog</li>
+                <li>Right-click again → <strong>Open</strong> → click <strong>Open Anyway</strong></li>
+            </ol>
+            <p>Linux and Windows builds don't have this issue — they run as downloaded.</p>
+        </div>
+    </section>
+
+    <section class="section alt">
         <div class="container center">
             <h2>Status</h2>
-            <p>Dune City 1.0.0 is the first public release. Active development continues — bug reports, balance feedback, and city screenshots are all very welcome.</p>
+            <p>Dune City is now publicly released (1.0.2 is current). Active development continues — bug reports, balance feedback, and city screenshots are all very welcome.</p>
             <div class="cta-buttons">
                 <a href="https://discord.com/invite/6sAcZr6y3B" target="_blank" class="button primary">Follow Progress on Discord</a>
                 <a href="https://github.com/svan058/dunecity" target="_blank" class="button secondary">View the Source</a>
