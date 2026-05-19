@@ -41,7 +41,7 @@ if (!defined('PUNCH_RATE_LIMIT_PER_IP')) {
 
 // Latest game version - update this when releasing new versions
 if (!defined('LATEST_VERSION')) {
-    define('LATEST_VERSION', '1.0.5');
+    define('LATEST_VERSION', '1.0.9');
 }
 if (!defined('DOWNLOAD_URL')) {
     define('DOWNLOAD_URL', 'https://dunelegacy.com/#download');
