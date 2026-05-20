@@ -379,6 +379,22 @@ nav a:hover {
     margin: 10px 0 0 0;
 }
 
+.download-card .download-count {
+    display: block;
+    font-size: 0.8em;
+    color: var(--primary);
+    opacity: 0.7;
+    margin-top: 8px;
+}
+
+.download-total-count,
+.download-latest-count {
+    display: inline-block;
+    font-size: 0.9em;
+    color: var(--primary);
+    opacity: 0.8;
+}
+
 .release-notes {
     background: rgba(212, 175, 55, 0.1);
     border: 2px solid rgba(212, 175, 55, 0.3);

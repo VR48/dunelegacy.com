@@ -1,0 +1,101 @@
+name: Update DuneCity Download Counts
+
+on:
+  schedule:
+    - cron: '15 6 * * *'   # Daily at 06:15 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-counts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch download counts from GitHub API
+        run: |
+          mkdir -p website/data
+
+          # Fetch all releases (public repo, no token needed)
+          curl -sf https://api.github.com/repos/svan058/dunecity/releases \
+            -H "Accept: application/vnd.github+json" \
+            -o /tmp/releases.json
+
+          # Build the downloads.json snapshot
+          python3 - <<'PYEOF'
+          import json, datetime
+
+          with open("/tmp/releases.json") as f:
+              data = json.load(f)
+
+          all_total = 0
+          releases = []
+
+          for r in data:
+              assets = []
+              release_total = 0
+              for a in r.get("assets", []):
+                  count = a["download_count"]
+                  release_total += count
+                  assets.append({
+                      "name": a["name"],
+                      "download_count": count,
+                      "size": a["size"],
+                  })
+              all_total += release_total
+              releases.append({
+                  "tag": r["tag_name"],
+                  "name": r["name"] or r["tag_name"],
+                  "published_at": r["published_at"],
+                  "total_downloads": release_total,
+                  "assets": assets,
+              })
+
+          latest = releases[0] if releases else None
+
+          snapshot = {
+              "generated": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "repository": "svan058/dunecity",
+              "latest_release": latest,
+              "all_releases_total": all_total,
+              "releases": releases,
+          }
+
+          with open("website/data/downloads.json", "w") as f:
+              json.dump(snapshot, f, indent=2)
+              f.write("\n")
+
+          # Append to bounded history log (keep last 365 entries)
+          history_path = "website/data/downloads-history.json"
+          try:
+              with open(history_path) as f:
+                  history = json.load(f)
+          except (FileNotFoundError, json.JSONDecodeError):
+              history = []
+
+          history.append({
+              "date": datetime.datetime.utcnow().strftime("%Y-%m-%d"),
+              "all_releases_total": all_total,
+              "latest_tag": latest["tag"] if latest else None,
+              "latest_total": latest["total_downloads"] if latest else 0,
+          })
+          history = history[-365:]
+
+          with open(history_path, "w") as f:
+              json.dump(history, f, indent=2)
+              f.write("\n")
+          PYEOF
+
+      - name: Commit and push if changed
+        run: |
+          git config user.email "ci@dunelegacy.com"
+          git config user.name "DuneCity CI"
+          git add website/data/downloads.json website/data/downloads-history.json
+          if git diff --cached --quiet; then
+            echo "No changes to download counts."
+          else
+            git commit -m "chore: update DuneCity download counts"
+            git push
+          fi
