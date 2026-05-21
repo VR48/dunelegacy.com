@@ -14,17 +14,57 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
+const DUNECITY_RELEASES_API = 'https://api.github.com/repos/svan058/dunecity/releases?per_page=100';
+
 // Download count display (progressive enhancement)
 document.addEventListener('DOMContentLoaded', () => {
-    fetch('data/downloads.json')
-        .then(r => r.ok ? r.json() : Promise.reject(r.status))
-        .then(data => {
-            renderDownloadCounts(data);
-        })
+    fetchLiveDownloadCounts()
+        .then(renderDownloadCounts)
+        .catch(() => fetch('data/downloads.json')
+            .then(r => r.ok ? r.json() : Promise.reject(r.status))
+            .then(renderDownloadCounts))
         .catch(() => {
             // Silent fail — counts are a nice-to-have
         });
 });
+
+function fetchLiveDownloadCounts() {
+    return fetch(DUNECITY_RELEASES_API, {
+        headers: {
+            'Accept': 'application/vnd.github+json'
+        }
+    })
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(releases => {
+            if (!Array.isArray(releases) || releases.length === 0) {
+                return Promise.reject('no releases');
+            }
+
+            const normalized = releases.map(release => {
+                const assets = (release.assets || []).map(asset => ({
+                    name: asset.name,
+                    download_count: asset.download_count || 0,
+                    size: asset.size || 0
+                }));
+
+                return {
+                    tag: release.tag_name,
+                    name: release.name,
+                    published_at: release.published_at,
+                    total_downloads: assets.reduce((sum, asset) => sum + asset.download_count, 0),
+                    assets
+                };
+            });
+
+            return {
+                generated: new Date().toISOString(),
+                repository: 'svan058/dunecity',
+                latest_release: normalized[0],
+                all_releases_total: normalized.reduce((sum, release) => sum + release.total_downloads, 0),
+                releases: normalized
+            };
+        });
+}
 
 function renderDownloadCounts(data) {
     if (!data || !data.latest_release) return;
