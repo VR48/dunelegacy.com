@@ -4,5 +4,11 @@
     "all_releases_total": 254,
     "latest_tag": "v1.0.10",
     "latest_total": 4
+  },
+  {
+    "date": "2026-05-21",
+    "all_releases_total": 358,
+    "latest_tag": "v1.0.11",
+    "latest_total": 65
   }
 ]
