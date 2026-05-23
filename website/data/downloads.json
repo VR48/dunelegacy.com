@@ -1,40 +1,40 @@
 {
-  "generated": "2026-05-22T07:31:27Z",
+  "generated": "2026-05-23T07:10:09Z",
   "repository": "svan058/dunecity",
   "latest_release": {
     "tag": "v1.0.12",
     "name": "Dune City v1.0.12",
     "published_at": "2026-05-21T08:43:19Z",
-    "total_downloads": 79,
+    "total_downloads": 150,
     "assets": [
       {
         "name": "DuneCity-1.0.12-macOS.dmg",
-        "download_count": 10,
+        "download_count": 27,
         "size": 13531889
       },
       {
         "name": "DuneCity-1.0.12-Windows-x64.zip",
-        "download_count": 69,
+        "download_count": 123,
         "size": 9104255
       }
     ]
   },
-  "all_releases_total": 443,
+  "all_releases_total": 514,
   "releases": [
     {
       "tag": "v1.0.12",
       "name": "Dune City v1.0.12",
       "published_at": "2026-05-21T08:43:19Z",
-      "total_downloads": 79,
+      "total_downloads": 150,
       "assets": [
         {
           "name": "DuneCity-1.0.12-macOS.dmg",
-          "download_count": 10,
+          "download_count": 27,
           "size": 13531889
         },
         {
           "name": "DuneCity-1.0.12-Windows-x64.zip",
-          "download_count": 69,
+          "download_count": 123,
           "size": 9104255
         }
       ]
