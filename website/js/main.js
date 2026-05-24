@@ -74,17 +74,25 @@ function fetchSourceForgeStats() {
         .then(data => {
             // SourceForge returns { oses: { "Windows": N, "Linux": N, "Mac": N, ... }, total: N }
             const oses = data.oses || {};
+            const total = data.total || 0;
+
+            // Calculate avg downloads/month from start_date to now
+            const startDate = new Date('2009-01-01');
+            const months = Math.max(1, (Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+            const avgPerMonth = Math.round(total / months);
+
             return {
                 windows: oses['Windows'] || 0,
                 macos: oses['Mac'] || 0,
                 linux: (oses['Linux'] || 0) + (oses['BSD'] || 0),
-                total: data.total || 0
+                total,
+                avgPerMonth
             };
         });
 }
 
 function renderDownloadCounts(ghData, sfData) {
-    // GitHub per-platform counts (all releases)
+    // GitHub per-platform counts (Dune City — all releases)
     const gh = { windows: 0, macos: 0, linux: 0, total: 0 };
     if (ghData && ghData.releases) {
         for (const release of ghData.releases) {
@@ -98,24 +106,16 @@ function renderDownloadCounts(ghData, sfData) {
         gh.total = ghData.all_releases_total || 0;
     }
 
-    // SourceForge counts (Dune Legacy era)
-    const sf = sfData || { windows: 0, macos: 0, linux: 0, total: 0 };
+    // SourceForge counts (Dune Legacy)
+    const sf = sfData || { windows: 0, macos: 0, linux: 0, total: 0, avgPerMonth: 0 };
 
-    // Combined totals
-    const combined = {
-        windows: gh.windows + sf.windows,
-        macos: gh.macos + sf.macos,
-        linux: gh.linux + sf.linux,
-        total: gh.total + sf.total
-    };
-
-    // Populate per-card counts via data-platform attributes
+    // Per-card counts show Dune City (GitHub) downloads only
     document.querySelectorAll('.download-card[data-platform]').forEach(card => {
         const p = card.dataset.platform;
         let count = 0;
-        if (p === 'windows') count = combined.windows;
-        else if (p === 'macos') count = combined.macos;
-        else if (p === 'linux') count = combined.linux;
+        if (p === 'windows') count = gh.windows;
+        else if (p === 'macos') count = gh.macos;
+        else if (p === 'linux') count = gh.linux;
 
         const el = card.querySelector('.download-count');
         if (el) {
@@ -123,12 +123,22 @@ function renderDownloadCounts(ghData, sfData) {
         }
     });
 
-    // Populate total count badges
-    document.querySelectorAll('.download-total-count').forEach(el => {
-        el.textContent = formatCount(combined.total) + ' total downloads';
+    // Dune City total
+    document.querySelectorAll('.download-dunecity-total').forEach(el => {
+        el.textContent = formatCount(gh.total) + ' total Dune City downloads';
     });
 
-    // Populate latest release count badges
+    // Dune Legacy total (SourceForge) with avg/month
+    if (sf.total > 0) {
+        const avgText = sf.avgPerMonth > 0
+            ? ' (' + formatCount(sf.avgPerMonth) + ' avg/month)'
+            : '';
+        document.querySelectorAll('.download-legacy-total').forEach(el => {
+            el.textContent = formatCount(sf.total) + ' total Dune Legacy downloads' + avgText;
+        });
+    }
+
+    // Latest release count badges
     if (ghData && ghData.latest_release) {
         document.querySelectorAll('.download-latest-count').forEach(el => {
             el.textContent = formatCount(ghData.latest_release.total_downloads) + ' downloads this release';
