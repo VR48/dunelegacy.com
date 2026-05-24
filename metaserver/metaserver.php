@@ -39,9 +39,39 @@ if (!defined('PUNCH_RATE_LIMIT_PER_IP')) {
     define('PUNCH_RATE_LIMIT_PER_IP', 10); // 10 requests per minute per IP
 }
 
-// Latest game version - update this when releasing new versions
+// Latest game version — fetched from GitHub releases with local file cache.
+// Cache refreshes every 10 minutes so new releases propagate quickly.
 if (!defined('LATEST_VERSION')) {
-    define('LATEST_VERSION', '1.0.9');
+    $latestVersion = '1.0.15'; // fallback
+    $cacheFile = DATA_DIR . '/github_latest_version.json';
+    $cacheTTL = 600; // 10 minutes
+
+    $useCache = false;
+    if (file_exists($cacheFile)) {
+        $cache = @json_decode(file_get_contents($cacheFile), true);
+        if ($cache && isset($cache['version']) && (time() - ($cache['time'] ?? 0)) < $cacheTTL) {
+            $latestVersion = $cache['version'];
+            $useCache = true;
+        }
+    }
+
+    if (!$useCache) {
+        $ctx = stream_context_create(['http' => [
+            'header' => "User-Agent: DuneLegacy-Metaserver\r\nAccept: application/vnd.github+json\r\n",
+            'timeout' => 5
+        ]]);
+        $resp = @file_get_contents('https://api.github.com/repos/svan058/dunecity/releases/latest', false, $ctx);
+        if ($resp !== false) {
+            $data = @json_decode($resp, true);
+            if (isset($data['tag_name'])) {
+                $tag = ltrim($data['tag_name'], 'vV');
+                $latestVersion = $tag;
+                @file_put_contents($cacheFile, json_encode(['version' => $tag, 'time' => time()]));
+            }
+        }
+    }
+
+    define('LATEST_VERSION', $latestVersion);
 }
 if (!defined('DOWNLOAD_URL')) {
     define('DOWNLOAD_URL', 'https://dunelegacy.com/#download');
