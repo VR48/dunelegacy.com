@@ -15,17 +15,19 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 });
 
 const DUNECITY_RELEASES_API = 'https://api.github.com/repos/svan058/dunecity/releases?per_page=100';
+const SOURCEFORGE_STATS_API = 'https://sourceforge.net/projects/dunelegacy/files/stats/json?start_date=2009-01-01&end_date=2030-12-31';
 
 // Download count display (progressive enhancement)
 document.addEventListener('DOMContentLoaded', () => {
-    fetchLiveDownloadCounts()
-        .then(renderDownloadCounts)
+    const githubData = fetchLiveDownloadCounts()
         .catch(() => fetch('data/downloads.json')
-            .then(r => r.ok ? r.json() : Promise.reject(r.status))
-            .then(renderDownloadCounts))
-        .catch(() => {
-            // Silent fail — counts are a nice-to-have
-        });
+            .then(r => r.ok ? r.json() : Promise.reject(r.status)))
+        .catch(() => null);
+
+    const sfData = fetchSourceForgeStats().catch(() => null);
+
+    Promise.all([githubData, sfData])
+        .then(([gh, sf]) => renderDownloadCounts(gh, sf));
 });
 
 function fetchLiveDownloadCounts() {
@@ -66,36 +68,54 @@ function fetchLiveDownloadCounts() {
         });
 }
 
-function renderDownloadCounts(data) {
-    if (!data || !data.releases) return;
+function fetchSourceForgeStats() {
+    return fetch(SOURCEFORGE_STATS_API)
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(data => {
+            // SourceForge returns { oses: { "Windows": N, "Linux": N, "Mac": N, ... }, total: N }
+            const oses = data.oses || {};
+            return {
+                windows: oses['Windows'] || 0,
+                macos: oses['Mac'] || 0,
+                linux: (oses['Linux'] || 0) + (oses['BSD'] || 0),
+                total: data.total || 0
+            };
+        });
+}
 
-    const latest = data.latest_release;
-
-    // Build a lookup: platform keyword -> count summed across ALL releases
-    const platformCounts = { windows: 0, macos: 0, 'linux-deb': 0, 'linux-rpm': 0, 'linux-tar': 0 };
-    for (const release of data.releases) {
-        for (const asset of release.assets) {
-            const name = asset.name.toLowerCase();
-            if (name.includes('windows')) platformCounts['windows'] += asset.download_count;
-            else if (name.includes('macos')) platformCounts['macos'] += asset.download_count;
-            else if (name.includes('linux') && name.endsWith('.deb')) platformCounts['linux-deb'] += asset.download_count;
-            else if (name.includes('linux') && name.endsWith('.rpm')) platformCounts['linux-rpm'] += asset.download_count;
-            else if (name.includes('linux') && name.endsWith('.tar.gz')) platformCounts['linux-tar'] += asset.download_count;
+function renderDownloadCounts(ghData, sfData) {
+    // GitHub per-platform counts (all releases)
+    const gh = { windows: 0, macos: 0, linux: 0, total: 0 };
+    if (ghData && ghData.releases) {
+        for (const release of ghData.releases) {
+            for (const asset of release.assets) {
+                const name = asset.name.toLowerCase();
+                if (name.includes('windows')) gh.windows += asset.download_count;
+                else if (name.includes('macos')) gh.macos += asset.download_count;
+                else if (name.includes('linux')) gh.linux += asset.download_count;
+            }
         }
+        gh.total = ghData.all_releases_total || 0;
     }
 
-    // Sum Linux variants
-    const linuxTotal = platformCounts['linux-deb']
-        + platformCounts['linux-rpm']
-        + platformCounts['linux-tar'];
+    // SourceForge counts (Dune Legacy era)
+    const sf = sfData || { windows: 0, macos: 0, linux: 0, total: 0 };
+
+    // Combined totals
+    const combined = {
+        windows: gh.windows + sf.windows,
+        macos: gh.macos + sf.macos,
+        linux: gh.linux + sf.linux,
+        total: gh.total + sf.total
+    };
 
     // Populate per-card counts via data-platform attributes
     document.querySelectorAll('.download-card[data-platform]').forEach(card => {
         const p = card.dataset.platform;
         let count = 0;
-        if (p === 'windows') count = platformCounts['windows'] || 0;
-        else if (p === 'macos') count = platformCounts['macos'] || 0;
-        else if (p === 'linux') count = linuxTotal;
+        if (p === 'windows') count = combined.windows;
+        else if (p === 'macos') count = combined.macos;
+        else if (p === 'linux') count = combined.linux;
 
         const el = card.querySelector('.download-count');
         if (el) {
@@ -105,13 +125,15 @@ function renderDownloadCounts(data) {
 
     // Populate total count badges
     document.querySelectorAll('.download-total-count').forEach(el => {
-        el.textContent = formatCount(data.all_releases_total) + ' total downloads';
+        el.textContent = formatCount(combined.total) + ' total downloads';
     });
 
     // Populate latest release count badges
-    document.querySelectorAll('.download-latest-count').forEach(el => {
-        el.textContent = formatCount(latest.total_downloads) + ' downloads this release';
-    });
+    if (ghData && ghData.latest_release) {
+        document.querySelectorAll('.download-latest-count').forEach(el => {
+            el.textContent = formatCount(ghData.latest_release.total_downloads) + ' downloads this release';
+        });
+    }
 }
 
 function formatCount(n) {
