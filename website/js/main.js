@@ -67,28 +67,27 @@ function fetchLiveDownloadCounts() {
 }
 
 function renderDownloadCounts(data) {
-    if (!data || !data.latest_release) return;
+    if (!data || !data.releases) return;
 
     const latest = data.latest_release;
 
-    // Build a lookup: platform keyword -> count
-    // Assets follow the pattern DuneCity-X.X.X-Platform-arch.ext
-    const platformCounts = {};
-    for (const asset of latest.assets) {
-        const name = asset.name.toLowerCase();
-        let platform = null;
-        if (name.includes('windows')) platform = 'windows';
-        else if (name.includes('macos')) platform = 'macos';
-        else if (name.includes('linux') && name.endsWith('.deb')) platform = 'linux-deb';
-        else if (name.includes('linux') && name.endsWith('.rpm')) platform = 'linux-rpm';
-        else if (name.includes('linux') && name.endsWith('.tar.gz')) platform = 'linux-tar';
-        if (platform) platformCounts[platform] = asset.download_count;
+    // Build a lookup: platform keyword -> count summed across ALL releases
+    const platformCounts = { windows: 0, macos: 0, 'linux-deb': 0, 'linux-rpm': 0, 'linux-tar': 0 };
+    for (const release of data.releases) {
+        for (const asset of release.assets) {
+            const name = asset.name.toLowerCase();
+            if (name.includes('windows')) platformCounts['windows'] += asset.download_count;
+            else if (name.includes('macos')) platformCounts['macos'] += asset.download_count;
+            else if (name.includes('linux') && name.endsWith('.deb')) platformCounts['linux-deb'] += asset.download_count;
+            else if (name.includes('linux') && name.endsWith('.rpm')) platformCounts['linux-rpm'] += asset.download_count;
+            else if (name.includes('linux') && name.endsWith('.tar.gz')) platformCounts['linux-tar'] += asset.download_count;
+        }
     }
 
     // Sum Linux variants
-    const linuxTotal = (platformCounts['linux-deb'] || 0)
-        + (platformCounts['linux-rpm'] || 0)
-        + (platformCounts['linux-tar'] || 0);
+    const linuxTotal = platformCounts['linux-deb']
+        + platformCounts['linux-rpm']
+        + platformCounts['linux-tar'];
 
     // Populate per-card counts via data-platform attributes
     document.querySelectorAll('.download-card[data-platform]').forEach(card => {
