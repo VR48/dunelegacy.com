@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>The Essence of Peopling</title>
+    <style>
+        :root {
+            --bg: #1a1612;
+            --panel: #221d17;
+            --ink: #e8e0d2;
+            --muted: #b3a892;
+            --accent: #d9a441;
+            --rule: #3a3228;
+        }
+        * { box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font: 18px/1.7 Georgia, "Iowan Old Style", "Times New Roman", serif;
+            padding: 0;
+        }
+        .wrap {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 48px 24px 120px;
+        }
+        #content h1 {
+            font-size: 2.1rem;
+            line-height: 1.2;
+            color: var(--accent);
+            margin: 0 0 .2em;
+            letter-spacing: .01em;
+        }
+        #content h2 {
+            font-size: 1.4rem;
+            color: var(--ink);
+            margin: 2.2em 0 .6em;
+            padding-bottom: .25em;
+            border-bottom: 1px solid var(--rule);
+        }
+        #content h3 {
+            font-size: 1.12rem;
+            color: var(--accent);
+            margin: 1.8em 0 .4em;
+        }
+        #content p { margin: 0 0 1.1em; }
+        #content em { color: var(--muted); }
+        #content strong { color: #fff; }
+        #content ul { margin: 0 0 1.2em; padding-left: 1.3em; }
+        #content li { margin: 0 0 .45em; }
+        #content blockquote {
+            margin: 1.4em 0;
+            padding: .4em 1.1em;
+            border-left: 3px solid var(--accent);
+            color: var(--muted);
+            font-style: italic;
+        }
+        #content hr {
+            border: none;
+            border-top: 1px solid var(--rule);
+            margin: 2.4em 0;
+        }
+        .meta {
+            color: var(--muted);
+            font-size: .8rem;
+            font-family: -apple-system, system-ui, sans-serif;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            margin-top: 64px;
+            padding-top: 16px;
+            border-top: 1px solid var(--rule);
+        }
+        .loading { color: var(--muted); font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <article id="content"><p class="loading">Loading…</p></article>
+        <p class="meta">Private working draft. Edit <code>website/data/peopling.md</code> and push to update.</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+    <script>
+        fetch('data/peopling.md?v=' + Date.now())
+            .then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.text();
+            })
+            .then(function (md) {
+                var html = marked.parse(md, { mangle: false, headerIds: true });
+                document.getElementById('content').innerHTML = DOMPurify.sanitize(html);
+                var h1 = document.querySelector('#content h1');
+                if (h1) document.title = h1.textContent;
+            })
+            .catch(function (e) {
+                document.getElementById('content').innerHTML =
+                    '<p class="loading">Could not load the draft (' + e.message + ').</p>';
+            });
+    </script>
+</body>
+</html>
