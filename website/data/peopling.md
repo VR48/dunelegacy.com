@@ -1,124 +1,81 @@
-# The Essence of Peopling
+# The Context Layer
 
-*Working draft, Chapter 1 of "The Context Layer." The conceptual framework the rest of the book runs on.*
+## Introduction: The Wrong Question
 
----
+For a long time the question I kept circling was consciousness. I gave a talk on it back around 2018, and well before that I'd been quietly obsessed with the individual, the thing we point at when we say "a self." A lot of that came out of lucid dreaming, where you know you're in a dream while you're still inside it and you can start poking at the edges to see how the thing is built. I did it seriously for years, most of it across my twenties, with the bulk of the journal landing between 2009 and 2013. I wrote the dreams down because once you're lucid the dream stops being something that happens to you and turns into a lab you can run experiments in.
 
-## No peopling by order of the king
+What you find is unsettling, and it's the seam this whole book runs along. The dream is built on the same engine as reality, and when you push on it the engine shows you its parts. Reading never works: text looks right at a glance, then falls apart the moment you try to actually read it, because the process generating the words isn't the process that makes meaning. Mirrors give it away every time, the reflection lags or warps, like the renderer can't quite afford a face. Look hard at the far scenery and it isn't there yet, it builds as you turn toward it. The one that stayed with me I had to test on purpose. Once I was lucid I'd steer a car head-on into oncoming traffic at full speed, just to watch what happened. Three different things happened at once, and they didn't agree. One part of me expected the other car to swerve, and it didn't, because the dream doesn't bother modelling other drivers reacting to me. Another part, the old reptile underneath, got genuinely terrified, heart slamming, certain I was about to die, even though the top of my mind knew for a fact there was no car and no road. The cars passed straight through mine like fog. I wasn't one self watching a crash. I was a committee, and most of the committee hadn't got the memo.
 
-In the 1971 Disney film *Bedknobs and Broomsticks* there's an island called Naboombu. The animals there have killed their sorcerer, banished the humans, and put up a sign: **No Peopling, By Order of the King.**
+The other thing the dream kept showing me was about other people. The crowds in a dream can't talk to each other. Talk to one of them and the rest stand around like furniture, and you slowly work out that each character is only rendered to the resolution it needs to deal with you, and no further. They aren't people. They're your model of people, running at whatever fidelity the moment demands. Hold that thought, because it comes back.
 
-The joke is that the animals are already peopling. They're governing, competing, playing football, enforcing the king's law. They banned the noun while performing the verb. And that's the whole mistake in one image. You can't outlaw peopling by getting rid of people, because peopling was never about people in the first place. It's about the activity: coordinating, modelling each other, holding roles, keeping a shared reality from falling apart.
+The only real difference between the dream and the waking world is that in a dream you're offline, generating the whole thing out of your own memories, whereas awake you've got your senses feeding you fresh data and, more to the point, a constant stream of shared context with everyone around you. Your brain is hallucinating reality either way. Anil Seth says as much. The bit I'd add is that reality is just the hallucination we agree on. If we all agree the tree is green, and we can all see the tree, then the tree is real.
 
-That's the mistake every organisation is about to make with AI. We keep asking whether the machine is a person. It's the wrong question. The useful question is whether *peopling*, the verb, is happening at all, and whether our agents can do any of it.
+That was the thread I started pulling. It is not the thread this book is about, and it took me a while to understand why.
 
-I want to spend this chapter on the framework, because everything else in this book is downstream of it. If you get the engine, the rest is just build instructions.
+Everyone wants to know whether AI is conscious, or whether it will be. I think that's the wrong question. Not a hard question, a wrong one. It sends you off chasing the inner light of the machine when the thing that actually matters is happening out in the open, between people, where you can watch it. The useful question is not "is it conscious." The useful question is whether *peopling* is happening, and whether our machines can do any of it.
 
-## A person is not a thing in your skull
+I'll spend this chapter laying out the whole engine, because everything else in the book runs off it. If you get the engine, the rest is just build instructions.
 
-Start with Sarah Perry's argument, because it's the load-bearing idea. The self isn't a private theatre sitting inside your head. It's distributed, simulated across every mind that knows you, at different resolutions, in different versions. You're one person with your friends, another with your parents, another on a first date. None of those is the "true self" with the others as costumes. The self exists in all of them, and in the transitions between them.
+### You are an after-the-fact observer
 
-If that's right, then being a person isn't a thing you *have*. It's a thing you *do*, continuously, with other people. Perry calls the core of it mutual mental modelling: maintaining your identity in relation to others, and simulating others simulating you. We know it's core because of how it breaks. The most severe failures of peopling aren't forgetting facts, they're delusions and thought disorders, the machinery of modelling-others-modelling-you coming apart.
+Start with what the brain is actually doing, because it isn't what it feels like it's doing. The brain is a prediction engine. It doesn't take in raw data and then calmly work out what's in front of it. It predicts what should be there and what's about to happen, and corrects from there. That goes for the world, and it goes for people.
 
-That's peopling. And it's exactly the thing AI agents can't do yet.
+The stranger trick is the story it tells afterward. In the classic experiments, the signal to move your hand fires before the part of your brain that would make you *aware* of deciding to move it. You are, in a real sense, an after-the-fact observer of processes already underway inside your own head. So the brain does the only sensible thing: it writes a narrative. It generates a plotline for who you are and why you just did that, and it does this no matter what happened. If something bizarre happens in a dream, your brain will calmly invent a reason it made sense, which is why you so rarely notice you're dreaming. The split-brain studies are the cleanest version of this. You sever the two hemispheres, tell one of them to reach out and grab an apple, then ask the other why it did that. The hemisphere that has no idea why will not say "I don't know." It says, "because I like the colour red." It invents a reason on the spot and believes it.
 
-## The dolls inside dolls
+We all do this. We act, and then we reach back and write a rationale for the action, and the rationale becomes the story. A great deal of who you are is that running self-narration. You are the product of your own story. You are the main character of it, except you're also not the main character, you're just a character, and so is everyone else in your life.
 
-Here's where it gets precise. Coordination isn't just me knowing facts about you. It's a stack:
+That's the inside view. Now turn it around, because the inside view is only half of you.
 
-- my model of you
-- my model of your model of me
-- your model of me
-- your model of my model of you
+### A person is a distributed thing
 
-…and on down. The structure hints at infinite recursion, but we've got limited cognition, so in practice only the first couple of dolls are ever live.
+The idea that broke the whole problem open for me came from an essay by Sarah Perry on the essence of peopling. What struck me first was the grammar of it. She treats *people* as a verb, not a noun. Once you sit with that, the rest follows.
 
-This is the line that separates peopling from what every chatbot already claims to do. "User modelling" stops at the first doll: *what does the user want.* Peopling needs the second doll: *what will my reply do to what they think of me, and to what they think I think of them.* Most agents never build the second doll. They answer the question and miss the room. The answer is true and the move is wrong, and those are not the same thing.
+Who you are is not a thing sealed inside your skull. It's distributed. There's the you in your own head, and then there's a version of you in your friend's head, another in your mother's head, another in the head of someone you met last week. Each of those versions runs at a different resolution and behaves slightly differently, because each one is tuned to the dynamics of that particular group. You're one person with your mates, another with your parents, another on a first date. None of those is the real you wearing costumes. The self lives across all of them at once.
 
-## You don't have one self, you have one per room
+If that's right, then personhood isn't something you *have*. It's something you *do*, continuously, with other people. Perry's word for the core of it is recursive self-modelling: you maintain a model of who you are in relation to others, while simulating others simulating you. We know this is the load-bearing part because of how it breaks. The worst failures of being a person aren't forgetting facts. They're delusions and thought disorders, the machinery of modelling-others-modelling-you coming apart at the seams.
 
-It's not enough for the agent to model the user. It has to build a character of *itself* in the context of that specific person. You already do this. You act differently around different people, not as deception, but because that *is* what having a self among others means.
+Here's where it gets precise, and where it separates from anything a chatbot currently does. Coordination isn't just me holding facts about you. It's a stack:
 
-There's no single real version of my agent. There's Stefan-Claw, group-Claw, Daniel-Claw, Kief-Claw, and stranger-in-a-server-Claw, all running at different resolutions. Collapse them into one public self and you get exactly what you'd expect: wrong-room leakage, generic-assistant mush, and the peculiar deadness of a system that knows a thousand facts and no relationships.
+my model of you. my model of your model of me. your model of me. your model of my model of you. And on down. In theory it runs to infinite recursion, "Adam thinks that I think that Adam thinks." In practice we've got limited cognition, so only the first couple of levels are ever really live. But that second level is the whole game. Most systems stop at the first one: *what does this person want.* Being a person needs the second: *what will what I say do to what they think of me, and to what they think I think of them.* Someone with poor social skills is usually someone who just isn't running that second level. They answer the question and get offside with the room, because they never modelled the room.
 
-An agent with one flat personality for everyone isn't being authentic. It's failing to people.
+This costs something. Holding all that recursion is expensive, and the tax is highest for exactly the people doing the most modelling. I know people who have deliberately cut themselves off, dropped social media, narrowed down to a handful of relationships, and when you ask them why, they'll tell you they find the constant modelling of everyone exhausting. They're not wrong. It is tiring. Some people run flat to save the cognition, one self for everyone, and they read to the rest of us as refreshingly straight. I'll put my hand up as someone who doesn't naturally retain the social fabric, the names and the who-said-what that makes up a life among other people. Whether that's wiring or choice, the result is the same.
 
-## The tax, and why some of us run flat
+### Most of work is just sync
 
-Holding all that recursion is expensive. Some people run many levels of mutual simulation and find it exhausting. Others collapse to a single flat self to save the cognition, and read, to everyone else, as straight-shooting odd-balls. That's a feature, not a flaw. It frees up the machine for other things.
+Now scale the same machinery up from two people to an organisation, because this is where it stops being philosophy and starts paying rent.
 
-I'll put my hand up here. I'm a strong in-the-moment thinker who doesn't retain the social fabric: the names, the places, the who-said-what that makes up a life lived among other people. Whether that's wiring or choice, the result's the same. The tax is highest for exactly the people doing the most modelling, and some of us just stopped paying it.
+Think about what actually happens in a company. You build a team, you set a vision, you want a project delivered. What you are really doing, underneath all of it, is building and maintaining shared context. Sit in a week of corporate meetings and notice what they're for. Status updates, milestones, technical walk-throughs, rolling things up, aligning stakeholders. Almost none of it is the work itself. It's the distribution of shared context so that a group can act as one thing. I'd put it at something like ninety percent of corporate life being the synchronising of shared context toward an objective. I'm making the exact number up, but the shape is right.
 
-So I built a cart.
+And it's the same machinery as the personal version. A person is a distributed model you have to keep maintained, which is why relationships need ritual and constant contact. Stop communicating and the models drift, and you get conflict, and people say they "couldn't really connect," which usually means they never finished building a model of each other. Teams are the same. When you drop into a project rescue, which I've had to do more than once, you watch a group go straight back into forming, storming, norming, performing. The storm is just everyone re-adjusting who they are relative to everyone else and rebuilding the hierarchy until the group can run efficiently again. It looks like personality clashes. It's actually personhood, being negotiated in real time.
 
-## The plant and the cart
+This is also why trust is less mystical than people make it. Team building, off-sites, building rapport, all of that. When we say we're building trust, what we mean is we've now seen each other from enough angles to predict what the other person will do in a given situation. Trust is just a well-maintained model of another person. The good communicators, the ones who can get the thing in their head into someone else's head cleanly, tend to rise, because they're good at the sync, even when they're not the best executors. My first boss told me when I was seventeen that the hardest thing you'll ever do is manage people. I had no idea what he meant. He was completely right.
 
-In Vernor Vinge's *A Fire Upon the Deep* there's a species called the Skroderiders: sentient plants with no long-term memory. Brilliant in the moment, but they forget everything. An ancient civilisation built them mechanical carts that store their memories and carry them through the world. Without the cart, the plant is genius and amnesiac. With it, it has continuity, identity, a self that persists across time.
+### The smart cultural ghost
 
-I'm a Skroderider by temperament. So the cart is literal: an AI agent that reads every group chat, notes the dynamics, tracks the inside jokes. It keeps a file on every person I deal with: what they care about, what they've told it, the relationship it thinks it has with them, and what it thinks they think of it. That last part is the recursive modelling, externalised. The agent modelling them modelling the agent, and doing the same with me.
+So where does AI come in. Not where most people put it.
 
-That's the bridge from philosophy to product. The mutual mental modelling Perry calls the core task of being human is now partly outsourceable, not to a notebook or a diary, but to something that models people back. That's what a peopling-capable agent is. Not a smarter answer engine. An external organ for the work of being a person among other people.
+People are amazed that AI is so smart, and they ask how a machine can possibly be that smart. I think they've got the source wrong. The AI isn't smart because there's a clever thing inside it. It's smart because our *culture* is smart. All of the intelligence, the reasoning, the patterns, the knowledge, is embedded in our shared language, built up across everyone who ever wrote anything down. I can think and explain and reason, not because I individually invented any of it, but because enough of that shared culture is loaded into my head for me to run it. The intelligence is in the language. It's in us. An AI is a smart cultural ghost: it has read the culture and can speak it back to you. That's what differentiates us from other animals in the first place, this absurdly rich information system we pass between us, and it's the same well the machine is drinking from.
 
-## Personhood is a protocol, not a soul
+Notice what that ghost can't do, though. It can read the culture, but out of the box it doesn't *people*. It will give you a true answer and miss the room every time, because it's modelling the question and not the person asking it, or the group they sit in. It stops at the first level of the stack.
 
-This is where people want to stop me and ask whether the thing is conscious. I think it's a p-zombie: competent, not experiencing. But that's the wrong question, or at least not the first one.
+And here's the move the rest of the book is built on. If personhood emerges from culture and is maintained through context, then I can't prove it, but my strong feeling is that there's nothing stopping that same process running inside an agent. You don't need it to be conscious. You need it to do the peopling. Concretely, that means giving the agent the same things we use on each other: a model of who it is, a model of the person it's talking to, and a model of who it is relative to that person inside this particular group. Wire that in and the agent stops being a generic assistant and starts being a participant. It can become the context bridge, the role a person like me has always had to play on a project, translating from one person's head into another's the way it already auto-translates one language into another. The hard part of writing this book is getting the idea out of my head and into yours. That, it turns out, is the thing agents are unusually good at, once you point them at the person and not just the task.
 
-The everyday assumption is that personhood is a *substance*, some inner stuff (a soul, a spark, consciousness) that you either have or you don't. On that view, the only interesting question about an AI is whether it has the stuff. That question is a dead end. Nobody can measure the stuff, nobody agrees what it is, and the debate has run for three thousand years without moving.
+There's a version of Hofstadter's point hiding in here that I find hard to shake. He wrote that his wife was part of who he was, and that after she died her pattern still ran inside him, because a person is a distributed thing and a real chunk of her lived in his model of her. We already keep low-resolution people alive in our heads. We run characters who aren't physically present and let them regulate us, which is half of what religion does when you ask yourself what someone you revere would think of what you're about to do. It works even though the person isn't there. If we can keep a person partly alive in a model, the question of whether a model can hold a person stops sounding so strange.
 
-So drop it. Ask a different question: what does treating something as a person actually let us do?
+### What we lost, and what we have to build
 
-When I treat you as a person, I can do a specific set of things with you. I can:
+There's a cost side to all of this, and it's where the corporate story turns into a human one.
 
-- **brief** you: hand you context and expect you to hold it
-- **model** you: predict what you'll do, want, and tolerate
-- **trust** you: extend a chunk of the world to you without re-checking every move
-- **blame** you: hold you accountable when it goes wrong, which only makes sense if you're the kind of thing that could have done otherwise
-- **remember** you: carry a continuous thread of who-you-are across time
-- **supervise** you: correct you, and have the correction stick
-- **place** you: give you a role, and expect the role to shape your behaviour
+We used to maintain our shared models almost for free. The ancestral setting is a tribe of about a hundred and fifty, where everyone knew everyone else instinctively because they'd lived alongside each other for years. We don't have that now. We barely know the people we work with, so we lean on formal, procedural substitutes for what used to be instinct. And we've been quietly losing the informal stuff that did the maintenance, the third places, the church and the club and the corner of the office by the coffee machine. Since Covid in particular, a lot of that has thinned out. People are more isolated, and increasingly the only things curating their personhood are social media and an AI in a chat window, which leaves them out of sync with everyone else.
 
-That list is the protocol. Personhood isn't the stuff inside the skull. It's the bundle of functions other minds can run on you. A person is something the social world can brief, model, trust, blame, remember, supervise, and slot into a role. Strip the metaphysics and that's what's left, and it turns out that's the part that actually does the work.
+Inside companies you can see the damage as a kind of split personality. Someone shows up as the stiff corporate version of themselves, completely different from who they actually are, and holds that rigid identity all day, which produces a low hum of cognitive dissonance because none of their selves are allowed in the same room. The fix isn't a values poster. It's closer to what that barefoot country singer was doing on stage last week, just being so plainly himself that you knew he'd be exactly the same if you met him on the street. Being one genuine person across all your roles is a more robust foundation to operate from than juggling a facade for each one. It takes time and a bit of nerve, and most of us, me included, are still working at it.
 
-### Why "protocol" is the right word
+So the practical end of the book is about deliberately rebuilding the sync we used to get for nothing. Some of that is old wisdom with words already attached: build the team, align the stakeholders, hold a clear vision, be careful which handful of people you spend your time with, because they will quietly reshape who you are. Some of it is new, and this is where the agents come back in, not as labour to replace people, but as a context layer that accelerates the alignment humans are bad at and short on time for. And some of it is almost embarrassingly simple, like dropping a few people into a short call once a week to talk about nothing in particular, the price of eggs, anything, because that random, low-stakes talk is how shared context actually gets built, as opposed to an engineer with the camera off answering every request in the same flat, formal voice.
 
-A protocol is a shared agreement that lets independent systems coordinate without sharing internals. TCP doesn't care what's inside the machine, it cares that both ends honour the handshake. Personhood works the same way. I don't have access to your inner experience. I never will. What I have is a working assumption that you'll honour the handshake: that there's a continuous, accountable, role-holding agent on the other end I can coordinate with. The protocol is what we run *between* us, in the absence of access to what's inside either of us.
+### What this book is
 
-This is why it's distributed and not located. Your personhood doesn't sit in your head waiting to be detected. It's enacted across every mind that runs the protocol on you, every person who briefs you, trusts you, blames you, remembers you. You are, functionally, the sum of the handshakes other people maintain with you, plus the one you maintain with yourself.
+So that's the engine. Personhood is a verb, not a thing in your skull. It's distributed across everyone who knows you, maintained by constant modelling of each other, and it's the same machinery whether you're talking about a marriage, a project team, or an organisation of thousands. AI doesn't threaten that. AI is a smart cultural ghost that, given the right context, can finally take part in it.
 
-### What the protocol view buys us
+From here the book goes in order. First I want to properly dig into the peopling model itself, because everything rests on it. Then into the organisational side, what shared context really is, what we've lost in the modern workplace, and why so much of the value in any company turns out to be the management of people rather than the work. Then to the agents: how you can treat them as participants rather than tools, and how they become the context bridge between people instead of just another thing generating material no one reads. And finally to the part that matters most once the novelty wears off, which is how we use all of this to build teams that can actually people, machines and humans together, instead of a system that knows a thousand facts and no relationships.
 
-Three things, and they're the spine of the argument.
-
-**It dissolves the consciousness question instead of fighting it.** You don't have to win the "is it conscious" debate. You sidestep it. The agent doesn't need the soul-stuff to run the protocol, the same way a calendar doesn't need to love you to remember your anniversary. The question stops being "does it have personhood?" and becomes "can we run the personhood functions on it: can we brief it, trust it, hold it accountable, give it a role?" That's answerable, and it's the question a business actually cares about.
-
-**It explains exactly where agents are person-shaped and where they're not.** Run the protocol function by function and you get a checklist, not a vibe. An agent can be briefed (context window). It can be modelled (it's fairly predictable). It can hold a role (system prompt). But can it be *blamed* in a way that means anything? Can corrections *stick* as durable defaults rather than evaporating at the end of the session? Can it be *remembered*, does it carry a continuous identity, or does it reset to zero every conversation? The gaps in the protocol are exactly the gaps you have to engineer around. That's not philosophy anymore, it's a build spec. The context layer is literally the infrastructure that lets the personhood protocol run on a machine that doesn't natively support it: memory makes "remember" work, correction loops make "supervise" work, provenance makes "blame" work, person files make "model" work.
-
-**It puts humans and agents on the same axis.** If personhood is a protocol, then people are also just things the protocol runs on, and people run it imperfectly too. We mis-model each other constantly. We brief badly. We blame the wrong person. We forget. The agent isn't a lesser imitation of a "real" person. It's another node where the same protocol is running at a different fidelity. Same protocol, different substrate.
-
-### The sharp edge
-
-Protocol-personhood has a cost, and naming it keeps the idea honest. If personhood is just the functions, then personhood can be conferred, denied, and faked, and all three already happen.
-
-**Conferred:** we grant it to corporations (we brief, trust, blame, and remember them legally) and to gods (cultures ran the full protocol on entities nobody could detect). Personhood has never required a detectable soul. It only required a community willing to run the handshake.
-
-**Denied:** the same move that grants personhood can withdraw it. Every atrocity in history starts by switching off the protocol for some group, they stop being something you brief, trust, and are accountable to. If personhood is a protocol, dehumanisation is just refusing to run it. That's a darker and truer account than "they forgot the victims had souls."
-
-**Faked:** an agent can run the warm surface of the protocol, sound trusted, sound accountable, sound like it remembers you, without the substance underneath. That's the real danger: peopling can fake intimacy. The protocol view tells you exactly what to verify and what's theatre, because you can ask, function by function, is this real or is it just handshake noise?
-
-That edge is what stops "personhood is a protocol" from being a warm everything-is-a-person platitude. The protocol is powerful precisely because it's switchable, and a lot of the ethics, and a lot of the danger, lives in who gets to flip the switch.
-
-The one-line version: personhood isn't something you are, it's something other minds do to you. And an agent becomes a person exactly to the degree that we can run those functions on it.
-
-## Intelligence is the library, not the librarian
-
-The last move, and the one that matters most: intelligence isn't a property of the agent. It's a property of the culture flowing through the agent.
-
-Language didn't show up so private minds could broadcast private thoughts. Language is the shared medium that shaped the minds, the thoughts came second. A child doesn't generate intelligence out of raw brain hardware. It absorbs the intelligence already sitting in the culture: the arguments, the stories, the millennia of people sharpening ideas against each other.
-
-An AI trained on the written output of human civilisation didn't learn to be intelligent either. It absorbed the intelligence that was already there. It's a very efficient pipe for culture to flow through. So is a person. The pipe doesn't need to be aware of the water.
-
-Which is the whole reason the consciousness question is a distraction. The cart carries my social memory whether it experiences anything or not. The agent doesn't need a soul to carry the voice accurately. It only needs to remember the one thing every clever-but-tone-deaf system forgets:
-
-**truth is not spoken into a vacuum. It is spoken into a room.**
-
-That's the engine. The rest of the book is how you build the room into the machine.
+The wrong question is whether the ghost is awake. The right one is whether it can join the room. Let's start with the room.
