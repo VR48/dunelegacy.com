@@ -100,5 +100,11 @@
     "all_releases_total": 753,
     "latest_tag": "v1.0.84",
     "latest_total": 372
+  },
+  {
+    "date": "2026-06-06",
+    "all_releases_total": 828,
+    "latest_tag": "v1.0.85",
+    "latest_total": 75
   }
 ]
