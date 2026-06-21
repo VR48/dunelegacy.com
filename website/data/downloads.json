@@ -1,70 +1,103 @@
 {
-  "generated": "2026-06-20T07:35:45Z",
+  "generated": "2026-06-21T07:54:54Z",
   "repository": "svan058/dunecity",
   "latest_release": {
-    "tag": "v1.0.86",
-    "name": "Dune City v1.0.86",
-    "published_at": "2026-06-13T02:27:55Z",
-    "total_downloads": 443,
+    "tag": "v1.0.87",
+    "name": "Dune City v1.0.87",
+    "published_at": "2026-06-20T17:34:07Z",
+    "total_downloads": 23,
     "assets": [
       {
-        "name": "DuneCity-1.0.86-Linux-x64.deb",
-        "download_count": 43,
-        "size": 27037026
+        "name": "DuneCity-1.0.87-Linux-x64.deb",
+        "download_count": 0,
+        "size": 27037858
       },
       {
-        "name": "DuneCity-1.0.86-Linux-x64.rpm",
-        "download_count": 24,
-        "size": 26829042
+        "name": "DuneCity-1.0.87-Linux-x64.rpm",
+        "download_count": 0,
+        "size": 26829305
       },
       {
-        "name": "DuneCity-1.0.86-Linux-x64.tar.gz",
-        "download_count": 36,
-        "size": 26999454
+        "name": "DuneCity-1.0.87-Linux-x64.tar.gz",
+        "download_count": 0,
+        "size": 26999405
       },
       {
-        "name": "DuneCity-1.0.86-macOS.dmg",
-        "download_count": 49,
-        "size": 26303766
+        "name": "DuneCity-1.0.87-macOS.dmg",
+        "download_count": 3,
+        "size": 26304012
       },
       {
-        "name": "DuneCity-1.0.86-Windows-x64.zip",
-        "download_count": 291,
-        "size": 23098733
+        "name": "DuneCity-1.0.87-Windows-x64.zip",
+        "download_count": 20,
+        "size": 23084706
       }
     ]
   },
-  "all_releases_total": 1704,
+  "all_releases_total": 1793,
   "releases": [
+    {
+      "tag": "v1.0.87",
+      "name": "Dune City v1.0.87",
+      "published_at": "2026-06-20T17:34:07Z",
+      "total_downloads": 23,
+      "assets": [
+        {
+          "name": "DuneCity-1.0.87-Linux-x64.deb",
+          "download_count": 0,
+          "size": 27037858
+        },
+        {
+          "name": "DuneCity-1.0.87-Linux-x64.rpm",
+          "download_count": 0,
+          "size": 26829305
+        },
+        {
+          "name": "DuneCity-1.0.87-Linux-x64.tar.gz",
+          "download_count": 0,
+          "size": 26999405
+        },
+        {
+          "name": "DuneCity-1.0.87-macOS.dmg",
+          "download_count": 3,
+          "size": 26304012
+        },
+        {
+          "name": "DuneCity-1.0.87-Windows-x64.zip",
+          "download_count": 20,
+          "size": 23084706
+        }
+      ]
+    },
     {
       "tag": "v1.0.86",
       "name": "Dune City v1.0.86",
       "published_at": "2026-06-13T02:27:55Z",
-      "total_downloads": 443,
+      "total_downloads": 511,
       "assets": [
         {
           "name": "DuneCity-1.0.86-Linux-x64.deb",
-          "download_count": 43,
+          "download_count": 48,
           "size": 27037026
         },
         {
           "name": "DuneCity-1.0.86-Linux-x64.rpm",
-          "download_count": 24,
+          "download_count": 27,
           "size": 26829042
         },
         {
           "name": "DuneCity-1.0.86-Linux-x64.tar.gz",
-          "download_count": 36,
+          "download_count": 44,
           "size": 26999454
         },
         {
           "name": "DuneCity-1.0.86-macOS.dmg",
-          "download_count": 49,
+          "download_count": 54,
           "size": 26303766
         },
         {
           "name": "DuneCity-1.0.86-Windows-x64.zip",
-          "download_count": 291,
+          "download_count": 338,
           "size": 23098733
         }
       ]
@@ -600,24 +633,6 @@
           "name": "DuneCity-1.0.29-Windows-x64.zip",
           "download_count": 1,
           "size": 9108667
-        }
-      ]
-    },
-    {
-      "tag": "v1.0.28",
-      "name": "Dune City v1.0.28",
-      "published_at": "2026-05-25T08:33:36Z",
-      "total_downloads": 2,
-      "assets": [
-        {
-          "name": "DuneCity-1.0.28-macOS.dmg",
-          "download_count": 1,
-          "size": 13535234
-        },
-        {
-          "name": "DuneCity-1.0.28-Windows-x64.zip",
-          "download_count": 1,
-          "size": 9107730
         }
       ]
     }
