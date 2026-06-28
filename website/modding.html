@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YZX2NQVEPK"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-YZX2NQVEPK');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="How to mod Dune Legacy: custom maps, PAK file replacement, graphics mods, unit stats, and what requires source-level changes.">
+    <meta name="keywords" content="Dune Legacy modding, custom maps, PAK files, Dune II mod, map editor, ini format, modding guide">
+    <meta name="author" content="Dune Legacy Team">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dunelegacy.com/modding.html">
+
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://dunelegacy.com/modding.html">
+    <meta property="og:title" content="Modding Dune Legacy — Maps, Graphics, PAK Files">
+    <meta property="og:description" content="What you can change today, and what still needs source work. Custom maps, PAK replacement, graphics mods, unit stats.">
+    <meta property="og:image" content="https://dunelegacy.com/img/screenshot1.png">
+    <meta property="og:site_name" content="Dune Legacy">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://dunelegacy.com/modding.html">
+    <meta name="twitter:title" content="Modding Dune Legacy — Maps, Graphics, PAK Files">
+    <meta name="twitter:description" content="What you can change today, and what still needs source work.">
+    <meta name="twitter:image" content="https://dunelegacy.com/img/screenshot1.png">
+
+    <title>Modding Dune Legacy — Maps, Graphics, PAK Files | Dune Legacy</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/x-icon" href="img/favicon.ico">
+
+    <style>
+        /* Modding page overrides — left-aligned content within sections */
+        .mod-section {
+            padding: 60px 0;
+        }
+        .mod-section.alt {
+            background: rgba(255, 255, 255, 0.02);
+            border-top: 1px solid rgba(212, 175, 55, 0.1);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        }
+        .mod-section h2 {
+            font-size: 2em;
+            margin-bottom: 8px;
+            color: var(--primary);
+            font-weight: 700;
+        }
+        .mod-section h3 {
+            font-size: 1.25em;
+            color: var(--primary);
+            font-weight: 600;
+            margin: 1.6em 0 0.6em;
+        }
+        .mod-body {
+            max-width: 860px;
+        }
+        .mod-body p {
+            color: rgba(245, 245, 245, 0.9);
+            line-height: 1.75;
+            margin-bottom: 1.1em;
+            font-size: 1.03em;
+        }
+        .mod-body ul, .mod-body ol {
+            margin: 0 0 1.2em 1.4em;
+            color: rgba(245, 245, 245, 0.9);
+            line-height: 1.75;
+        }
+        .mod-body li {
+            margin-bottom: 0.45em;
+        }
+        .mod-body strong {
+            color: var(--light);
+        }
+        .mod-body code {
+            background: rgba(212, 175, 55, 0.12);
+            color: var(--primary);
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.88em;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+        .mod-body pre {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 6px;
+            padding: 18px 20px;
+            overflow-x: auto;
+            margin: 1em 0 1.4em;
+        }
+        .mod-body pre code {
+            background: none;
+            color: rgba(245, 245, 245, 0.85);
+            padding: 0;
+            font-size: 0.87em;
+        }
+        .mod-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0 1.4em;
+            font-size: 0.97em;
+        }
+        .mod-table th {
+            text-align: left;
+            padding: 10px 14px;
+            background: rgba(212, 175, 55, 0.15);
+            color: var(--primary);
+            font-weight: 600;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+        }
+        .mod-table td {
+            padding: 9px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            color: rgba(245, 245, 245, 0.88);
+            vertical-align: top;
+        }
+        .mod-table tr:last-child td {
+            border-bottom: none;
+        }
+        .mod-table td code {
+            background: rgba(212, 175, 55, 0.12);
+            color: var(--primary);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.86em;
+        }
+        .mod-notice {
+            background: rgba(212, 175, 55, 0.08);
+            border-left: 3px solid var(--primary);
+            border-radius: 0 6px 6px 0;
+            padding: 14px 18px;
+            margin: 1em 0 1.4em;
+            color: rgba(245, 245, 245, 0.88);
+            font-size: 0.98em;
+            line-height: 1.7;
+        }
+        .mod-toc {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-bottom: 2em;
+            display: inline-block;
+        }
+        .mod-toc p {
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 0.5em;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .mod-toc ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .mod-toc li {
+            margin-bottom: 0.3em;
+        }
+        .mod-toc a {
+            color: rgba(245, 245, 245, 0.8);
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: color 0.2s;
+        }
+        .mod-toc a:hover {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="/"><img src="img/logo.png" alt="Dune Legacy" class="logo-img"></a>
+                <div class="logo-text">
+                    <h1><a href="/">Dune <span>Legacy</span></a></h1>
+                    <p class="tagline">An open-source remake of Dune II</p>
+                </div>
+            </div>
+            <nav>
+                <a href="/#about">About</a>
+                <a href="/#download">Download</a>
+                <a href="dune-city.html">DuneCity</a>
+                <a href="openclaw.html">OpenClaw</a>
+                <a href="modding.html">Modding</a>
+                <a href="https://discord.com/invite/6sAcZr6y3B" target="_blank">Discord</a>
+                <a href="https://github.com/svan058/dunecity" target="_blank">GitHub</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-overlay"></div>
+        <div class="container">
+            <div class="hero-content">
+                <h2>Modding Dune Legacy</h2>
+                <p>What you can change today — and what still needs source work.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Table of contents -->
+    <section class="mod-section">
+        <div class="container">
+            <div class="mod-body">
+                <div class="mod-toc">
+                    <p>Contents</p>
+                    <ul>
+                        <li><a href="#custom-maps">Custom Maps</a></li>
+                        <li><a href="#pak-files">Graphics &amp; PAK Files</a></li>
+                        <li><a href="#custom-graphics">Custom Graphics Modding</a></li>
+                        <li><a href="#unit-stats">Unit &amp; Building Stats</a></li>
+                        <li><a href="#not-moddable">What's NOT Moddable Yet</a></li>
+                        <li><a href="#contributing">Contributing</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Custom Maps -->
+    <section id="custom-maps" class="mod-section alt">
+        <div class="container">
+            <div class="mod-body">
+                <h2>Custom Maps</h2>
+                <p>
+                    The easiest way to mod Dune Legacy. Drop an <code>.ini</code> file into
+                    <code>data/maps/singleplayer/</code> or <code>data/maps/multiplayer/</code>
+                    and it appears in the map selection list. No rebuild required.
+                </p>
+
+                <h3>Map File Format</h3>
+                <p>Maps are plain-text <code>.ini</code> files with the following sections:</p>
+
+                <pre><code>[BASIC]
+Author=Your Name
+Name=Your Map Name
+Size=64
+NumPlayers=2
+MapScale=0
+
+[BRIEFING]
+1=First player briefing text
+2=Second player briefing text
+
+[Player1]
+Credits=5000
+Quota=0
+
+[CHOAM]
+Carryall=2
+Harvester=4
+Launcher=5
+MCV=2
+'Thopter=3
+Quad=5
+Siege Tank=6
+Tank=6
+Trike=5
+
+[STRUCTURES]
+ID001=Player1,Const Yard,256,100
+ID002=Player1,Windtrap,256,103
+
+[MAP]
+001=%%%%%%%---~~~~~~~~...
+002=%%%%%%--~~~~~~~~...</code></pre>
+
+                <h3>Terrain Tile Characters</h3>
+                <table class="mod-table">
+                    <thead>
+                        <tr><th>Character</th><th>Terrain</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>%</code></td><td>Solid rock — buildings and base structures go here</td></tr>
+                        <tr><td><code>-</code></td><td>Dune sand — impassable to most ground units</td></tr>
+                        <tr><td><code>~</code></td><td>Spice field</td></tr>
+                        <tr><td><code>+</code></td><td>Bloom (bonus spice yield on harvest)</td></tr>
+                        <tr><td><code>O</code></td><td>Player spawn / base start location</td></tr>
+                        <tr><td><code>^</code></td><td>Mountain — impassable to all units</td></tr>
+                        <tr><td><code>_</code></td><td>Water / lake</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Map Sizes</h3>
+                <table class="mod-table">
+                    <thead>
+                        <tr><th>Size</th><th>Best for</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>32&times;32</td><td>Tiny skirmish, very fast games</td></tr>
+                        <tr><td>64&times;64</td><td>Standard multiplayer and campaign missions</td></tr>
+                        <tr><td>128&times;128</td><td>Large battles with room to manoeuvre</td></tr>
+                        <tr><td>192&times;192 / 256&times;256</td><td>Epic scale — long campaigns or city-sim style layouts</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="mod-notice">
+                    <strong>Tip:</strong> The bundled <code>2P - 192x192 - SimCity.ini</code> map is a good
+                    starting template for large maps. Open it in any text editor to see how
+                    the sections fit together.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Graphics & PAK Files -->
+    <section id="pak-files" class="mod-section">
+        <div class="container">
+            <div class="mod-body">
+                <h2>Graphics &amp; PAK Files</h2>
+                <p>
+                    Dune Legacy loads art from <code>.PAK</code> archives under the <code>data/</code>
+                    directory. These are the original Dune II data files (or HD replacements). You can
+                    replace or extend them to change how the game looks.
+                </p>
+
+                <table class="mod-table">
+                    <thead>
+                        <tr><th>PAK File</th><th>Contents</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>ATRE.PAK</code></td><td>Atreides-specific unit and building graphics</td></tr>
+                        <tr><td><code>HARK.PAK</code></td><td>Harkonnen-specific unit and building graphics</td></tr>
+                        <tr><td><code>ORDOS.PAK</code></td><td>Ordos-specific unit and building graphics</td></tr>
+                        <tr><td><code>DUNE.PAK</code></td><td>Shared terrain, UI, and common sprites</td></tr>
+                        <tr><td><code>GFXHD.PAK</code></td><td>HD upscaled graphics (overrides standard PAKs when present)</td></tr>
+                        <tr><td><code>SCENARIO.PAK</code></td><td>Campaign mission data and cutscene assets</td></tr>
+                    </tbody>
+                </table>
+
+                <p>
+                    Dune Legacy supports loading alternative PAK files. Place replacement PAKs in the
+                    <code>data/</code> directory and they will override the originals at startup.
+                    HD texture packs work the same way — <code>GFXHD.PAK</code> is loaded last and
+                    takes priority over lower-resolution assets.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Custom Graphics Modding -->
+    <section id="custom-graphics" class="mod-section alt">
+        <div class="container">
+            <div class="mod-body">
+                <h2>Custom Graphics Modding</h2>
+                <p>
+                    To replace sprites and textures you need to unpack the relevant PAK file, edit the
+                    art assets, and repack. Here's the general process:
+                </p>
+
+                <h3>Palette Considerations</h3>
+                <p>
+                    Dune II graphics use an indexed 256-colour palette. When editing sprites, you
+                    must work within the original palette or house-specific palette entries — free colour
+                    painting will produce unexpected results at runtime. Many sprite editors (PCED,
+                    Grafx2) and general tools like GIMP support indexed-mode editing with a loaded palette.
+                </p>
+                <p>
+                    The palette file is typically <code>IBM.PAL</code> inside <code>DUNE.PAK</code>.
+                    Each house also remaps a range of colour indices to its house colours (blue for
+                    Atreides, red for Harkonnen, green for Ordos) — keep this in mind when editing
+                    unit sprites shared across houses.
+                </p>
+
+                <h3>PAK Packing Tools</h3>
+                <p>
+                    Several community tools exist for working with Dune II PAK files:
+                </p>
+                <ul>
+                    <li><strong>DunePAK</strong> — command-line tool for extracting and repacking <code>.PAK</code> archives</li>
+                    <li><strong>Dune Legacy's own PAK reader</strong> — the source (<code>src/FileClasses/</code>) shows the PAK format if you want to write your own tooling</li>
+                    <li><strong>OpenDUNE tools</strong> — the OpenDUNE project ships utilities compatible with Dune II asset formats</li>
+                </ul>
+                <div class="mod-notice">
+                    The HD texture pack path (<code>GFXHD.PAK</code>) is the cleanest way to
+                    distribute a graphics mod — users drop it into <code>data/</code> and it takes
+                    priority without replacing the originals.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Unit & Building Stats -->
+    <section id="unit-stats" class="mod-section">
+        <div class="container">
+            <div class="mod-body">
+                <h2>Unit &amp; Building Stats</h2>
+                <p>
+                    Cost, health, build time, weapon damage, firing rate, and movement speed are
+                    defined in the C++ source under <code>src/</code>. Changing these values
+                    requires editing source and rebuilding. See <code>BUILD.md</code> in the
+                    repository for compilation instructions.
+                </p>
+                <ul>
+                    <li><strong>Unit stats</strong> — unit type definitions, cost, speed, weapon tables</li>
+                    <li><strong>Building stats</strong> — structure type definitions, power consumption, build prerequisites</li>
+                    <li><strong>AI behaviour</strong> — computer player attack timing, unit composition, and base-build priorities</li>
+                    <li><strong>Mission scripting</strong> — campaign event triggers and win/loss conditions in <code>SCENARIO.PAK</code></li>
+                </ul>
+                <p>
+                    There is no data-driven config file for these values today — they live directly
+                    in C++ constants and would need a significant refactor to expose as moddable
+                    data without a rebuild.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- What's NOT moddable -->
+    <section id="not-moddable" class="mod-section alt">
+        <div class="container">
+            <div class="mod-body">
+                <h2>What's NOT Moddable Yet</h2>
+
+                <h3>Custom Houses / Factions</h3>
+                <p>
+                    Dune Legacy ships with three playable houses — Atreides, Harkonnen, and Ordos —
+                    plus campaign-only houses (Sardaukar, Mercenary, and Fremen). There is no
+                    modding interface to add a new house or swap one out. The house system is
+                    embedded in the Dune II engine's mission data, AI, and UI.
+                </p>
+                <p>
+                    Adding a custom house would require forking the source, adding a new
+                    <code>HouseType</code> enum value, creating PAK entries with sprites and sounds,
+                    wiring it into AI decision trees and mission scripting, and providing
+                    house-specific briefing text, mentat portraits, and voice lines. It's a
+                    substantial engineering effort.
+                </p>
+
+                <h3>General Mod Loader</h3>
+                <p>
+                    There is no general-purpose mod loader, mod directory scan, or mod conflict
+                    resolution system. Mods today are limited to custom maps (drop-in <code>.ini</code>
+                    files) and PAK replacements (drop-in asset files). Any logic change requires
+                    a source-level patch and a rebuilt binary.
+                </p>
+
+                <h3>Sound &amp; Music Replacement</h3>
+                <p>
+                    The audio assets (voice clips, sound effects) come from the original Dune II
+                    data files or replacements placed in <code>data/</code>. Music replacement
+                    follows the same PAK drop-in pattern, but full audio mod tooling is not
+                    documented and may require source-level changes for some formats.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contributing -->
+    <section id="contributing" class="mod-section">
+        <div class="container">
+            <div class="mod-body">
+                <h2>Contributing</h2>
+                <p style="text-align: left; max-width: none; margin: 0 0 1.1em;">
+                    Made a custom map, improved a sprite, or written a useful patch?
+                    Contributions are welcome:
+                </p>
+                <ul>
+                    <li>
+                        <strong>Maps</strong> — submit via pull request to <code>data/maps/</code>
+                        in the <a href="https://github.com/svan058/dunecity" target="_blank">dunecity repository</a>
+                    </li>
+                    <li>
+                        <strong>Bug reports &amp; feature requests</strong> —
+                        <a href="https://github.com/svan058/dunecity/issues" target="_blank">open a GitHub issue</a>
+                    </li>
+                    <li>
+                        <strong>Source patches</strong> — see <code>BUILD.md</code> and
+                        <code>ARCHITECTURE.md</code> for codebase layout and build instructions
+                    </li>
+                    <li>
+                        <strong>Graphics mods</strong> — share work-in-progress on
+                        <a href="https://discord.com/invite/6sAcZr6y3B" target="_blank">Discord</a>
+                        for feedback before submitting a PR
+                    </li>
+                </ul>
+
+                <div class="mod-notice" style="margin-top: 1.5em;">
+                    Dune Legacy is open-source under the GPL-2.0+ licence. The Dune II data files
+                    (PAK assets) are copyright 1992 Westwood Studios / EA and are not redistributable
+                    — players must supply their own copy.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Dune Legacy Team | Licensed under GPL-2.0+</p>
+            <p>Dune II &copy; 1992 Westwood Studios</p>
+            <p>
+                <a href="/">Home</a> |
+                <a href="dune-city.html">DuneCity</a> |
+                <a href="modding.html">Modding</a> |
+                <a href="https://github.com/svan058/dunecity">GitHub</a> |
+                <a href="/metaserver/">Metaserver Status</a> |
+                <a href="https://github.com/svan058/dunecity/wiki">Wiki</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="js/main.js?v=20260521-download-stats"></script>
+</body>
+</html>
