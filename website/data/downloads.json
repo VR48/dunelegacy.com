@@ -1,25 +1,25 @@
 {
-  "generated": "2026-07-04T08:49:00Z",
+  "generated": "2026-07-05T09:20:46Z",
   "repository": "svan058/dunecity",
   "latest_release": {
     "tag": "v1.0.247",
     "name": "Dune City v1.0.247",
     "published_at": "2026-07-03T01:35:11Z",
-    "total_downloads": 112,
+    "total_downloads": 178,
     "assets": [
       {
         "name": "DuneCity-1.0.247-Linux-x64.deb",
-        "download_count": 10,
+        "download_count": 14,
         "size": 27597740
       },
       {
         "name": "DuneCity-1.0.247-Linux-x64.rpm",
-        "download_count": 7,
+        "download_count": 9,
         "size": 27399233
       },
       {
         "name": "DuneCity-1.0.247-Linux-x64.tar.gz",
-        "download_count": 11,
+        "download_count": 13,
         "size": 27608397
       },
       {
@@ -29,37 +29,37 @@
       },
       {
         "name": "DuneCity-1.0.247-macOS.dmg",
-        "download_count": 11,
+        "download_count": 22,
         "size": 26936951
       },
       {
         "name": "DuneCity-1.0.247-Windows-x64.zip",
-        "download_count": 70,
+        "download_count": 117,
         "size": 23631231
       }
     ]
   },
-  "all_releases_total": 261,
+  "all_releases_total": 329,
   "releases": [
     {
       "tag": "v1.0.247",
       "name": "Dune City v1.0.247",
       "published_at": "2026-07-03T01:35:11Z",
-      "total_downloads": 112,
+      "total_downloads": 178,
       "assets": [
         {
           "name": "DuneCity-1.0.247-Linux-x64.deb",
-          "download_count": 10,
+          "download_count": 14,
           "size": 27597740
         },
         {
           "name": "DuneCity-1.0.247-Linux-x64.rpm",
-          "download_count": 7,
+          "download_count": 9,
           "size": 27399233
         },
         {
           "name": "DuneCity-1.0.247-Linux-x64.tar.gz",
-          "download_count": 11,
+          "download_count": 13,
           "size": 27608397
         },
         {
@@ -69,12 +69,12 @@
         },
         {
           "name": "DuneCity-1.0.247-macOS.dmg",
-          "download_count": 11,
+          "download_count": 22,
           "size": 26936951
         },
         {
           "name": "DuneCity-1.0.247-Windows-x64.zip",
-          "download_count": 70,
+          "download_count": 117,
           "size": 23631231
         }
       ]
@@ -235,7 +235,7 @@
       "tag": "v1.0.241",
       "name": "Dune City v1.0.241",
       "published_at": "2026-07-02T11:59:26Z",
-      "total_downloads": 40,
+      "total_downloads": 42,
       "assets": [
         {
           "name": "DuneCity-1.0.241-Linux-x64.deb",
@@ -259,12 +259,12 @@
         },
         {
           "name": "DuneCity-1.0.241-macOS.dmg",
-          "download_count": 5,
+          "download_count": 6,
           "size": 26902733
         },
         {
           "name": "DuneCity-1.0.241-Windows-x64.zip",
-          "download_count": 33,
+          "download_count": 34,
           "size": 23629737
         }
       ]
