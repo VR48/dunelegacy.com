@@ -171,6 +171,7 @@
                     <h3>🍎 macOS</h3>
                     <p>macOS 14.0+ (Apple Silicon)</p>
                     <a href="https://github.com/svan058/dunecity/releases/download/v1.0.358/DuneCity-1.0.358-macOS.dmg" class="button">Download DMG</a>
+                    <p class="small-text">macOS blocks it on first launch — see how to <a href="#macos-fix">Open Anyway</a>.</p>
                     <span class="download-count"></span>
                 </div>
                 <div class="download-card" data-platform="linux">
@@ -234,18 +235,20 @@
 
     <section id="macos-fix" class="section">
         <div class="container">
-            <h2>Troubleshooting: macOS "damaged" warning</h2>
-            <p>The first time you download the macOS build, macOS may refuse to open it with the message <strong><em>"dunecity.app is damaged and can't be opened. You should move it to the Bin."</em></strong></p>
-            <p>The app is <strong>not</strong> damaged. The GitHub-built bundle is ad-hoc signed (no paid Apple Developer ID yet), and any file downloaded by a browser is also tagged with a <code>com.apple.quarantine</code> attribute. macOS Gatekeeper refuses to run ad-hoc-signed apps that carry that flag.</p>
-            <p><strong>One-line fix in Terminal:</strong></p>
-            <pre style="background: rgba(0,0,0,0.4); padding: 12px 16px; border-radius: 4px; overflow-x: auto;"><code>xattr -cr /Applications/dunecity.app</code></pre>
-            <p>After running that once, the app opens normally and keeps working across reboots. You only need to repeat it when you drag in a new version.</p>
-            <p>If you'd rather not touch Terminal:</p>
+            <h2>Running on macOS (first launch)</h2>
+            <p>The macOS build is ad-hoc signed (no paid Apple Developer ID yet), so on first launch macOS Gatekeeper blocks it. The app is <strong>not</strong> damaged or unsafe — you just need to approve it once. Depending on your macOS version you'll see either <strong><em>"dunecity.app was blocked to protect your Mac"</em></strong> or <strong><em>"dunecity.app is damaged and can't be opened"</em></strong>.</p>
+
+            <p><strong>macOS 15 Sequoia / macOS 26 and later — use "Open Anyway":</strong></p>
             <ol>
-                <li>Right-click <code>dunecity.app</code> → <strong>Open</strong></li>
-                <li>macOS will refuse the first time — close the dialog</li>
-                <li>Right-click again → <strong>Open</strong> → click <strong>Open Anyway</strong></li>
+                <li>Double-click <code>dunecity.app</code>. macOS blocks it with <em>"dunecity.app was blocked to protect your Mac."</em> — click <strong>Done</strong>.</li>
+                <li>Open <strong> Apple menu → System Settings → Privacy &amp; Security</strong> and scroll down to the <strong>Security</strong> section.</li>
+                <li>Next to <em>"dunecity.app was blocked…"</em>, click <strong>Open Anyway</strong>, authenticate with Touch ID / your password, then confirm <strong>Open Anyway</strong> in the final dialog.</li>
             </ol>
+            <p>You only need to do this once per version. (On <strong>macOS 14 and earlier</strong> you can instead right-click <code>dunecity.app</code> → <strong>Open</strong>, then click <strong>Open Anyway</strong> in the dialog.)</p>
+
+            <p><strong>Prefer Terminal?</strong> Strip the quarantine flag in one line, then open normally:</p>
+            <pre style="background: rgba(0,0,0,0.4); padding: 12px 16px; border-radius: 4px; overflow-x: auto;"><code>xattr -dr com.apple.quarantine /Applications/dunecity.app</code></pre>
+
             <p>Linux and Windows builds don't have this issue — they run as downloaded.</p>
         </div>
     </section>
