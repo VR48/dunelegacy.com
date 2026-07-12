@@ -1,9 +1,0 @@
-# App Platform no longer used
-# Website and metaserver moved to dedicated Droplet at dunelegacy.com
-#
-# To fully remove: doctl apps delete <APP_ID>
-# Or keep this minimal config to preserve the app without deploying anything
-
-name: dunelegacy-com-deprecated
-region: nyc
-
