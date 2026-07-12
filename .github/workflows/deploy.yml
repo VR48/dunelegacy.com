@@ -1,9 +1,13 @@
 name: Deploy to DigitalOcean
 
+# NOTE: Automatic (push) deploys are disabled. The live site dunelegacy.com is
+# served by the droplet via deploy-metaserver-droplet.yml ("Deploy to Droplet").
+# This DigitalOcean App Platform deploy is legacy and its
+# DIGITALOCEAN_ACCESS_TOKEN has expired, so it failed on every push. It is now
+# manual-only (workflow_dispatch). To re-enable: renew DIGITALOCEAN_ACCESS_TOKEN
+# and restore the `push:` trigger below.
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:  # Allow manual deployment
+  workflow_dispatch:  # Manual only
 
 jobs:
   deploy:
