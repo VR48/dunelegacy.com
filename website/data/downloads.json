@@ -1,25 +1,25 @@
 {
-  "generated": "2026-07-13T09:45:37Z",
+  "generated": "2026-07-14T08:25:53Z",
   "repository": "svan058/dunecity",
   "latest_release": {
     "tag": "v1.0.359",
     "name": "Dune City v1.0.359",
     "published_at": "2026-07-12T02:39:10Z",
-    "total_downloads": 109,
+    "total_downloads": 159,
     "assets": [
       {
         "name": "DuneCity-1.0.359-Linux-x64.deb",
-        "download_count": 9,
+        "download_count": 13,
         "size": 27850564
       },
       {
         "name": "DuneCity-1.0.359-Linux-x64.rpm",
-        "download_count": 3,
+        "download_count": 4,
         "size": 27661713
       },
       {
         "name": "DuneCity-1.0.359-Linux-x64.tar.gz",
-        "download_count": 5,
+        "download_count": 6,
         "size": 27862511
       },
       {
@@ -29,37 +29,37 @@
       },
       {
         "name": "DuneCity-1.0.359-macOS.dmg",
-        "download_count": 12,
+        "download_count": 16,
         "size": 27203779
       },
       {
         "name": "DuneCity-1.0.359-Windows-x64.zip",
-        "download_count": 76,
+        "download_count": 116,
         "size": 23824281
       }
     ]
   },
-  "all_releases_total": 576,
+  "all_releases_total": 627,
   "releases": [
     {
       "tag": "v1.0.359",
       "name": "Dune City v1.0.359",
       "published_at": "2026-07-12T02:39:10Z",
-      "total_downloads": 109,
+      "total_downloads": 159,
       "assets": [
         {
           "name": "DuneCity-1.0.359-Linux-x64.deb",
-          "download_count": 9,
+          "download_count": 13,
           "size": 27850564
         },
         {
           "name": "DuneCity-1.0.359-Linux-x64.rpm",
-          "download_count": 3,
+          "download_count": 4,
           "size": 27661713
         },
         {
           "name": "DuneCity-1.0.359-Linux-x64.tar.gz",
-          "download_count": 5,
+          "download_count": 6,
           "size": 27862511
         },
         {
@@ -69,12 +69,12 @@
         },
         {
           "name": "DuneCity-1.0.359-macOS.dmg",
-          "download_count": 12,
+          "download_count": 16,
           "size": 27203779
         },
         {
           "name": "DuneCity-1.0.359-Windows-x64.zip",
-          "download_count": 76,
+          "download_count": 116,
           "size": 23824281
         }
       ]
@@ -83,7 +83,7 @@
       "tag": "tornie-beta",
       "name": "Tornie Mod Beta v1.0.517",
       "published_at": "2026-07-12T14:07:54Z",
-      "total_downloads": 3,
+      "total_downloads": 4,
       "assets": [
         {
           "name": "DuneCity-1.0.517-Linux-x64.deb",
@@ -112,7 +112,7 @@
         },
         {
           "name": "DuneCity-1.0.517-Windows-x64.zip",
-          "download_count": 3,
+          "download_count": 4,
           "size": 24131552
         }
       ]
