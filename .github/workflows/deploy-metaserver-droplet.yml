@@ -22,13 +22,22 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.DROPLET_SSH_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
+          if [ -z "$DROPLET_IP" ]; then
+            echo "::error::Missing METASERVER_DROPLET_IP repository secret."
+            exit 1
+          fi
+          if [ -z "$SSH_PRIVATE_KEY" ]; then
+            echo "::error::Missing DROPLET_SSH_KEY repository secret."
+            exit 1
+          fi
+
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
           
           echo "Deploying to droplet..."
-          ssh -o StrictHostKeyChecking=no root@$DROPLET_IP 'cd /var/www/html && git pull origin main && cp -r website/* . && chown -R www-data:www-data /var/www/html && git log -1 --oneline'
+          ssh -o StrictHostKeyChecking=no root@$DROPLET_IP 'cd /var/www/html && git remote set-url origin https://github.com/VR48/dunelegacy.com.git && git pull origin main && cp -r website/* . && chown -R www-data:www-data /var/www/html && git log -1 --oneline'
           
           # Configure Discord webhook if secret is set
           if [ -n "$DISCORD_WEBHOOK_URL" ]; then
