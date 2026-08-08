@@ -19,7 +19,7 @@ jobs:
           mkdir -p website/data
 
           # Fetch all releases (public repo, no token needed)
-          curl -sf https://api.github.com/repos/svan058/dunecity/releases \
+          curl -sf https://api.github.com/repos/VR48/dunecity/releases \
             -H "Accept: application/vnd.github+json" \
             -o /tmp/releases.json
 
@@ -57,7 +57,7 @@ jobs:
 
           snapshot = {
               "generated": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-              "repository": "svan058/dunecity",
+              "repository": "VR48/dunecity",
               "latest_release": latest,
               "all_releases_total": all_total,
               "releases": releases,

@@ -14,7 +14,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-const DUNECITY_RELEASES_API = 'https://api.github.com/repos/svan058/dunecity/releases?per_page=100';
+const DUNECITY_RELEASES_API = 'https://api.github.com/repos/VR48/dunecity/releases?per_page=100';
 const SOURCEFORGE_STATS_API = 'https://sourceforge.net/projects/dunelegacy/files/stats/json?start_date=2009-01-01&end_date=2030-12-31';
 
 // Download count display (progressive enhancement)
@@ -60,7 +60,7 @@ function fetchLiveDownloadCounts() {
 
             return {
                 generated: new Date().toISOString(),
-                repository: 'svan058/dunecity',
+                repository: 'VR48/dunecity',
                 latest_release: normalized[0],
                 all_releases_total: normalized.reduce((sum, release) => sum + release.total_downloads, 0),
                 releases: normalized
