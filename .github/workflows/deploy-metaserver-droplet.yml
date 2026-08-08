@@ -6,6 +6,7 @@ on:
     paths:
       - 'website/**'
       - 'metaserver/**'
+      - '.github/workflows/deploy-metaserver-droplet.yml'
   workflow_dispatch:  # Allow manual deployment
 
 jobs:
