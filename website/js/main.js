@@ -93,7 +93,7 @@ function fetchSourceForgeStats() {
 
 function renderDownloadCounts(ghData, sfData) {
     // GitHub per-platform counts (Dune City — all releases)
-    const gh = { windows: 0, macos: 0, linux: 0, total: 0 };
+    const gh = { windows: 0, macos: 0, linux: 0, android: 0, total: 0 };
     if (ghData && ghData.releases) {
         for (const release of ghData.releases) {
             for (const asset of release.assets) {
@@ -101,6 +101,7 @@ function renderDownloadCounts(ghData, sfData) {
                 if (name.includes('windows')) gh.windows += asset.download_count;
                 else if (name.includes('macos')) gh.macos += asset.download_count;
                 else if (name.includes('linux')) gh.linux += asset.download_count;
+                else if (name.endsWith('.apk')) gh.android += asset.download_count;
             }
         }
         gh.total = ghData.all_releases_total || 0;
@@ -116,6 +117,7 @@ function renderDownloadCounts(ghData, sfData) {
         if (p === 'windows') count = gh.windows;
         else if (p === 'macos') count = gh.macos;
         else if (p === 'linux') count = gh.linux;
+        else if (p === 'android') count = gh.android;
 
         const el = card.querySelector('.download-count');
         if (el) {
