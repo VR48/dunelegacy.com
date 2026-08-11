@@ -38,7 +38,18 @@ jobs:
           ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
           
           echo "Deploying to droplet..."
-          ssh -o StrictHostKeyChecking=no root@$DROPLET_IP 'cd /var/www/html && git remote set-url origin https://github.com/VR48/dunelegacy.com.git && git pull origin main && cp -r website/* . && chown -R www-data:www-data /var/www/html && git log -1 --oneline'
+          ssh -o StrictHostKeyChecking=no root@$DROPLET_IP '
+            set -e
+            cd /var/www/html
+            git remote set-url origin https://github.com/VR48/dunelegacy.com.git
+            git fetch origin main
+            deploy_dir=$(mktemp -d)
+            trap "rm -rf $deploy_dir" EXIT
+            git archive origin/main website | tar -x -C "$deploy_dir" --strip-components=1
+            cp -a "$deploy_dir"/. /var/www/html/
+            chown -R www-data:www-data /var/www/html
+            git log -1 --oneline origin/main
+          '
           
           # Configure Discord webhook if secret is set
           if [ -n "$DISCORD_WEBHOOK_URL" ]; then
