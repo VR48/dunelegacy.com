@@ -261,6 +261,19 @@ dunelegacy.com/
 
 ## Advanced
 
+### Finish Apache version suppression
+
+The restricted deployment account cannot edit global Apache configuration.
+After migrating an existing server, run this once from the DigitalOcean root
+console, then confirm that `curl -I` reports `Server: Apache` without a version:
+
+```bash
+sed -i 's/^ServerTokens .*/ServerTokens Prod/' /etc/apache2/conf-available/security.conf
+sed -i 's/^ServerSignature .*/ServerSignature Off/' /etc/apache2/conf-available/security.conf
+apache2ctl configtest && systemctl reload apache2
+curl -I https://dunelegacy.com/play/
+```
+
 ### SSL Certificate Renewal
 
 SSL certificates auto-renew via certbot. Check status:
