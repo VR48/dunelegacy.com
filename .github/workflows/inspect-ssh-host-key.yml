@@ -1,0 +1,23 @@
+name: Inspect SSH host key
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print hashed host keys and fingerprints
+        env:
+          DROPLET_IP: ${{ secrets.METASERVER_DROPLET_IP }}
+        run: |
+          set -euo pipefail
+          test -n "$DROPLET_IP"
+          ssh-keyscan -T 10 -H "$DROPLET_IP" > /tmp/dunelegacy-known-hosts 2>/dev/null
+          echo "Fingerprints to verify against the DigitalOcean console:"
+          ssh-keygen -lf /tmp/dunelegacy-known-hosts
+          echo "Hashed known_hosts value:"
+          cat /tmp/dunelegacy-known-hosts
