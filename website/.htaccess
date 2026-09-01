@@ -7,5 +7,6 @@ Options -Indexes
   Header always set X-Frame-Options "SAMEORIGIN"
   Header always set X-Permitted-Cross-Domain-Policies "none"
   Header always set Permissions-Policy "accelerometer=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), publickey-credentials-get=(), serial=(), usb=()"
+  Header always set Server "Apache"
   Header always unset X-Powered-By
 </IfModule>

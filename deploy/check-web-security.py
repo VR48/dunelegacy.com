@@ -76,6 +76,7 @@ def main() -> int:
         "Referrer-Policy",
         "X-Frame-Options",
         "Permissions-Policy",
+        "Header always set Server \"Apache\"",
         "Options -Indexes",
     )))
     errors.extend(require_tokens(play / ".htaccess", (

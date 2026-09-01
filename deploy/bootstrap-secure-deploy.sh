@@ -52,7 +52,7 @@ chown "$DEPLOY_USER:www-data" "$DATA_ROOT/discord_webhook.txt"
 chmod 0640 "$DATA_ROOT/discord_webhook.txt"
 
 a2enmod headers rewrite deflate >/dev/null
-cat > /etc/apache2/conf-available/dunelegacy-security.conf <<'EOF'
+cat > /etc/apache2/conf-available/zz-dunelegacy-security.conf <<'EOF'
 ServerTokens Prod
 ServerSignature Off
 TraceEnable Off
@@ -63,7 +63,9 @@ TraceEnable Off
     Require all granted
 </Directory>
 EOF
-a2enconf dunelegacy-security >/dev/null
+a2disconf dunelegacy-security >/dev/null 2>&1 || true
+rm -f /etc/apache2/conf-available/dunelegacy-security.conf
+a2enconf zz-dunelegacy-security >/dev/null
 
 if [[ -f /etc/apache2/sites-available/dunelegacy.conf ]]; then
     sed -i 's/^[[:space:]]*AllowOverride All[[:space:]]*$/            AllowOverride FileInfo Options=Indexes/' \
