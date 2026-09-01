@@ -9,20 +9,32 @@ on:
       - '.github/workflows/deploy-metaserver-droplet.yml'
   workflow_dispatch:  # Allow manual deployment
 
+permissions:
+  contents: read
+
+concurrency:
+  group: dunelegacy-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Validate browser security policy
+        run: python3 deploy/check-web-security.py
       
-      - name: Deploy to Droplet via SSH
+      - name: Configure verified SSH transport
         env:
           DROPLET_IP: ${{ secrets.METASERVER_DROPLET_IP }}
           SSH_PRIVATE_KEY: ${{ secrets.DROPLET_SSH_KEY }}
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SSH_KNOWN_HOSTS: ${{ secrets.METASERVER_SSH_KNOWN_HOSTS }}
         run: |
+          set -euo pipefail
           if [ -z "$DROPLET_IP" ]; then
             echo "::error::Missing METASERVER_DROPLET_IP repository secret."
             exit 1
@@ -31,31 +43,68 @@ jobs:
             echo "::error::Missing DROPLET_SSH_KEY repository secret."
             exit 1
           fi
+          if [ -z "$SSH_KNOWN_HOSTS" ]; then
+            echo "::error::Missing METASERVER_SSH_KNOWN_HOSTS repository secret."
+            exit 1
+          fi
 
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
-          
-          echo "Deploying to droplet..."
-          ssh -o StrictHostKeyChecking=no root@$DROPLET_IP '
-            set -e
-            cd /var/www/html
-            git remote set-url origin https://github.com/VR48/dunelegacy.com.git
-            git fetch origin main
-            deploy_dir=$(mktemp -d)
-            trap "rm -rf $deploy_dir" EXIT
-            git archive origin/main website | tar -x -C "$deploy_dir" --strip-components=1
-            cp -a "$deploy_dir"/. /var/www/html/
-            chown -R www-data:www-data /var/www/html
-            git log -1 --oneline origin/main
-          '
-          
-          # Configure Discord webhook if secret is set
-          if [ -n "$DISCORD_WEBHOOK_URL" ]; then
-            echo "Configuring Discord webhook..."
-            ssh -o StrictHostKeyChecking=no root@$DROPLET_IP "echo '$DISCORD_WEBHOOK_URL' > /var/www/data/discord_webhook.txt && chown www-data:www-data /var/www/data/discord_webhook.txt && chmod 600 /var/www/data/discord_webhook.txt"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/deploy_key > /tmp/deploy_key.pub
+          ssh-keygen -F "$DROPLET_IP" -f ~/.ssh/known_hosts >/dev/null || {
+            echo "::error::Pinned known_hosts does not contain the deployment host."
+            exit 1
+          }
+
+      - name: Bootstrap restricted deployment account when needed
+        env:
+          DROPLET_IP: ${{ secrets.METASERVER_DROPLET_IP }}
+        run: |
+          set -euo pipefail
+          SSH_ARGS=(-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
+          if ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" true 2>/dev/null; then
+            exit 0
           fi
-          
-          echo "Deployment complete!"
+
+          echo "Migrating the existing root deployment key to a restricted account..."
+          scp "${SSH_ARGS[@]}" deploy/bootstrap-secure-deploy.sh /tmp/deploy_key.pub root@"$DROPLET_IP":/root/
+          ssh "${SSH_ARGS[@]}" root@"$DROPLET_IP" \
+            'bash /root/bootstrap-secure-deploy.sh dunelegacy-deploy /root/deploy_key.pub'
+          ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" true
+
+      - name: Deploy website and metaserver
+        env:
+          DROPLET_IP: ${{ secrets.METASERVER_DROPLET_IP }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          set -euo pipefail
+          SSH_ARGS=(-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
+          scp "${SSH_ARGS[@]}" deploy/deploy-release.sh \
+            dunelegacy-deploy@"$DROPLET_IP":/home/dunelegacy-deploy/deploy-release.sh
+          ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" \
+            'bash /home/dunelegacy-deploy/deploy-release.sh'
+
+          if [ -n "$DISCORD_WEBHOOK_URL" ]; then
+            printf '%s' "$DISCORD_WEBHOOK_URL" \
+              | ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" \
+                  'umask 027; cat > /var/www/data/discord_webhook.txt'
+          fi
+
+      - name: Verify production security headers
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 \
+            --dump-header /tmp/play-headers --output /dev/null https://dunelegacy.com/play/
+          grep -qi '^strict-transport-security: max-age=' /tmp/play-headers
+          grep -qi '^content-security-policy:.*default-src.*none' /tmp/play-headers
+          grep -qi '^x-content-type-options: nosniff' /tmp/play-headers
+          grep -qi '^cross-origin-opener-policy: same-origin' /tmp/play-headers
+          if grep -Eqi '^server:.*Apache/[0-9]' /tmp/play-headers; then
+            echo "::error::The server is exposing its exact Apache version."
+            exit 1
+          fi
+          curl --fail --silent --show-error --head https://dunelegacy.com/play/dunecity.wasm \
+            | grep -qi '^content-type: application/wasm'
 

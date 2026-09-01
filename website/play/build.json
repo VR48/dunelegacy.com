@@ -1,10 +1,20 @@
-{
-  "artifacts": [
-    "dunecity.html",
-    "dunecity.js",
-    "dunecity.wasm",
-    "dunecity.data"
-  ],
-  "builtAtUtc": "2026-09-01T09:00:37.9948982Z",
-  "version": "1.0.531"
+﻿{
+    "artifacts":  [
+                      "index.html",
+                      "shell.css",
+                      "shell.js",
+                      "dunecity.js",
+                      "dunecity.wasm",
+                      "dunecity.data"
+                  ],
+    "sha256":  {
+                   "index.html":  "0938521f131cefe5b4dac34a71f4d43340dd4e65a825de9a895bb80042b9ec10",
+                   "shell.css":  "710ae949a38cc3dfec7da47b38c39304e0a4a97b49048fa3e69af77b3cf8ca06",
+                   "shell.js":  "221607fa0f017adba246d10907ade78b60bfcf61fc1cab9bc9972879c58d8444",
+                   "dunecity.js":  "78371278c860c3f25a5b247746116371049f1b8cf11a9bee122cda47f77035d5",
+                   "dunecity.wasm":  "a783d514dab98125d32ee3210e24528a7cdb2c2a796e6d91bbb941decce093a3",
+                   "dunecity.data":  "c8f935a6a9ca155928eb414a72f23ce430c001c13ddf697643d8721ab32cc129"
+               },
+    "version":  "1.0.531",
+    "builtAtUtc":  "2026-09-01T15:44:28.5492890Z"
 }

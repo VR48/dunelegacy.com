@@ -18,7 +18,7 @@ cd deploy && ./create-droplet.sh      # Creates metaserver VM
 
 - Website: https://dunelegacy.com
 - Metaserver API: http://metaserver.dunelegacy.com/metaserver.php
-- Status Page: http://metaserver.dunelegacy.com/index.php
+- Status Page: https://dunelegacy.com/metaserver/
 
 ---
 
@@ -32,7 +32,8 @@ vim metaserver/metaserver.php
 git push origin main
 ```
 
-Both website and metaserver auto-deploy on push.
+Both website and metaserver are staged and auto-deployed on push through a
+restricted account. The production web root is not a Git checkout.
 
 ---
 

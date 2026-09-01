@@ -1,0 +1,29 @@
+name: Web security
+
+on:
+  pull_request:
+    paths:
+      - 'website/.htaccess'
+      - 'website/play/**'
+      - 'deploy/check-web-security.py'
+      - '.github/workflows/web-security.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'website/.htaccess'
+      - 'website/play/**'
+      - 'deploy/check-web-security.py'
+      - '.github/workflows/web-security.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-browser-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Validate CSP and artifact integrity
+        run: python3 deploy/check-web-security.py

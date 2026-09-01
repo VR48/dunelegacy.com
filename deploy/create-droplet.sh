@@ -13,7 +13,7 @@ DROPLET_NAME="dunelegacy-metaserver"
 REGION="nyc1"
 SIZE="s-1vcpu-1gb"
 IMAGE="ubuntu-24-04-x64"
-REPO_URL="https://github.com/svan058/dunelegacy.com.git"
+REPO_URL="https://github.com/VR48/dunelegacy.com.git"
 
 # Cloud-init script - runs automatically on first boot
 cat > /tmp/cloud-config.yml <<'CLOUD_INIT'
@@ -30,11 +30,14 @@ packages:
   - libapache2-mod-php
   - php-cli
   - git
+  - rsync
 
 # Commands to run after packages are installed
 runcmd:
   # Enable Apache modules
   - a2enmod rewrite
+  - a2enmod headers
+  - a2enmod deflate
   - a2enmod php8.3
   
   # Remove default Apache files

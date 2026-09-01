@@ -49,12 +49,14 @@ Auto-deploys via GitHub Actions (~20 sec)
 
 **How auto-deploy works:**
 1. You push to `main` branch
-2. GitHub Actions SSHs into the droplet
-3. Runs `git pull` in `/var/www/html`
-4. Done! Changes are live.
+2. GitHub Actions validates the browser policy and artifact hashes
+3. SSH authenticates the droplet against a pinned host key
+4. A restricted account stages both `website/` and `metaserver/`
+5. The staged release is synchronized into the web root
 
 **Directory structure on droplet:**
-- `/var/www/html/` → Git repo (website + metaserver code)
+- `/var/www/html/` → Published files only; never a Git checkout
+- `/srv/dunelegacy-deploy/repo/` → Restricted deployment checkout
 - `/var/www/html/metaserver/` → Metaserver PHP files
 - `/var/www/data/` → Persistent game statistics (NOT in git)
 
@@ -98,8 +100,9 @@ cd deploy
 - SSH key (press 1 for default)
 
 **What it does:**
-- Adds secrets to GitHub
-- Enables auto-deployment workflow
+- Pins the confirmed SSH host key in GitHub
+- Adds the deployment key and droplet address as repository secrets
+- Enables the one-time root-to-restricted-account migration
 
 ### Step 3: Enable Auto-Deploy (2 min)
 
@@ -192,8 +195,11 @@ curl https://dunelegacy.com
 # Test metaserver
 curl https://dunelegacy.com/metaserver/metaserver.php?action=list
 
-# SSH and check
-ssh root@<DROPLET_IP>
+# Inspect the deployment checkout
+ssh dunelegacy-deploy@<DROPLET_IP>
+git -C /srv/dunelegacy-deploy/repo status
+
+# Apache service and logs still require an administrator or provider console
 systemctl status apache2
 tail -f /var/log/apache2/dunelegacy-error.log
 ```
@@ -208,19 +214,15 @@ gh run list
 cd deploy && ./setup-github-actions.sh
 ```
 
-### Git pull failing on droplet
+### Deployment checkout failing on droplet
 
-If you see "not a git repository" errors, the droplet wasn't set up correctly:
+The published web root intentionally has no `.git` directory. Inspect the
+restricted deployment checkout instead:
 
 ```bash
-ssh root@<DROPLET_IP>
-cd /var/www/html
-git init
-git remote add origin https://github.com/svan058/dunelegacy.com.git
-git config --global --add safe.directory /var/www/html
-git fetch origin main
-git checkout -f main
-chown -R www-data:www-data /var/www/html
+ssh dunelegacy-deploy@<DROPLET_IP>
+git -C /srv/dunelegacy-deploy/repo status
+git -C /srv/dunelegacy-deploy/repo fetch origin main
 ```
 
 ### DNS not resolving
@@ -280,7 +282,7 @@ doctl compute droplet-action enable-backups <DROPLET_ID>
 
 ```bash
 # Both website and metaserver
-ssh root@<DROPLET_IP> "cd /var/www/html && git pull"
+ssh dunelegacy-deploy@<DROPLET_IP> "bash /home/dunelegacy-deploy/deploy-release.sh"
 ```
 
 ---
