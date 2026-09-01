@@ -1,0 +1,15 @@
+AddType application/wasm .wasm
+AddType application/octet-stream .data
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(wasm|data|js)$">
+    Header set Cache-Control "public, max-age=3600"
+  </FilesMatch>
+  <FilesMatch "^(index\.html|build\.json)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE application/wasm application/javascript application/octet-stream
+</IfModule>
