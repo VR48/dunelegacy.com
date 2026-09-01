@@ -1,10 +1,10 @@
 {
-  "builtAtUtc": "2026-09-01T08:14:52.7696285Z",
-  "version": "1.0.531",
   "artifacts": [
     "dunecity.html",
     "dunecity.js",
     "dunecity.wasm",
     "dunecity.data"
-  ]
+  ],
+  "builtAtUtc": "2026-09-01T09:00:37.9948982Z",
+  "version": "1.0.531"
 }
