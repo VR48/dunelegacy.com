@@ -85,6 +85,10 @@ if (!is_writable(DATA_DIR)) {
     error_log("Warning: Data directory " . DATA_DIR . " is not writable");
 }
 
+// Match analytics is intentionally separate from the legacy server-list and
+// stats.json code below.  Old clients continue to use the existing endpoints.
+require_once __DIR__ . '/analytics.php';
+
 /**
  * Get the real client IP address, accounting for load balancers and proxies
  */
@@ -130,8 +134,9 @@ if (basename($_SERVER['PHP_SELF']) === 'metaserver.php') {
     header('Content-Type: text/plain');
     header('Cache-Control: no-cache, must-revalidate');
     
-    // Get action from query string (support both 'action' and 'command' for backwards compatibility)
-    $action = $_GET['action'] ?? $_GET['command'] ?? '';
+    // The legacy protocol is query-string based. Match analytics uses POST so
+    // its compact JSON payload does not exceed Apache's request-line limit.
+    $action = $_GET['action'] ?? $_GET['command'] ?? $_POST['action'] ?? $_POST['command'] ?? '';
     
     // Main routing
     switch($action) {
@@ -156,6 +161,9 @@ if (basename($_SERVER['PHP_SELF']) === 'metaserver.php') {
         case 'gamestart':
             handleGameStart();
             break;
+        case 'gamestats':
+            handleGameStats();
+            break;
         case 'punch_request':
             handlePunchRequest();
             break;
@@ -170,7 +178,7 @@ if (basename($_SERVER['PHP_SELF']) === 'metaserver.php') {
             break;
         default:
             echo "ERROR: Invalid action\n";
-            echo "Valid actions: add, update, remove, list, list2, version, gamestart, punch_request, punch_poll, punch_ready, punch_status\n";
+            echo "Valid actions: add, update, remove, list, list2, version, gamestart, gamestats, punch_request, punch_poll, punch_ready, punch_status\n";
             echo "Use: ?action=list or ?command=list\n";
             http_response_code(400);
     }
@@ -963,6 +971,11 @@ function handleGameStart() {
         echo "ERROR: Secret required\n";
         return;
     }
+
+    // Legacy clients have no end-of-game event or structured payload.  Keep a
+    // start-only row so historical versions remain represented without
+    // storing their player names or any game log.
+    analyticsRecordLegacyStart($secret, $map, $modName, $version, $players);
     
     // Send Discord notification
     sendGameStartNotification($map, $modName, $players, $version);
@@ -1117,4 +1130,3 @@ function sendDiscordNotification($name, $map, $maxPlayers, $version, $modName, $
         $log("Response: HTTP $httpCode - $response");
     }
 }
-
