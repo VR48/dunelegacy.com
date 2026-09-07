@@ -1,0 +1,2 @@
+RewriteEngine On
+RewriteRule ^analytics_store\.py$ - [F,L,NC]

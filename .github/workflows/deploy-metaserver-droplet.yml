@@ -32,6 +32,7 @@ jobs:
         run: |
           php -l metaserver/metaserver.php
           php -l metaserver/analytics.php
+          python3 -m py_compile metaserver/analytics_store.py
       
       - name: Configure verified SSH transport
         env:
@@ -70,11 +71,7 @@ jobs:
           set -euo pipefail
           SSH_ARGS=(-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
           if ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" true 2>/dev/null; then
-            if ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" \
-              'php -r '\''exit(in_array("sqlite", PDO::getAvailableDrivers(), true) ? 0 : 1);'\'' && test -w /var/www/data'; then
-              exit 0
-            fi
-            echo "Existing deployment account needs the analytics runtime; applying the root bootstrap."
+            exit 0
           fi
 
           echo "Configuring the restricted deployment account and runtime dependencies..."

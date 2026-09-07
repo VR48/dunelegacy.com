@@ -99,9 +99,12 @@ counts, military value, and, in Dune City matches, population and average land
 value. No player names, IP addresses, chat, or local decision logs enter this
 database.
 
-The production host needs PHP's SQLite PDO driver (`php-sqlite3`). The Docker
-image installs it, and `deploy/create-droplet.sh` installs it for a new Ubuntu
-droplet. Existing droplets need the one-time command:
+PHP's SQLite PDO driver (`php-sqlite3`) is the preferred runtime. The Docker
+image and new-droplet setup install it. Existing restricted droplets without
+that package use the bundled Python `sqlite3` helper for the same schema and
+transactions; match events are infrequent, so the per-event helper process is
+small and avoids granting the deployment key root access. Administrators can
+switch those hosts back to PDO with:
 
 ```sh
 sudo apt-get install php-sqlite3 && sudo systemctl restart apache2

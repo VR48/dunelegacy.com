@@ -25,6 +25,42 @@ function analyticsAvailable() {
     return class_exists('PDO') && in_array('sqlite', PDO::getAvailableDrivers(), true);
 }
 
+function analyticsPythonHelper() {
+    $helper = __DIR__ . '/analytics_store.py';
+    return is_file($helper) && is_readable($helper) && function_exists('proc_open') ? $helper : null;
+}
+
+function analyticsPythonRequest($action, array $request = []) {
+    $helper = analyticsPythonHelper();
+    if ($helper === null) return null;
+    $request['action'] = $action;
+    $request['database'] = ANALYTICS_DB_FILE;
+    $encoded = json_encode($request, JSON_UNESCAPED_SLASHES);
+    if ($encoded === false || strlen($encoded) > ANALYTICS_MAX_PAYLOAD_BYTES + 4096) return null;
+    $pipes = [];
+    $process = @proc_open(['/usr/bin/python3', $helper], [
+        0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w'],
+    ], $pipes);
+    if (!is_resource($process)) return null;
+    fwrite($pipes[0], $encoded);
+    fclose($pipes[0]);
+    $output = stream_get_contents($pipes[1]);
+    fclose($pipes[1]);
+    $error = stream_get_contents($pipes[2]);
+    fclose($pipes[2]);
+    $status = proc_close($process);
+    if ($status !== 0) {
+        error_log('Metaserver analytics helper unavailable: ' . trim($error));
+        return null;
+    }
+    $response = json_decode($output, true);
+    return is_array($response) && ($response['ok'] ?? false) ? $response : null;
+}
+
+function analyticsBackendAvailable() {
+    return analyticsDatabase() !== null || analyticsPythonRequest('health') !== null;
+}
+
 function analyticsDatabase() {
     static $database = null;
     if ($database !== null) {
@@ -231,7 +267,11 @@ function analyticsStorePlayers(PDO $database, $matchId, array $players, $replace
 
 function analyticsRecordMatch($phase, $matchId, array $payload, $source = 'v1') {
     $database = analyticsDatabase();
-    if ($database === null) return false;
+    if ($database === null) {
+        return analyticsPythonRequest('record', [
+            'phase' => $phase, 'match_id' => $matchId, 'payload' => $payload, 'source' => $source,
+        ]) !== null;
+    }
     $fields = analyticsMatchFields($payload);
     $now = time();
     $json = json_encode($payload, JSON_UNESCAPED_SLASHES);
@@ -297,7 +337,12 @@ function analyticsRecordLegacyStart($secret, $map, $modName, $version, $players)
 
 function analyticsSummary() {
     $database = analyticsDatabase();
-    if ($database === null) return ['available' => false];
+    if ($database === null) {
+        $summary = analyticsPythonRequest('summary');
+        if ($summary === null) return ['available' => false];
+        return ['available' => true, 'started' => (int)$summary['started'],
+            'finished' => (int)$summary['finished'], 'last_30_days' => (int)$summary['last_30_days']];
+    }
     try {
         $row = $database->query('SELECT COUNT(*) AS started, SUM(CASE WHEN ended_at IS NOT NULL THEN 1 ELSE 0 END) AS finished,
             SUM(CASE WHEN started_at >= strftime("%s", "now", "-30 days") THEN 1 ELSE 0 END) AS last_30_days
@@ -316,7 +361,7 @@ function handleGameStats() {
     $request = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
     $phase = $request['phase'] ?? '';
     if ($phase === 'health') {
-        if (analyticsDatabase() === null) {
+        if (!analyticsBackendAvailable()) {
             http_response_code(503);
             echo "ERROR: Analytics storage unavailable\n";
             return;
@@ -331,7 +376,7 @@ function handleGameStats() {
         echo "ERROR: Invalid game stats payload\n";
         return;
     }
-    if (!analyticsAvailable()) {
+    if (!analyticsBackendAvailable()) {
         http_response_code(503);
         echo "ERROR: Analytics storage unavailable\n";
         return;
