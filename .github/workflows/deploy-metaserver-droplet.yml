@@ -70,10 +70,14 @@ jobs:
           set -euo pipefail
           SSH_ARGS=(-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
           if ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" true 2>/dev/null; then
-            exit 0
+            if ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" \
+              'php -r '\''exit(in_array("sqlite", PDO::getAvailableDrivers(), true) ? 0 : 1);'\'' && test -w /var/www/data'; then
+              exit 0
+            fi
+            echo "Existing deployment account needs the analytics runtime; applying the root bootstrap."
           fi
 
-          echo "Migrating the existing root deployment key to a restricted account..."
+          echo "Configuring the restricted deployment account and runtime dependencies..."
           scp "${SSH_ARGS[@]}" deploy/bootstrap-secure-deploy.sh /tmp/deploy_key.pub root@"$DROPLET_IP":/root/
           ssh "${SSH_ARGS[@]}" root@"$DROPLET_IP" \
             'bash /root/bootstrap-secure-deploy.sh dunelegacy-deploy /root/deploy_key.pub'

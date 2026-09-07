@@ -30,9 +30,9 @@ install -m 0600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" \
     "$DEPLOY_AUTHORIZED_KEYS" "$DEPLOY_HOME/.ssh/authorized_keys"
 rm -f "$DEPLOY_AUTHORIZED_KEYS"
 
-if ! command -v rsync >/dev/null 2>&1; then
+if ! command -v rsync >/dev/null 2>&1 || ! php -r 'exit(in_array("sqlite", PDO::getAvailableDrivers(), true) ? 0 : 1);'; then
     apt-get update
-    DEBIAN_FRONTEND=noninteractive apt-get install -y rsync
+    DEBIAN_FRONTEND=noninteractive apt-get install -y rsync php-sqlite3
 fi
 
 install -d -m 0755 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$(dirname "$REPOSITORY_ROOT")"
