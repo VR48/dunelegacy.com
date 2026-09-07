@@ -19,7 +19,8 @@ from typing import Any
 
 MAX_PLAYERS = 12
 MAX_UNIT_ROWS = 48
-MAX_PAYLOAD_BYTES = 20 * 1024
+MAX_ITEM_ROWS = 96
+MAX_PAYLOAD_BYTES = 64 * 1024
 
 
 SCHEMA = """
@@ -54,6 +55,9 @@ CREATE TABLE IF NOT EXISTS analytics_matches (
 CREATE TABLE IF NOT EXISTS analytics_players (
     match_id TEXT NOT NULL,
     slot INTEGER NOT NULL,
+    player_id INTEGER,
+    player_name TEXT,
+    house_slot INTEGER,
     house_id INTEGER,
     house_name TEXT,
     team INTEGER,
@@ -90,9 +94,22 @@ CREATE TABLE IF NOT EXISTS analytics_qbot_units (
     PRIMARY KEY (match_id, slot, item_id),
     FOREIGN KEY (match_id, slot) REFERENCES analytics_players(match_id, slot) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS analytics_player_items (
+    match_id TEXT NOT NULL,
+    slot INTEGER NOT NULL,
+    item_id INTEGER NOT NULL,
+    item_name TEXT,
+    item_kind TEXT,
+    produced INTEGER,
+    killed INTEGER,
+    lost INTEGER,
+    PRIMARY KEY (match_id, slot, item_id),
+    FOREIGN KEY (match_id, slot) REFERENCES analytics_players(match_id, slot) ON DELETE CASCADE
+);
 CREATE INDEX IF NOT EXISTS analytics_matches_started_idx ON analytics_matches(started_at);
 CREATE INDEX IF NOT EXISTS analytics_matches_mode_idx ON analytics_matches(game_type, mod_name);
 CREATE INDEX IF NOT EXISTS analytics_qbot_units_item_idx ON analytics_qbot_units(item_id);
+CREATE INDEX IF NOT EXISTS analytics_player_items_item_idx ON analytics_player_items(item_id);
 """
 
 
@@ -122,7 +139,11 @@ def fields(payload: dict[str, Any]) -> dict[str, Any]:
     game_type = text(payload.get("game_type"), 32)
     if game_type not in {"campaign", "skirmish", "single_custom", "multiplayer", "load"}:
         game_type = "unknown"
-    outcome = text(summary.get("outcome"), 16)
+    players = payload.get("players")
+    players = players[:MAX_PLAYERS] if isinstance(players, list) else []
+    human_count = sum(isinstance(player, dict) and player.get("controller") == "human" for player in players)
+    qbot_count = sum(isinstance(player, dict) and player.get("controller") == "qbot" for player in players)
+    outcome = text(payload.get("outcome", summary.get("outcome")), 16)
     if outcome not in {"finished", "abandoned"}:
         outcome = "finished"
     return {
@@ -135,16 +156,16 @@ def fields(payload: dict[str, Any]) -> dict[str, Any]:
         "mod_name": text(mod.get("name", payload.get("mod_name", "vanilla"))),
         "mod_version": text(mod.get("version")),
         "game_version": text(payload.get("game_version")),
-        "player_count": integer(summary.get("player_count"), 0, MAX_PLAYERS),
-        "human_count": integer(summary.get("human_count"), 0, MAX_PLAYERS),
-        "qbot_count": integer(summary.get("qbot_count"), 0, MAX_PLAYERS),
+        "player_count": integer(summary.get("player_count", len(players)), 0, MAX_PLAYERS),
+        "human_count": integer(summary.get("human_count", human_count), 0, MAX_PLAYERS),
+        "qbot_count": integer(summary.get("qbot_count", qbot_count), 0, MAX_PLAYERS),
         "outcome": outcome,
-        "duration_cycles": integer(summary.get("duration_cycles"), 0),
-        "duration_seconds": integer(summary.get("duration_seconds"), 0),
-        "winning_house": integer(summary.get("winning_house"), -1, 255),
-        "total_spice_harvested": integer(summary.get("total_spice_harvested"), 0),
-        "total_units_destroyed": integer(summary.get("total_units_destroyed"), 0),
-        "total_structures_destroyed": integer(summary.get("total_structures_destroyed"), 0),
+        "duration_cycles": integer(payload.get("duration_cycles", summary.get("duration_cycles")), 0),
+        "duration_seconds": integer(payload.get("duration_seconds", summary.get("duration_seconds")), 0),
+        "winning_house": integer(payload.get("winning_house", summary.get("winning_house")), -1, 255),
+        "total_spice_harvested": integer(payload.get("total_spice_harvested", summary.get("total_spice_harvested")), 0),
+        "total_units_destroyed": integer(payload.get("total_units_destroyed", summary.get("total_units_destroyed")), 0),
+        "total_structures_destroyed": integer(payload.get("total_structures_destroyed", summary.get("total_structures_destroyed")), 0),
     }
 
 
@@ -157,6 +178,12 @@ def open_database(database_path: str) -> sqlite3.Connection:
     connection.execute("PRAGMA foreign_keys=ON")
     connection.execute("PRAGMA busy_timeout=3000")
     connection.executescript(SCHEMA)
+    existing_columns = {row[1] for row in connection.execute("PRAGMA table_info(analytics_players)")}
+    for column, definition in (
+        ("player_id", "INTEGER"), ("player_name", "TEXT"), ("house_slot", "INTEGER")
+    ):
+        if column not in existing_columns:
+            connection.execute(f"ALTER TABLE analytics_players ADD COLUMN {column} {definition}")
     return connection
 
 
@@ -166,10 +193,13 @@ def store_players(connection: sqlite3.Connection, match_id: str, payload: dict[s
     if not isinstance(players, list):
         return
     player_sql = """INSERT OR REPLACE INTO analytics_players
-        (match_id, slot, house_id, house_name, team, controller, qbot_difficulty, result,
+        (match_id, slot, player_id, player_name, house_slot, house_id, house_name, team, controller, qbot_difficulty, result,
          final_credits, spice_harvested, units_built, structures_built, units_destroyed,
          structures_destroyed, units_lost, structures_lost, military_value, city_population, city_value)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+    item_sql = """INSERT OR REPLACE INTO analytics_player_items
+        (match_id, slot, item_id, item_name, item_kind, produced, killed, lost)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
     unit_sql = """INSERT OR REPLACE INTO analytics_qbot_units
         (match_id, slot, item_id, item_name, target_weight_bps, built, lost, destroyed,
          reward_milli, lost_value, damage_value_milli, kill_bonus_milli)
@@ -182,7 +212,9 @@ def store_players(connection: sqlite3.Connection, match_id: str, payload: dict[s
             continue
         controller = text(player.get("controller", "unknown"), 32)
         connection.execute(player_sql, (
-            match_id, slot, integer(player.get("house_id"), 0, 255), text(player.get("house_name")),
+            match_id, slot, integer(player.get("player_id"), 0, 255), text(player.get("player_name")),
+            integer(player.get("house_slot"), 0, 255), integer(player.get("house_id"), 0, 255),
+            text(player.get("house_name")),
             integer(player.get("team"), -1, 255), controller,
             text(player.get("qbot_difficulty"), 32), text(player.get("result"), 16),
             integer(player.get("final_credits")), integer(player.get("spice_harvested"), 0),
@@ -192,6 +224,24 @@ def store_players(connection: sqlite3.Connection, match_id: str, payload: dict[s
             integer(player.get("military_value"), 0), integer(player.get("city_population"), 0),
             integer(player.get("city_value"), 0),
         ))
+        item_stats = player.get("item_stats")
+        if isinstance(item_stats, list):
+            for item in item_stats[:MAX_ITEM_ROWS]:
+                if not isinstance(item, (list, dict)):
+                    continue
+                if isinstance(item, list):
+                    values = item + [None] * (6 - len(item))
+                    item_id, item_name, item_kind, produced, killed, lost = values[:6]
+                else:
+                    item_id, item_name, item_kind = item.get("item_id"), item.get("item_name"), item.get("item_kind")
+                    produced, killed, lost = item.get("produced"), item.get("killed"), item.get("lost")
+                item_id = integer(item_id, 0, 10000)
+                if item_id is None:
+                    continue
+                connection.execute(item_sql, (
+                    match_id, slot, item_id, text(item_name), text(item_kind, 16),
+                    integer(produced, 0), integer(killed, 0), integer(lost, 0),
+                ))
         units = player.get("qbot_units")
         if controller != "qbot" or not isinstance(units, list):
             continue

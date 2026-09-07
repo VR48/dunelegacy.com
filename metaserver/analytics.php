@@ -3,7 +3,7 @@
  * Compact, versioned match analytics for the metaserver.
  *
  * This deliberately stores match summaries, not client logs.  A request is
- * limited to 20 KiB and expanded into queryable SQLite rows.  The original
+ * limited to 64 KiB and expanded into queryable SQLite rows.  The original
  * JSON is retained only as a small forward-compatible envelope so a newer
  * client can add fields without requiring an immediate server migration.
  */
@@ -12,13 +12,16 @@ if (!defined('ANALYTICS_DB_FILE')) {
     define('ANALYTICS_DB_FILE', DATA_DIR . '/games.sqlite');
 }
 if (!defined('ANALYTICS_MAX_PAYLOAD_BYTES')) {
-    define('ANALYTICS_MAX_PAYLOAD_BYTES', 20 * 1024);
+    define('ANALYTICS_MAX_PAYLOAD_BYTES', 64 * 1024);
 }
 if (!defined('ANALYTICS_MAX_PLAYERS')) {
     define('ANALYTICS_MAX_PLAYERS', 12);
 }
 if (!defined('ANALYTICS_MAX_UNIT_ROWS_PER_PLAYER')) {
     define('ANALYTICS_MAX_UNIT_ROWS_PER_PLAYER', 48);
+}
+if (!defined('ANALYTICS_MAX_ITEM_ROWS_PER_PLAYER')) {
+    define('ANALYTICS_MAX_ITEM_ROWS_PER_PLAYER', 96);
 }
 
 function analyticsAvailable() {
@@ -119,6 +122,9 @@ function analyticsMigrate(PDO $database) {
     $database->exec('CREATE TABLE IF NOT EXISTS analytics_players (
         match_id TEXT NOT NULL,
         slot INTEGER NOT NULL,
+        player_id INTEGER,
+        player_name TEXT,
+        house_slot INTEGER,
         house_id INTEGER,
         house_name TEXT,
         team INTEGER,
@@ -155,9 +161,34 @@ function analyticsMigrate(PDO $database) {
         PRIMARY KEY (match_id, slot, item_id),
         FOREIGN KEY (match_id, slot) REFERENCES analytics_players(match_id, slot) ON DELETE CASCADE
     )');
+    $database->exec('CREATE TABLE IF NOT EXISTS analytics_player_items (
+        match_id TEXT NOT NULL,
+        slot INTEGER NOT NULL,
+        item_id INTEGER NOT NULL,
+        item_name TEXT,
+        item_kind TEXT,
+        produced INTEGER,
+        killed INTEGER,
+        lost INTEGER,
+        PRIMARY KEY (match_id, slot, item_id),
+        FOREIGN KEY (match_id, slot) REFERENCES analytics_players(match_id, slot) ON DELETE CASCADE
+    )');
+    // CREATE TABLE IF NOT EXISTS does not add columns to existing deployments.
+    analyticsEnsureColumn($database, 'analytics_players', 'player_id', 'INTEGER');
+    analyticsEnsureColumn($database, 'analytics_players', 'player_name', 'TEXT');
+    analyticsEnsureColumn($database, 'analytics_players', 'house_slot', 'INTEGER');
     $database->exec('CREATE INDEX IF NOT EXISTS analytics_matches_started_idx ON analytics_matches(started_at)');
     $database->exec('CREATE INDEX IF NOT EXISTS analytics_matches_mode_idx ON analytics_matches(game_type, mod_name)');
     $database->exec('CREATE INDEX IF NOT EXISTS analytics_qbot_units_item_idx ON analytics_qbot_units(item_id)');
+    $database->exec('CREATE INDEX IF NOT EXISTS analytics_player_items_item_idx ON analytics_player_items(item_id)');
+}
+
+function analyticsEnsureColumn(PDO $database, $table, $column, $definition) {
+    $columns = $database->query('PRAGMA table_info(' . $table . ')')->fetchAll();
+    foreach ($columns as $existing) {
+        if (($existing['name'] ?? null) === $column) return;
+    }
+    $database->exec('ALTER TABLE ' . $table . ' ADD COLUMN ' . $column . ' ' . $definition);
 }
 
 function analyticsString($value, $max = 128) {
@@ -195,6 +226,14 @@ function analyticsMatchId($value) {
 
 function analyticsMatchFields(array $payload) {
     $summary = is_array($payload['summary'] ?? null) ? $payload['summary'] : [];
+    $players = is_array($payload['players'] ?? null) ? array_slice($payload['players'], 0, ANALYTICS_MAX_PLAYERS) : [];
+    $humanCount = 0;
+    $qbotCount = 0;
+    foreach ($players as $player) {
+        if (!is_array($player)) continue;
+        if (($player['controller'] ?? null) === 'human') ++$humanCount;
+        if (($player['controller'] ?? null) === 'qbot') ++$qbotCount;
+    }
     return [
         'schema_version' => analyticsInt($payload['schema_version'] ?? 0, 0, 1000) ?? 0,
         'game_type' => analyticsGameType($payload['game_type'] ?? null),
@@ -205,16 +244,16 @@ function analyticsMatchFields(array $payload) {
         'mod_name' => analyticsString($payload['mod']['name'] ?? ($payload['mod_name'] ?? 'vanilla')),
         'mod_version' => analyticsString($payload['mod']['version'] ?? null),
         'game_version' => analyticsString($payload['game_version'] ?? null),
-        'player_count' => analyticsInt($summary['player_count'] ?? null, 0, ANALYTICS_MAX_PLAYERS),
-        'human_count' => analyticsInt($summary['human_count'] ?? null, 0, ANALYTICS_MAX_PLAYERS),
-        'qbot_count' => analyticsInt($summary['qbot_count'] ?? null, 0, ANALYTICS_MAX_PLAYERS),
-        'outcome' => analyticsOutcome($summary['outcome'] ?? null),
-        'duration_cycles' => analyticsInt($summary['duration_cycles'] ?? null, 0),
-        'duration_seconds' => analyticsInt($summary['duration_seconds'] ?? null, 0),
-        'winning_house' => analyticsInt($summary['winning_house'] ?? null, -1, 255),
-        'total_spice_harvested' => analyticsInt($summary['total_spice_harvested'] ?? null, 0),
-        'total_units_destroyed' => analyticsInt($summary['total_units_destroyed'] ?? null, 0),
-        'total_structures_destroyed' => analyticsInt($summary['total_structures_destroyed'] ?? null, 0),
+        'player_count' => analyticsInt($summary['player_count'] ?? count($players), 0, ANALYTICS_MAX_PLAYERS),
+        'human_count' => analyticsInt($summary['human_count'] ?? $humanCount, 0, ANALYTICS_MAX_PLAYERS),
+        'qbot_count' => analyticsInt($summary['qbot_count'] ?? $qbotCount, 0, ANALYTICS_MAX_PLAYERS),
+        'outcome' => analyticsOutcome($payload['outcome'] ?? ($summary['outcome'] ?? null)),
+        'duration_cycles' => analyticsInt($payload['duration_cycles'] ?? ($summary['duration_cycles'] ?? null), 0),
+        'duration_seconds' => analyticsInt($payload['duration_seconds'] ?? ($summary['duration_seconds'] ?? null), 0),
+        'winning_house' => analyticsInt($payload['winning_house'] ?? ($summary['winning_house'] ?? null), -1, 255),
+        'total_spice_harvested' => analyticsInt($payload['total_spice_harvested'] ?? ($summary['total_spice_harvested'] ?? null), 0),
+        'total_units_destroyed' => analyticsInt($payload['total_units_destroyed'] ?? ($summary['total_units_destroyed'] ?? null), 0),
+        'total_structures_destroyed' => analyticsInt($payload['total_structures_destroyed'] ?? ($summary['total_structures_destroyed'] ?? null), 0),
     ];
 }
 
@@ -224,10 +263,13 @@ function analyticsStorePlayers(PDO $database, $matchId, array $players, $replace
         $delete->execute([$matchId]);
     }
     $insert = $database->prepare('INSERT OR REPLACE INTO analytics_players
-        (match_id, slot, house_id, house_name, team, controller, qbot_difficulty, result,
+        (match_id, slot, player_id, player_name, house_slot, house_id, house_name, team, controller, qbot_difficulty, result,
          final_credits, spice_harvested, units_built, structures_built, units_destroyed,
          structures_destroyed, units_lost, structures_lost, military_value, city_population, city_value)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $itemInsert = $database->prepare('INSERT OR REPLACE INTO analytics_player_items
+        (match_id, slot, item_id, item_name, item_kind, produced, killed, lost)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
     $unitInsert = $database->prepare('INSERT OR REPLACE INTO analytics_qbot_units
         (match_id, slot, item_id, item_name, target_weight_bps, built, lost, destroyed,
          reward_milli, lost_value, damage_value_milli, kill_bonus_milli)
@@ -238,7 +280,9 @@ function analyticsStorePlayers(PDO $database, $matchId, array $players, $replace
         $slot = analyticsInt($player['slot'] ?? $slot, 0, ANALYTICS_MAX_PLAYERS - 1);
         $controller = analyticsString($player['controller'] ?? 'unknown', 32);
         $insert->execute([
-            $matchId, $slot, analyticsInt($player['house_id'] ?? null, 0, 255),
+            $matchId, $slot, analyticsInt($player['player_id'] ?? null, 0, 255),
+            analyticsString($player['player_name'] ?? null), analyticsInt($player['house_slot'] ?? null, 0, 255),
+            analyticsInt($player['house_id'] ?? null, 0, 255),
             analyticsString($player['house_name'] ?? null), analyticsInt($player['team'] ?? null, -1, 255),
             $controller, analyticsString($player['qbot_difficulty'] ?? null, 32),
             analyticsString($player['result'] ?? null, 16), analyticsInt($player['final_credits'] ?? null),
@@ -248,6 +292,21 @@ function analyticsStorePlayers(PDO $database, $matchId, array $players, $replace
             analyticsInt($player['structures_lost'] ?? null, 0), analyticsInt($player['military_value'] ?? null, 0),
             analyticsInt($player['city_population'] ?? null, 0), analyticsInt($player['city_value'] ?? null, 0),
         ]);
+
+        if (is_array($player['item_stats'] ?? null)) {
+            foreach (array_slice($player['item_stats'], 0, ANALYTICS_MAX_ITEM_ROWS_PER_PLAYER) as $item) {
+                if (!is_array($item)) continue;
+                $itemId = analyticsInt($item[0] ?? ($item['item_id'] ?? null), 0, 10000);
+                if ($itemId === null) continue;
+                $itemInsert->execute([
+                    $matchId, $slot, $itemId, analyticsString($item[1] ?? ($item['item_name'] ?? null)),
+                    analyticsString($item[2] ?? ($item['item_kind'] ?? null), 16),
+                    analyticsInt($item[3] ?? ($item['produced'] ?? null), 0),
+                    analyticsInt($item[4] ?? ($item['killed'] ?? null), 0),
+                    analyticsInt($item[5] ?? ($item['lost'] ?? null), 0),
+                ]);
+            }
+        }
 
         if ($controller !== 'qbot' || !is_array($player['qbot_units'] ?? null)) continue;
         foreach (array_slice($player['qbot_units'], 0, ANALYTICS_MAX_UNIT_ROWS_PER_PLAYER) as $unit) {
@@ -327,11 +386,24 @@ function analyticsRecordMatch($phase, $matchId, array $payload, $source = 'v1') 
 
 function analyticsRecordLegacyStart($secret, $map, $modName, $version, $players) {
     $matchId = 'legacy-' . substr(hash('sha256', 'dunelegacy:' . $secret), 0, 48);
-    $playerCount = $players === '' ? null : min(ANALYTICS_MAX_PLAYERS, count(explode(',', $players)));
+    $playerRows = [];
+    foreach (explode(',', $players) as $houseEntry) {
+        $parts = explode(':', trim($houseEntry), 2);
+        if (count($parts) !== 2) continue;
+        $houseName = trim($parts[0]);
+        foreach (explode('+', $parts[1]) as $playerName) {
+            $playerName = trim($playerName);
+            if ($playerName === '' || count($playerRows) >= ANALYTICS_MAX_PLAYERS) continue;
+            $playerRows[] = [
+                'slot' => count($playerRows), 'player_name' => $playerName,
+                'house_name' => $houseName, 'controller' => 'unknown',
+            ];
+        }
+    }
     return analyticsRecordMatch('start', $matchId, [
         'schema_version' => 0, 'game_type' => 'multiplayer', 'map' => ['name' => $map],
         'mod' => ['name' => $modName], 'game_version' => $version,
-        'summary' => ['player_count' => $playerCount],
+        'players' => $playerRows,
     ], 'legacy_gamestart');
 }
 
@@ -356,7 +428,7 @@ function analyticsSummary() {
 }
 
 function handleGameStats() {
-    // v1 native clients use POST to keep the payload below Apache's request
+    // Structured native clients use POST to keep the payload below Apache's request
     // line limit. Accept GET too for the browser fallback and manual probes.
     $request = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
     $phase = $request['phase'] ?? '';

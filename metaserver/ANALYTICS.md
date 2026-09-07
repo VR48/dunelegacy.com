@@ -1,111 +1,111 @@
 # Metaserver match analytics
 
-`metaserver.php?command=gamestats` accepts a compact JSON match summary at the
-start and end of a game. Native clients submit it as an HTTP POST, so the data
-does not hit Apache's request-line limit. It writes a SQLite database at
-`$DATA_DIR/games.sqlite`; it never accepts an AI decision log.
+`metaserver.php?command=gamestats` accepts one compact JSON record when a game
+starts and one when it ends. Native clients submit HTTP POST requests. The
+server expands the records into SQLite at `$DATA_DIR/games.sqlite`; it never
+accepts the local AI decision log.
 
-The endpoint accepts form-encoded parameters in either POST body (normal
-native client path) or GET query (browser fallback):
+The endpoint accepts:
 
 ```text
 command=gamestats
 phase=start|end
 match_id=<96-character opaque id>
-stats=<JSON object, maximum 20 KiB>
+stats=<JSON object, maximum 64 KiB>
 ```
 
 `command=gamestats&phase=health` opens and migrates the database without
-creating a match row. Deployment uses this as a storage readiness check.
+creating a match row.
 
-`stats` schema version 1 has this shape:
+Schema version 2 uses the existing multiplayer player list as its base. The
+start event contains the map, mod, version, and one row per actual player:
 
 ```json
 {
-  "schema_version": 1,
-  "game_type": "campaign|skirmish|single_custom|multiplayer",
-  "game_version": "1.0.583",
+  "schema_version": 2,
+  "game_type": "multiplayer",
+  "game_version": "1.0.598",
   "map": { "name": "Four Corners", "width": 64, "height": 64, "seed": 42 },
-  "mod": { "name": "vanilla", "version": "" },
-  "summary": {
-    "player_count": 4,
-    "human_count": 1,
-    "qbot_count": 3,
-    "outcome": "finished",
-    "duration_cycles": 12345,
-    "duration_seconds": 740,
-    "winning_house": 1,
-    "total_spice_harvested": 32000,
-    "total_units_destroyed": 64,
-    "total_structures_destroyed": 8
-  },
-  "players": []
+  "mod": { "name": "vanilla" },
+  "players": [
+    {
+      "slot": 0,
+      "player_id": 7,
+      "player_name": "Player",
+      "house_slot": 0,
+      "house_id": 0,
+      "house_name": "Atreides",
+      "team": 1,
+      "controller": "human",
+      "shared_house_players": 1
+    }
+  ]
 }
 ```
 
-Each player summary deliberately contains a house and controller class rather
-than a player name. QBot players may add at most 48 `qbot_units` entries with
-their production weight, built/lost/destroyed counts, reward, loss value, and
-damage/kill components. Those rows live in `analytics_qbot_units`, making unit
-mix and performance queries practical without retaining a large event stream.
+The end event repeats the player list and adds result, credits, harvested spice,
+aggregate totals, military value, and sparse per-type statistics. Each
+`item_stats` row is:
 
-The database has three tables:
+```json
+[31, "Harvester", "unit", 4, 2, 1]
+```
 
-- `analytics_matches`: one summary per opaque match ID, start and end payloads
-  capped at 20 KiB each. The start omits duplicate QBot outcome counters.
-- `analytics_players`: one bounded summary per active house/slot.
-- `analytics_qbot_units`: bounded QBot-only unit performance data.
+The positions mean `item_id`, `item_name`, `unit|structure`, `produced`,
+`killed`, and `lost`. Rows whose three counters are all zero are omitted. QBot
+players also add their final allocation weights and combat score components in
+`qbot_units`. Match outcome and duration appear once at the root.
 
-Both start and end are idempotent upserts. The end event can create a finished
-record if a start was lost in transit. Old `gamestart` clients still work: the
-server records an anonymised, start-only `legacy_gamestart` row while preserving
-the existing Discord notification and `stats.json` behaviour.
+The database has four tables:
 
-The data is designed for direct SQLite interrogation. For example:
+- `analytics_matches`: map, mode, version, timing, and the bounded start/end JSON.
+- `analytics_players`: one row per actual player, with the same display name and
+  house association already sent by multiplayer `gamestart`.
+- `analytics_player_items`: per-player/house production, kill and loss counts for
+  every unit and building type used in the match.
+- `analytics_qbot_units`: QBot allocation and combat performance data.
+
+Start and end are idempotent upserts. An end event can create a completed record
+if its start was lost. Clients older than 1.0.583 still create a start-only row
+from their existing `House: Player` multiplayer list. New clients use the
+structured pair, avoiding duplicate multiplayer rows while preserving the
+Discord notification and `stats.json` behaviour.
+
+Example queries:
 
 ```sql
--- Activity and completion rate by mode and mod.
-SELECT game_type, mod_name, COUNT(*) AS started,
-       SUM(ended_at IS NOT NULL) AS finished,
-       ROUND(AVG(duration_seconds), 1) AS average_seconds
-FROM analytics_matches
-GROUP BY game_type, mod_name
-ORDER BY started DESC;
-
--- QBot win rate and economic outcome by difficulty.
-SELECT p.qbot_difficulty, COUNT(*) AS games,
-       ROUND(100.0 * AVG(p.result = 'winner'), 1) AS win_percent,
-       ROUND(AVG(p.spice_harvested)) AS average_spice,
-       ROUND(AVG(p.military_value)) AS average_military_value
+-- Every participant and result from completed matches.
+SELECT m.started_at, m.game_type, m.map_name, p.player_name, p.house_name,
+       p.controller, p.result, p.spice_harvested
 FROM analytics_players AS p
 JOIN analytics_matches AS m USING (match_id)
-WHERE m.outcome = 'finished' AND p.controller = 'qbot'
-GROUP BY p.qbot_difficulty;
+WHERE m.ended_at IS NOT NULL
+ORDER BY m.started_at DESC, p.slot;
 
--- Unit mix against its actual reward-to-loss value ratio. item_id 9999 is
--- QBot's combined Devastator/Sonic Tank/Deviator "special" allocation.
-SELECT q.item_id, q.item_name, ROUND(AVG(q.target_weight_bps) / 100.0, 1) AS target_percent,
+-- Produced, killed and lost totals by type.
+SELECT i.item_name, i.item_kind,
+       SUM(i.produced) AS produced, SUM(i.killed) AS killed, SUM(i.lost) AS lost
+FROM analytics_player_items AS i
+JOIN analytics_matches AS m USING (match_id)
+WHERE m.outcome = 'finished'
+GROUP BY i.item_id, i.item_name, i.item_kind
+ORDER BY produced DESC;
+
+-- QBot unit mix against reward-to-loss value.
+SELECT q.item_id, q.item_name,
+       ROUND(AVG(q.target_weight_bps) / 100.0, 1) AS target_percent,
        SUM(q.built) AS built, SUM(q.lost) AS lost,
-       ROUND(1.0 * SUM(q.reward_milli) / NULLIF(SUM(q.lost_value) * 1000, 0), 3) AS reward_per_loss
+       ROUND(1.0 * SUM(q.reward_milli) / NULLIF(SUM(q.lost_value) * 1000, 0), 3)
+           AS reward_per_loss
 FROM analytics_qbot_units AS q
 JOIN analytics_matches AS m USING (match_id)
 WHERE m.outcome = 'finished'
-GROUP BY q.item_id, q.item_name
-ORDER BY target_percent DESC;
+GROUP BY q.item_id, q.item_name;
 ```
 
-The per-house summary also includes final credits, spice, production/loss
-counts, military value, and, in Dune City matches, population and average land
-value. No player names, IP addresses, chat, or local decision logs enter this
-database.
+Display names are the same names already advertised when multiplayer begins.
+IP addresses, chat, and local decision logs are not stored.
 
-PHP's SQLite PDO driver (`php-sqlite3`) is the preferred runtime. The Docker
-image and new-droplet setup install it. Existing restricted droplets without
-that package use the bundled Python `sqlite3` helper for the same schema and
-transactions; match events are infrequent, so the per-event helper process is
-small and avoids granting the deployment key root access. Administrators can
-switch those hosts back to PDO with:
-
-```sh
-sudo apt-get install php-sqlite3 && sudo systemctl restart apache2
-```
+PHP's SQLite PDO driver (`php-sqlite3`) is preferred. Existing restricted hosts
+without it use the bundled Python `sqlite3` helper with the same schema and
+transactions.

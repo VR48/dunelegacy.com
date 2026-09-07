@@ -972,10 +972,13 @@ function handleGameStart() {
         return;
     }
 
-    // Legacy clients have no end-of-game event or structured payload.  Keep a
-    // start-only row so historical versions remain represented without
-    // storing their player names or any game log.
-    analyticsRecordLegacyStart($secret, $map, $modName, $version, $players);
+    // Clients before structured match analytics have no end event. Keep their
+    // multiplayer player list as a start-only row. Newer clients submit their
+    // own start/end pair, so recording this announcement too would duplicate
+    // every multiplayer game.
+    if ($version === '' || version_compare($version, '1.0.583', '<')) {
+        analyticsRecordLegacyStart($secret, $map, $modName, $version, $players);
+    }
     
     // Send Discord notification
     sendGameStartNotification($map, $modName, $players, $version);
