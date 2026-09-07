@@ -976,7 +976,7 @@ function handleGameStart() {
     // multiplayer player list as a start-only row. Newer clients submit their
     // own start/end pair, so recording this announcement too would duplicate
     // every multiplayer game.
-    if ($version === '' || version_compare($version, '1.0.583', '<')) {
+    if ($version === '' || version_compare($version, '1.0.598', '<')) {
         analyticsRecordLegacyStart($secret, $map, $modName, $version, $players);
     }
     

@@ -66,7 +66,7 @@ The database has four tables:
 - `analytics_qbot_units`: QBot allocation and combat performance data.
 
 Start and end are idempotent upserts. An end event can create a completed record
-if its start was lost. Clients older than 1.0.583 still create a start-only row
+if its start was lost. Clients older than 1.0.598 still create a start-only row
 from their existing `House: Player` multiplayer list. New clients use the
 structured pair, avoiding duplicate multiplayer rows while preserving the
 Discord notification and `stats.json` behaviour.
