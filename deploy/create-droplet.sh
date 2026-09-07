@@ -29,6 +29,7 @@ packages:
   - php
   - libapache2-mod-php
   - php-cli
+  - php-sqlite3
   - git
   - rsync
 
@@ -211,4 +212,3 @@ echo "🎉 Done! Your metaserver droplet is ready!"
 
 # Clean up
 rm /tmp/cloud-config.yml
-

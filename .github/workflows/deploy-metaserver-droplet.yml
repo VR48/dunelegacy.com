@@ -27,6 +27,11 @@ jobs:
 
       - name: Validate browser security policy
         run: python3 deploy/check-web-security.py
+
+      - name: Validate metaserver PHP
+        run: |
+          php -l metaserver/metaserver.php
+          php -l metaserver/analytics.php
       
       - name: Configure verified SSH transport
         env:
@@ -96,6 +101,10 @@ jobs:
         run: |
           set -euo pipefail
           curl --fail --silent --show-error --retry 5 --retry-delay 2 \
+            --data 'command=gamestats&phase=health' \
+            https://dunelegacy.com/metaserver/metaserver.php \
+            | grep -qx 'OK'
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 \
             --dump-header /tmp/play-headers --output /dev/null https://dunelegacy.com/play/
           grep -qi '^strict-transport-security: max-age=' /tmp/play-headers
           grep -qi '^content-security-policy:.*default-src.*none' /tmp/play-headers
@@ -106,4 +115,3 @@ jobs:
           fi
           curl --fail --silent --show-error --head https://dunelegacy.com/play/dunecity.wasm \
             | grep -qi '^content-type: application/wasm'
-
