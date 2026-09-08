@@ -10,6 +10,7 @@ bounded JSON request on stdin and never emits or stores client log streams.
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import sys
 import time
@@ -171,7 +172,14 @@ def fields(payload: dict[str, Any]) -> dict[str, Any]:
 
 def open_database(database_path: str) -> sqlite3.Connection:
     path = Path(database_path)
+    os.umask(0o007)
     path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        path.parent.chmod(0o2770)
+        if path.exists():
+            path.chmod(0o660)
+    except OSError:
+        pass
     connection = sqlite3.connect(path, timeout=3)
     connection.execute("PRAGMA journal_mode=WAL")
     connection.execute("PRAGMA synchronous=NORMAL")
@@ -184,6 +192,12 @@ def open_database(database_path: str) -> sqlite3.Connection:
     ):
         if column not in existing_columns:
             connection.execute(f"ALTER TABLE analytics_players ADD COLUMN {column} {definition}")
+    for related_path in (path, Path(f"{path}-wal"), Path(f"{path}-shm")):
+        try:
+            if related_path.exists():
+                related_path.chmod(0o660)
+        except OSError:
+            pass
     return connection
 
 

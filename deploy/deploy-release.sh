@@ -21,6 +21,9 @@ git -C "$REPOSITORY_ROOT" archive origin/main metaserver \
 python3 "$REPOSITORY_ROOT/deploy/check-web-security.py"
 rsync -a --delete --exclude='.well-known/' "$STAGING_ROOT/" "$WEB_ROOT/"
 
+install -d -m 0755 "$HOME/bin"
+install -m 0755 "$REPOSITORY_ROOT/deploy/query-analytics.py" "$HOME/bin/metaserver-sqlite"
+
 find "$WEB_ROOT" -type d -exec chmod 0755 {} +
 find "$WEB_ROOT" -type f -exec chmod 0644 {} +
 echo "Deployed $(git -C "$REPOSITORY_ROOT" rev-parse --short origin/main)"

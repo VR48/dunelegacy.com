@@ -28,6 +28,17 @@ function analyticsAvailable() {
     return class_exists('PDO') && in_array('sqlite', PDO::getAvailableDrivers(), true);
 }
 
+function analyticsPrepareDatabasePermissions() {
+    // The restricted deployment account is in www-data so administrators can
+    // query SQLite directly over SSH, including while WAL mode is active.
+    umask(0007);
+    $directory = dirname(ANALYTICS_DB_FILE);
+    if (is_dir($directory)) @chmod($directory, 02770);
+    foreach ([ANALYTICS_DB_FILE, ANALYTICS_DB_FILE . '-wal', ANALYTICS_DB_FILE . '-shm'] as $path) {
+        if (is_file($path)) @chmod($path, 0660);
+    }
+}
+
 function analyticsPythonHelper() {
     $helper = __DIR__ . '/analytics_store.py';
     return is_file($helper) && is_readable($helper) && function_exists('proc_open') ? $helper : null;
@@ -69,6 +80,7 @@ function analyticsDatabase() {
     if ($database !== null) {
         return $database;
     }
+    analyticsPrepareDatabasePermissions();
     if (!analyticsAvailable()) {
         return null;
     }
@@ -83,6 +95,7 @@ function analyticsDatabase() {
         $database->exec('PRAGMA foreign_keys=ON');
         $database->exec('PRAGMA busy_timeout=3000');
         analyticsMigrate($database);
+        analyticsPrepareDatabasePermissions();
         return $database;
     } catch (Throwable $error) {
         error_log('Metaserver analytics unavailable: ' . $error->getMessage());

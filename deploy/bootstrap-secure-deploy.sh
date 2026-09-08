@@ -46,7 +46,7 @@ install -d -m 0755 -o "$DEPLOY_USER" -g www-data "$WEB_ROOT"
 chown -R "$DEPLOY_USER:www-data" "$WEB_ROOT"
 rm -rf "$WEB_ROOT/.git"
 
-install -d -m 0750 -o www-data -g www-data "$DATA_ROOT"
+install -d -m 2770 -o www-data -g www-data "$DATA_ROOT"
 touch "$DATA_ROOT/discord_webhook.txt"
 chown "$DEPLOY_USER:www-data" "$DATA_ROOT/discord_webhook.txt"
 chmod 0640 "$DATA_ROOT/discord_webhook.txt"
