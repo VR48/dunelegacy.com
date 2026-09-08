@@ -2,6 +2,11 @@ name: Export latest analytics
 
 on:
   workflow_dispatch:
+    inputs:
+      local_public_key:
+        description: Public key to authorize on the restricted deployment account
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -26,6 +31,27 @@ jobs:
           printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
           ssh-keygen -F "$DROPLET_IP" -f ~/.ssh/known_hosts >/dev/null
+          ssh-keygen -lf ~/.ssh/known_hosts
+
+      - name: Authorize the dedicated local key
+        env:
+          DROPLET_IP: ${{ secrets.METASERVER_DROPLET_IP }}
+          LOCAL_PUBLIC_KEY: ${{ inputs.local_public_key }}
+        run: |
+          set -euo pipefail
+          SSH_ARGS=(-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
+          printf '%s\n' "$LOCAL_PUBLIC_KEY" > /tmp/local-metaserver.pub
+          ssh-keygen -lf /tmp/local-metaserver.pub
+          scp "${SSH_ARGS[@]}" /tmp/local-metaserver.pub \
+            dunelegacy-deploy@"$DROPLET_IP":/home/dunelegacy-deploy/local-metaserver.pub
+          ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" '
+            set -e
+            auth="$HOME/.ssh/authorized_keys"
+            entry="restrict $(cat "$HOME/local-metaserver.pub")"
+            grep -Fqx "$entry" "$auth" || printf "%s\n" "$entry" >> "$auth"
+            chmod 600 "$auth"
+            rm -f "$HOME/local-metaserver.pub"
+          '
 
       - name: Export latest completed match
         env:
