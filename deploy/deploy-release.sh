@@ -22,7 +22,9 @@ python3 "$REPOSITORY_ROOT/deploy/check-web-security.py"
 rsync -a --delete --exclude='.well-known/' "$STAGING_ROOT/" "$WEB_ROOT/"
 
 install -d -m 0755 "$HOME/bin"
-install -m 0755 "$REPOSITORY_ROOT/deploy/query-analytics.py" "$HOME/bin/metaserver-sqlite"
+git -C "$REPOSITORY_ROOT" show origin/main:deploy/query-analytics.py \
+    > "$HOME/bin/metaserver-sqlite"
+chmod 0755 "$HOME/bin/metaserver-sqlite"
 
 find "$WEB_ROOT" -type d -exec chmod 0755 {} +
 find "$WEB_ROOT" -type f -exec chmod 0644 {} +
