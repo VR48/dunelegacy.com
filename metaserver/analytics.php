@@ -142,6 +142,10 @@ function analyticsMigrate(PDO $database) {
         house_name TEXT,
         team INTEGER,
         controller TEXT,
+        player_class TEXT,
+        ai_type TEXT,
+        ai_difficulty TEXT,
+        ai_support INTEGER,
         qbot_difficulty TEXT,
         result TEXT,
         final_credits INTEGER,
@@ -190,6 +194,10 @@ function analyticsMigrate(PDO $database) {
     analyticsEnsureColumn($database, 'analytics_players', 'player_id', 'INTEGER');
     analyticsEnsureColumn($database, 'analytics_players', 'player_name', 'TEXT');
     analyticsEnsureColumn($database, 'analytics_players', 'house_slot', 'INTEGER');
+    analyticsEnsureColumn($database, 'analytics_players', 'player_class', 'TEXT');
+    analyticsEnsureColumn($database, 'analytics_players', 'ai_type', 'TEXT');
+    analyticsEnsureColumn($database, 'analytics_players', 'ai_difficulty', 'TEXT');
+    analyticsEnsureColumn($database, 'analytics_players', 'ai_support', 'INTEGER');
     $database->exec('CREATE INDEX IF NOT EXISTS analytics_matches_started_idx ON analytics_matches(started_at)');
     $database->exec('CREATE INDEX IF NOT EXISTS analytics_matches_mode_idx ON analytics_matches(game_type, mod_name)');
     $database->exec('CREATE INDEX IF NOT EXISTS analytics_qbot_units_item_idx ON analytics_qbot_units(item_id)');
@@ -245,7 +253,7 @@ function analyticsMatchFields(array $payload) {
     foreach ($players as $player) {
         if (!is_array($player)) continue;
         if (($player['controller'] ?? null) === 'human') ++$humanCount;
-        if (($player['controller'] ?? null) === 'qbot') ++$qbotCount;
+        if (($player['controller'] ?? null) === 'qbot' || ($player['ai_type'] ?? null) === 'qbot') ++$qbotCount;
     }
     return [
         'schema_version' => analyticsInt($payload['schema_version'] ?? 0, 0, 1000) ?? 0,
@@ -276,10 +284,11 @@ function analyticsStorePlayers(PDO $database, $matchId, array $players, $replace
         $delete->execute([$matchId]);
     }
     $insert = $database->prepare('INSERT OR REPLACE INTO analytics_players
-        (match_id, slot, player_id, player_name, house_slot, house_id, house_name, team, controller, qbot_difficulty, result,
+        (match_id, slot, player_id, player_name, house_slot, house_id, house_name, team, controller,
+         player_class, ai_type, ai_difficulty, ai_support, qbot_difficulty, result,
          final_credits, spice_harvested, units_built, structures_built, units_destroyed,
          structures_destroyed, units_lost, structures_lost, military_value, city_population, city_value)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $itemInsert = $database->prepare('INSERT OR REPLACE INTO analytics_player_items
         (match_id, slot, item_id, item_name, item_kind, produced, killed, lost)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
@@ -292,12 +301,17 @@ function analyticsStorePlayers(PDO $database, $matchId, array $players, $replace
         if (!is_array($player)) continue;
         $slot = analyticsInt($player['slot'] ?? $slot, 0, ANALYTICS_MAX_PLAYERS - 1);
         $controller = analyticsString($player['controller'] ?? 'unknown', 32);
+        $aiType = analyticsString($player['ai_type'] ?? null, 32);
+        if ($aiType === null && $controller === 'qbot') $aiType = 'qbot';
+        $aiDifficulty = analyticsString($player['ai_difficulty'] ?? ($player['qbot_difficulty'] ?? null), 32);
         $insert->execute([
             $matchId, $slot, analyticsInt($player['player_id'] ?? null, 0, 255),
             analyticsString($player['player_name'] ?? null), analyticsInt($player['house_slot'] ?? null, 0, 255),
             analyticsInt($player['house_id'] ?? null, 0, 255),
             analyticsString($player['house_name'] ?? null), analyticsInt($player['team'] ?? null, -1, 255),
-            $controller, analyticsString($player['qbot_difficulty'] ?? null, 32),
+            $controller, analyticsString($player['player_class'] ?? null, 64), $aiType, $aiDifficulty,
+            ($player['ai_support'] ?? false) === true ? 1 : 0,
+            analyticsString($player['qbot_difficulty'] ?? ($aiType === 'qbot' ? $aiDifficulty : null), 32),
             analyticsString($player['result'] ?? null, 16), analyticsInt($player['final_credits'] ?? null),
             analyticsInt($player['spice_harvested'] ?? null, 0), analyticsInt($player['units_built'] ?? null, 0),
             analyticsInt($player['structures_built'] ?? null, 0), analyticsInt($player['units_destroyed'] ?? null, 0),

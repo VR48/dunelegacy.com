@@ -17,7 +17,7 @@ stats=<JSON object, maximum 64 KiB>
 `command=gamestats&phase=health` opens and migrates the database without
 creating a match row.
 
-Schema version 2 uses the existing multiplayer player list as its base. The
+Schema version 3 uses the existing multiplayer player list as its base. The
 start event contains the map, mod, version, and one row per actual player:
 
 ```json
@@ -37,6 +37,7 @@ start event contains the map, mod, version, and one row per actual player:
       "house_name": "Atreides",
       "team": 1,
       "controller": "human",
+      "player_class": "HumanPlayer",
       "shared_house_players": 1
     }
   ]
@@ -60,10 +61,16 @@ The database has four tables:
 
 - `analytics_matches`: map, mode, version, timing, and the bounded start/end JSON.
 - `analytics_players`: one row per actual player, with the same display name and
-  house association already sent by multiplayer `gamestart`.
+  house association already sent by multiplayer `gamestart`. `player_class`
+  preserves the exact controller implementation. AI rows also contain normalized
+  `ai_type`, `ai_difficulty`, and `ai_support` fields. These identify QBot,
+  Mentat, classic AI, Campaign AI, and SmartBot independently of optional
+  algorithm-specific metrics.
 - `analytics_player_items`: per-player/house production, kill and loss counts for
   every unit and building type used in the match.
-- `analytics_qbot_units`: QBot allocation and combat performance data.
+- `analytics_qbot_units`: optional QBot allocation and combat performance data.
+  Other AI implementations have ordinary player and per-item rows without
+  fabricated allocation ratios.
 
 Start and end are idempotent upserts. An end event can create a completed record
 if its start was lost. Clients older than 1.0.598 still create a start-only row
@@ -76,7 +83,8 @@ Example queries:
 ```sql
 -- Every participant and result from completed matches.
 SELECT m.started_at, m.game_type, m.map_name, p.player_name, p.house_name,
-       p.controller, p.result, p.spice_harvested
+       p.controller, p.player_class, p.ai_type, p.ai_difficulty,
+       p.result, p.spice_harvested
 FROM analytics_players AS p
 JOIN analytics_matches AS m USING (match_id)
 WHERE m.ended_at IS NOT NULL

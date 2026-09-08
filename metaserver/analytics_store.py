@@ -63,6 +63,10 @@ CREATE TABLE IF NOT EXISTS analytics_players (
     house_name TEXT,
     team INTEGER,
     controller TEXT,
+    player_class TEXT,
+    ai_type TEXT,
+    ai_difficulty TEXT,
+    ai_support INTEGER,
     qbot_difficulty TEXT,
     result TEXT,
     final_credits INTEGER,
@@ -143,7 +147,11 @@ def fields(payload: dict[str, Any]) -> dict[str, Any]:
     players = payload.get("players")
     players = players[:MAX_PLAYERS] if isinstance(players, list) else []
     human_count = sum(isinstance(player, dict) and player.get("controller") == "human" for player in players)
-    qbot_count = sum(isinstance(player, dict) and player.get("controller") == "qbot" for player in players)
+    qbot_count = sum(
+        isinstance(player, dict)
+        and (player.get("controller") == "qbot" or player.get("ai_type") == "qbot")
+        for player in players
+    )
     outcome = text(payload.get("outcome", summary.get("outcome")), 16)
     if outcome not in {"finished", "abandoned"}:
         outcome = "finished"
@@ -188,7 +196,9 @@ def open_database(database_path: str) -> sqlite3.Connection:
     connection.executescript(SCHEMA)
     existing_columns = {row[1] for row in connection.execute("PRAGMA table_info(analytics_players)")}
     for column, definition in (
-        ("player_id", "INTEGER"), ("player_name", "TEXT"), ("house_slot", "INTEGER")
+        ("player_id", "INTEGER"), ("player_name", "TEXT"), ("house_slot", "INTEGER"),
+        ("player_class", "TEXT"), ("ai_type", "TEXT"), ("ai_difficulty", "TEXT"),
+        ("ai_support", "INTEGER")
     ):
         if column not in existing_columns:
             connection.execute(f"ALTER TABLE analytics_players ADD COLUMN {column} {definition}")
@@ -207,10 +217,11 @@ def store_players(connection: sqlite3.Connection, match_id: str, payload: dict[s
     if not isinstance(players, list):
         return
     player_sql = """INSERT OR REPLACE INTO analytics_players
-        (match_id, slot, player_id, player_name, house_slot, house_id, house_name, team, controller, qbot_difficulty, result,
+        (match_id, slot, player_id, player_name, house_slot, house_id, house_name, team, controller,
+         player_class, ai_type, ai_difficulty, ai_support, qbot_difficulty, result,
          final_credits, spice_harvested, units_built, structures_built, units_destroyed,
          structures_destroyed, units_lost, structures_lost, military_value, city_population, city_value)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
     item_sql = """INSERT OR REPLACE INTO analytics_player_items
         (match_id, slot, item_id, item_name, item_kind, produced, killed, lost)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
@@ -225,12 +236,18 @@ def store_players(connection: sqlite3.Connection, match_id: str, payload: dict[s
         if slot is None:
             continue
         controller = text(player.get("controller", "unknown"), 32)
+        ai_type = text(player.get("ai_type"), 32)
+        if ai_type is None and controller == "qbot":
+            ai_type = "qbot"
+        ai_difficulty = text(player.get("ai_difficulty", player.get("qbot_difficulty")), 32)
         connection.execute(player_sql, (
             match_id, slot, integer(player.get("player_id"), 0, 255), text(player.get("player_name")),
             integer(player.get("house_slot"), 0, 255), integer(player.get("house_id"), 0, 255),
             text(player.get("house_name")),
-            integer(player.get("team"), -1, 255), controller,
-            text(player.get("qbot_difficulty"), 32), text(player.get("result"), 16),
+            integer(player.get("team"), -1, 255), controller, text(player.get("player_class"), 64),
+            ai_type, ai_difficulty, 1 if player.get("ai_support") is True else 0,
+            text(player.get("qbot_difficulty", ai_difficulty if ai_type == "qbot" else None), 32),
+            text(player.get("result"), 16),
             integer(player.get("final_credits")), integer(player.get("spice_harvested"), 0),
             integer(player.get("units_built"), 0), integer(player.get("structures_built"), 0),
             integer(player.get("units_destroyed"), 0), integer(player.get("structures_destroyed"), 0),
