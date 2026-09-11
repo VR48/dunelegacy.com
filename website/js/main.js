@@ -14,141 +14,56 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-const DUNECITY_RELEASES_API = 'https://api.github.com/repos/VR48/dunecity/releases?per_page=100';
-const SOURCEFORGE_STATS_API = 'https://sourceforge.net/projects/dunelegacy/files/stats/json?start_date=2009-01-01&end_date=2030-12-31';
-
-// Download count display (progressive enhancement)
-document.addEventListener('DOMContentLoaded', () => {
-    const githubData = fetchLiveDownloadCounts()
-        .catch(() => fetch('data/downloads.json')
-            .then(r => r.ok ? r.json() : Promise.reject(r.status)))
-        .catch(() => null);
-
-    const sfData = fetchSourceForgeStats().catch(() => null);
-
-    Promise.all([githubData, sfData])
-        .then(([gh, sf]) => renderDownloadCounts(gh, sf));
-});
-
-function fetchLiveDownloadCounts() {
-    return fetch(DUNECITY_RELEASES_API, {
-        headers: {
-            'Accept': 'application/vnd.github+json'
+// Serve a verified server-collected snapshot: no visitor API limits or CORS dependency.
+async function refreshDownloadStatistics() {
+    const status = document.getElementById('stats-updated');
+    try {
+        const response = await fetch('data/download-stats.json', {cache: 'no-store'});
+        if (!response.ok) throw new Error('Statistics unavailable');
+        const stats = await response.json();
+        for (const key of ['total', 'year', 'month', 'day']) {
+            const target = document.querySelector(`[data-stat="${key}"]`);
+            if (!target) continue;
+            target.textContent = stats[key] ? 'At least ' + formatCount(stats[key].total) : 'Collecting';
         }
-    })
-        .then(r => r.ok ? r.json() : Promise.reject(r.status))
-        .then(releases => {
-            if (!Array.isArray(releases) || releases.length === 0) {
-                return Promise.reject('no releases');
-            }
-
-            const normalized = releases.map(release => {
-                const assets = (release.assets || []).map(asset => ({
-                    name: asset.name,
-                    download_count: asset.download_count || 0,
-                    size: asset.size || 0
-                }));
-
-                return {
-                    tag: release.tag_name,
-                    name: release.name,
-                    published_at: release.published_at,
-                    total_downloads: assets.reduce((sum, asset) => sum + asset.download_count, 0),
-                    assets
-                };
-            });
-
-            return {
-                generated: new Date().toISOString(),
-                repository: 'VR48/dunecity',
-                latest_release: normalized[0],
-                all_releases_total: normalized.reduce((sum, release) => sum + release.total_downloads, 0),
-                releases: normalized
-            };
-        });
-}
-
-function fetchSourceForgeStats() {
-    return fetch(SOURCEFORGE_STATS_API)
-        .then(r => r.ok ? r.json() : Promise.reject(r.status))
-        .then(data => {
-            // SourceForge returns { oses: { "Windows": N, "Linux": N, "Mac": N, ... }, total: N }
-            const oses = data.oses || {};
-            const total = data.total || 0;
-
-            // Calculate avg downloads/month from start_date to now
-            const startDate = new Date('2009-01-01');
-            const months = Math.max(1, (Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44));
-            const avgPerMonth = Math.round(total / months);
-
-            return {
-                windows: oses['Windows'] || 0,
-                macos: oses['Mac'] || 0,
-                linux: (oses['Linux'] || 0) + (oses['BSD'] || 0),
-                total,
-                avgPerMonth
-            };
-        });
-}
-
-function renderDownloadCounts(ghData, sfData) {
-    // GitHub per-platform counts (Dune City — all releases)
-    const gh = { windows: 0, macos: 0, linux: 0, android: 0, total: 0 };
-    if (ghData && ghData.releases) {
-        for (const release of ghData.releases) {
-            for (const asset of release.assets) {
-                const name = asset.name.toLowerCase();
-                if (name.includes('windows')) gh.windows += asset.download_count;
-                else if (name.includes('macos')) gh.macos += asset.download_count;
-                else if (name.includes('linux')) gh.linux += asset.download_count;
-                else if (name.endsWith('.apk')) gh.android += asset.download_count;
+        if (stats.day) {
+            document.getElementById('stats-day-note')?.replaceChildren(document.createTextNode(
+                'Since ' + new Date(stats.day.since).toLocaleString()));
+        }
+        const updated = new Date(stats.generated);
+        const stale = Date.now() - updated.getTime() > 3 * 60 * 60 * 1000;
+        if (status) {
+            status.textContent = (stale ? 'Update delayed · Last successful update: ' : 'Updated hourly · Last updated: ') + updated.toLocaleString();
+            status.classList.toggle('stats-stale', stale);
+        }
+        const source = document.getElementById('stats-sources');
+        if (source) source.textContent = 'Recorded totals: SourceForge ' + formatCount(stats.total.sourceforge) + ' · GitHub at least ' + formatCount(stats.total.github) + '.';
+        const table = document.getElementById('stats-years');
+        if (table) {
+            table.replaceChildren();
+            for (const year of stats.years) {
+                const row = document.createElement('tr');
+                [year.year, formatCount(year.sourceforge), year.github === null ? 'Not tracked' : 'At least ' + formatCount(year.github), year.total === null ? 'Incomplete' : 'At least ' + formatCount(year.total)].forEach((value, index) => {
+                    const cell = document.createElement(index === 0 ? 'th' : 'td');
+                    if (index === 0) cell.scope = 'row';
+                    cell.textContent = value;
+                    row.append(cell);
+                });
+                table.append(row);
             }
         }
-        gh.total = ghData.all_releases_total || 0;
-    }
-
-    // SourceForge counts (Dune Legacy)
-    const sf = sfData || { windows: 0, macos: 0, linux: 0, total: 0, avgPerMonth: 0 };
-
-    // Per-card counts show Dune City (GitHub) downloads only
-    document.querySelectorAll('.download-card[data-platform]').forEach(card => {
-        const p = card.dataset.platform;
-        let count = 0;
-        if (p === 'windows') count = gh.windows;
-        else if (p === 'macos') count = gh.macos;
-        else if (p === 'linux') count = gh.linux;
-        else if (p === 'android') count = gh.android;
-
-        const el = card.querySelector('.download-count');
-        if (el) {
-            el.textContent = formatCount(count) + ' downloads';
-        }
-    });
-
-    // Dune City total
-    document.querySelectorAll('.download-dunecity-total').forEach(el => {
-        el.textContent = formatCount(gh.total) + ' total Dune City downloads';
-    });
-
-    // Dune Legacy total (SourceForge) with avg/month
-    if (sf.total > 0) {
-        const avgText = sf.avgPerMonth > 0
-            ? ' (' + formatCount(sf.avgPerMonth) + ' avg/month)'
-            : '';
-        document.querySelectorAll('.download-legacy-total').forEach(el => {
-            el.textContent = formatCount(sf.total) + ' total Dune Legacy downloads' + avgText;
+        document.querySelectorAll('.download-card[data-platform]').forEach(card => {
+            const target = card.querySelector('.download-count');
+            const count = stats.platforms[card.dataset.platform];
+            if (target && Number.isFinite(count)) target.textContent = formatCount(count) + ' recorded GitHub downloads';
         });
-    }
-
-    // Latest release count badges
-    if (ghData && ghData.latest_release) {
-        document.querySelectorAll('.download-latest-count').forEach(el => {
-            el.textContent = formatCount(ghData.latest_release.total_downloads) + ' downloads this release';
-        });
+    } catch (error) {
+        if (status) status.textContent = 'Download statistics are temporarily unavailable. Please try again later.';
     }
 }
+document.addEventListener('DOMContentLoaded', refreshDownloadStatistics);
+setInterval(refreshDownloadStatistics, 15 * 60 * 1000);
 
-function formatCount(n) {
-    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
-    return n.toLocaleString();
+function formatCount(value) {
+    return Number(value).toLocaleString();
 }

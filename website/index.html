@@ -100,6 +100,33 @@
         </div>
     </section>
 
+    <section id="download-statistics" class="section download-statistics" aria-labelledby="stats-title">
+        <div class="container">
+            <h2 id="stats-title">Dune downloads</h2>
+            <p class="stats-intro">Dune Legacy &amp; Dune City across GitHub and SourceForge.</p>
+            <div class="stats-grid">
+                <article class="stat-card"><h3>Total downloads</h3><strong data-stat="total">—</strong><p>All recorded downloads</p></article>
+                <article class="stat-card"><h3>This year</h3><strong data-stat="year">—</strong><p>Since 1 January (UTC)</p></article>
+                <article class="stat-card"><h3>Last 30 days</h3><strong data-stat="month">—</strong><p>Including today so far</p></article>
+                <article class="stat-card"><h3>Last 24 hours</h3><strong data-stat="day">—</strong><p id="stats-day-note">Building a full day of history</p></article>
+            </div>
+            <p id="stats-updated" role="status">Loading download statistics…</p>
+            <noscript><p>Enable JavaScript to see the latest download statistics.</p></noscript>
+            <details class="stats-details">
+                <summary>Downloads by year &amp; how we count</summary>
+                <div class="stats-table-wrap"><table>
+                    <caption>Calendar years, including the current year so far</caption>
+                    <thead><tr><th scope="col">Year</th><th scope="col">SourceForge</th><th scope="col">GitHub</th><th scope="col">Combined</th></tr></thead>
+                    <tbody id="stats-years"></tbody>
+                </table></div>
+                <p id="stats-sources"></p>
+                <p>Counts are file downloads, including updates, repeat downloads, automated downloads and supporting files—not unique players. “At least” means a known minimum: historical GitHub downloads cannot all be assigned to dates, and deleted files may predate our tracking. “Not tracked” is missing history, not zero.</p>
+                <p>Collected hourly. SourceForge reporting can lag; the 24-hour count uses snapshots up to 90 minutes apart from the target boundary. Failed updates retain the last good figures, with a freshness warning after three hours.</p>
+                <p><a href="https://sourceforge.net/projects/dunelegacy/files/stats/timeline">SourceForge statistics</a> · <a href="https://github.com/VR48/dunecity/releases">GitHub releases</a></p>
+            </details>
+        </div>
+    </section>
+
     <section id="screenshots" class="section alt">
         <div class="container">
             <div class="screenshot-gallery">

@@ -571,3 +571,25 @@ footer a:hover {
         font-size: 1.5em;
     }
 }
+
+/* Download statistics */
+.download-statistics { background: var(--darker); }
+.stats-intro { color: #bbb; margin: 0 0 24px; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.stat-card { padding: 22px; border: 1px solid #54471e; border-radius: 8px; background: #201e17; }
+.stat-card h3 { font-size: 1rem; color: #ddd; margin-bottom: 12px; }
+.stat-card strong { display: block; color: var(--primary); font-size: clamp(1.25rem, 2vw, 1.8rem); font-variant-numeric: tabular-nums; }
+.stat-card p { color: #bbb; font-size: .85rem; margin: 8px 0 0; }
+#stats-updated { margin: 18px 0; color: #bbb; font-size: .9rem; }
+#stats-updated.stats-stale { color: #ffd18a; }
+.stats-details summary { color: var(--primary); cursor: pointer; padding: 8px 0; }
+.stats-details p { max-width: 900px; margin: 14px 0; color: #bbb; }
+.stats-table-wrap { overflow-x: auto; }
+.stats-details table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.stats-details caption { text-align: left; color: #bbb; padding-bottom: 10px; }
+.stats-details th, .stats-details td { text-align: right; padding: 12px; border-bottom: 1px solid #444; }
+.stats-details th:first-child { text-align: left; }
+@media (max-width: 850px) { .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .stat-card { padding: 14px; } .stat-card strong { font-size: 1.15rem; } }
+
+#download-statistics { scroll-margin-top: 120px; }
