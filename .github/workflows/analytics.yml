@@ -1,0 +1,32 @@
+name: Match analytics compatibility
+on:
+  push:
+    branches: [main]
+    paths: ['metaserver/analytics*', 'scripts/tests/test_analytics*', '.github/workflows/analytics.yml']
+  pull_request:
+    paths: ['metaserver/analytics*', 'scripts/tests/test_analytics*', '.github/workflows/analytics.yml']
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Test SQLite migration and old clients
+        run: python3 -m unittest discover -s scripts/tests -p 'test_analytics_runtime.py'
+      - name: Install PHP SQLite
+        run: sudo apt-get update && sudo apt-get install -y php-cli php-sqlite3
+      - name: Test PHP PDO and Python fallback
+        run: |
+          php -l metaserver/analytics.php
+          php -r 'if (!in_array("sqlite", PDO::getAvailableDrivers())) exit(1);'
+          mkdir -p /tmp/analytics-pdo /tmp/analytics-fallback
+          php scripts/tests/test_analytics_runtime.php /tmp/analytics-pdo/games.sqlite
+          php -n scripts/tests/test_analytics_runtime.php /tmp/analytics-fallback/games.sqlite
+          python3 - <<'PY'
+          import sqlite3
+          for backend in ('pdo', 'fallback'):
+              connection = sqlite3.connect(f'/tmp/analytics-{backend}/games.sqlite')
+              rows = connection.execute('SELECT match_id,client_runtime FROM analytics_matches ORDER BY match_id').fetchall()
+              assert rows == [('php-browser-test','browser'),('php-legacy-test','unknown'),('php-native-test','native')], rows
+          PY

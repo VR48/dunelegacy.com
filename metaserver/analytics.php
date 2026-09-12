@@ -120,6 +120,7 @@ function analyticsMigrate(PDO $database) {
         mod_name TEXT,
         mod_version TEXT,
         game_version TEXT,
+        client_runtime TEXT NOT NULL DEFAULT "unknown",
         player_count INTEGER,
         human_count INTEGER,
         qbot_count INTEGER,
@@ -190,6 +191,9 @@ function analyticsMigrate(PDO $database) {
         PRIMARY KEY (match_id, slot, item_id),
         FOREIGN KEY (match_id, slot) REFERENCES analytics_players(match_id, slot) ON DELETE CASCADE
     )');
+    // Missing runtime remains unknown: older clients and historical records
+    // cannot be reliably classified as native or browser.
+    analyticsEnsureColumn($database, 'analytics_matches', 'client_runtime', "TEXT NOT NULL DEFAULT 'unknown'");
     // CREATE TABLE IF NOT EXISTS does not add columns to existing deployments.
     analyticsEnsureColumn($database, 'analytics_players', 'player_id', 'INTEGER');
     analyticsEnsureColumn($database, 'analytics_players', 'player_name', 'TEXT');
@@ -245,6 +249,10 @@ function analyticsMatchId($value) {
     return ($value !== null && preg_match('/^[A-Za-z0-9._-]{12,96}$/', $value)) ? $value : null;
 }
 
+function analyticsClientRuntime($value) {
+    return in_array($value, ['browser', 'native'], true) ? $value : null;
+}
+
 function analyticsMatchFields(array $payload) {
     $summary = is_array($payload['summary'] ?? null) ? $payload['summary'] : [];
     $players = is_array($payload['players'] ?? null) ? array_slice($payload['players'], 0, ANALYTICS_MAX_PLAYERS) : [];
@@ -265,6 +273,7 @@ function analyticsMatchFields(array $payload) {
         'mod_name' => analyticsString($payload['mod']['name'] ?? ($payload['mod_name'] ?? 'vanilla')),
         'mod_version' => analyticsString($payload['mod']['version'] ?? null),
         'game_version' => analyticsString($payload['game_version'] ?? null),
+        'client_runtime' => analyticsClientRuntime($payload['client_runtime'] ?? null),
         'player_count' => analyticsInt($summary['player_count'] ?? count($players), 0, ANALYTICS_MAX_PLAYERS),
         'human_count' => analyticsInt($summary['human_count'] ?? $humanCount, 0, ANALYTICS_MAX_PLAYERS),
         'qbot_count' => analyticsInt($summary['qbot_count'] ?? $qbotCount, 0, ANALYTICS_MAX_PLAYERS),
@@ -402,6 +411,9 @@ function analyticsRecordMatch($phase, $matchId, array $payload, $source = 'v1') 
                 $fields['total_structures_destroyed'], $json]);
             analyticsStorePlayers($database, $matchId, is_array($payload['players'] ?? null) ? $payload['players'] : [], true);
         }
+        // Preserve a known runtime if an older/retried event omits the field.
+        $runtime = $database->prepare('UPDATE analytics_matches SET client_runtime = COALESCE(?, client_runtime) WHERE match_id = ?');
+        $runtime->execute([$fields['client_runtime'], $matchId]);
         $database->commit();
         return true;
     } catch (Throwable $error) {
@@ -455,8 +467,8 @@ function analyticsSummary() {
 }
 
 function handleGameStats() {
-    // Structured native clients use POST to keep the payload below Apache's request
-    // line limit. Accept GET too for the browser fallback and manual probes.
+    // Clients use POST to avoid request-line limits. Keep GET compatible with
+    // older clients and manual probes.
     $request = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
     $phase = $request['phase'] ?? '';
     if ($phase === 'health') {

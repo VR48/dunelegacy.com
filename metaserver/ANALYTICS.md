@@ -1,7 +1,7 @@
 # Metaserver match analytics
 
 `metaserver.php?command=gamestats` accepts one compact JSON record when a game
-starts and one when it ends. Native clients submit HTTP POST requests. The
+starts and one when it ends. Native and browser clients submit HTTP POST requests. The
 server expands the records into SQLite at `$DATA_DIR/games.sqlite`; it never
 accepts the local AI decision log.
 
@@ -22,7 +22,8 @@ start event contains the map, mod, version, and one row per actual player:
 
 ```json
 {
-  "schema_version": 2,
+  "schema_version": 3,
+  "client_runtime": "browser",
   "game_type": "multiplayer",
   "game_version": "1.0.598",
   "map": { "name": "Four Corners", "width": 64, "height": 64, "seed": 42 },
@@ -117,3 +118,37 @@ IP addresses, chat, and local decision logs are not stored.
 PHP's SQLite PDO driver (`php-sqlite3`) is preferred. Existing restricted hosts
 without it use the bundled Python `sqlite3` helper with the same schema and
 transactions.
+
+## Browser versus native runtime (1.0.655+)
+
+Schema 3 accepts the optional `client_runtime` field: `browser` or `native`.
+Both PHP/PDO and the Python fallback add `analytics_matches.client_runtime`
+using an additive migration with default `unknown`. Old clients, missing/invalid
+values and existing rows remain compatible. Historical rows cannot reliably be
+classified retroactively. Missing or invalid values on a later event do not
+erase a known runtime; end-only and retried events also retain it. `source`
+continues to identify the logging protocol, not the runtime. The marker is
+client-reported metadata, not an authenticated identity.
+
+Browser game start/end use a same-origin asynchronous POST queue with bounded
+retries, bypassing the native SDL worker thread. The URL-encoded body avoids GET
+length limits, and small requests use fetch keepalive. Closing/crashing a tab
+can still lose an end event; start-only rows must not be counted as completed
+games. No browser fingerprint, IP, new user identifier or local log is added.
+
+```sql
+SELECT client_runtime, COUNT(*) AS started,
+       SUM(ended_at IS NOT NULL) AS ended
+FROM analytics_matches
+GROUP BY client_runtime;
+
+SELECT match_id, game_version, game_type, map_name, started_at, ended_at
+FROM analytics_matches
+WHERE client_runtime = 'browser'
+ORDER BY started_at DESC;
+```
+
+Compatibility checks: `python3 -m unittest discover -s scripts/tests -p
+ 'test_analytics_runtime.py'`; PHP adapter checks run with
+`php scripts/tests/test_analytics_runtime.php /tmp/isolated-test/games.sqlite`.
+Never point the fixture at the production database.

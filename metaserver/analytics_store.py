@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS analytics_matches (
     mod_name TEXT,
     mod_version TEXT,
     game_version TEXT,
+    client_runtime TEXT NOT NULL DEFAULT 'unknown',
     player_count INTEGER,
     human_count INTEGER,
     qbot_count INTEGER,
@@ -165,6 +166,7 @@ def fields(payload: dict[str, Any]) -> dict[str, Any]:
         "mod_name": text(mod.get("name", payload.get("mod_name", "vanilla"))),
         "mod_version": text(mod.get("version")),
         "game_version": text(payload.get("game_version")),
+        "client_runtime": payload.get("client_runtime") if payload.get("client_runtime") in ("browser", "native") else None,
         "player_count": integer(summary.get("player_count", len(players)), 0, MAX_PLAYERS),
         "human_count": integer(summary.get("human_count", human_count), 0, MAX_PLAYERS),
         "qbot_count": integer(summary.get("qbot_count", qbot_count), 0, MAX_PLAYERS),
@@ -194,6 +196,9 @@ def open_database(database_path: str) -> sqlite3.Connection:
     connection.execute("PRAGMA foreign_keys=ON")
     connection.execute("PRAGMA busy_timeout=3000")
     connection.executescript(SCHEMA)
+    match_columns = {row[1] for row in connection.execute("PRAGMA table_info(analytics_matches)")}
+    if "client_runtime" not in match_columns:
+        connection.execute("ALTER TABLE analytics_matches ADD COLUMN client_runtime TEXT NOT NULL DEFAULT 'unknown'")
     existing_columns = {row[1] for row in connection.execute("PRAGMA table_info(analytics_players)")}
     for column, definition in (
         ("player_id", "INTEGER"), ("player_name", "TEXT"), ("house_slot", "INTEGER"),
@@ -339,6 +344,9 @@ def record(connection: sqlite3.Connection, request: dict[str, Any]) -> None:
                  data["qbot_count"], data["duration_cycles"], data["duration_seconds"], data["winning_house"],
                  data["total_spice_harvested"], data["total_units_destroyed"],
                  data["total_structures_destroyed"], encoded))
+        # A missing/invalid field from an older event must not erase a known runtime.
+        connection.execute("UPDATE analytics_matches SET client_runtime = COALESCE(?, client_runtime) WHERE match_id = ?",
+                           (data["client_runtime"], match_id))
         store_players(connection, match_id, payload)
 
 
