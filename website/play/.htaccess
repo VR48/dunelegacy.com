@@ -3,7 +3,7 @@ AddType application/octet-stream .data
 Options -Indexes
 
 <IfModule mod_headers.c>
-  Header always set Content-Security-Policy "default-src 'none'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'none'; script-src 'self' 'wasm-unsafe-eval'; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self'; connect-src 'self' https://api.github.com https://raw.githubusercontent.com; media-src 'self' blob:; font-src 'self'; worker-src 'self' blob:; frame-src 'none'; manifest-src 'self'; upgrade-insecure-requests"
+  Header always set Content-Security-Policy "default-src 'none'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'none'; script-src 'self' 'wasm-unsafe-eval'; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self'; connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://dunelegacy.com wss://dunelegacy.com; media-src 'self' blob:; font-src 'self'; worker-src 'self' blob:; frame-src 'none'; manifest-src 'self'; upgrade-insecure-requests"
   Header always set Cross-Origin-Opener-Policy "same-origin"
   Header always set Cross-Origin-Resource-Policy "same-origin"
   Header always set Origin-Agent-Cluster "?1"
