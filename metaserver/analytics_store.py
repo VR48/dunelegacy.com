@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sqlite3
 import sys
 import time
@@ -350,6 +351,36 @@ def record(connection: sqlite3.Connection, request: dict[str, Any]) -> None:
         store_players(connection, match_id, payload)
 
 
+def relay_record(connection: sqlite3.Connection, request: dict[str, Any]) -> None:
+    """Trusted service events only. The PHP endpoint authenticates before invoking this helper."""
+    event = request.get("event")
+    keys = {"schema_version", "event_id", "room_id", "kind", "occurred_at", "participant_id",
+            "client_runtime", "game_version", "reason"}
+    if not isinstance(event, dict) or set(event) != keys or type(event["schema_version"]) is not int or event["schema_version"] != 1:
+        raise ValueError("invalid relay event")
+    def matches(key: str, pattern: str) -> bool:
+        return isinstance(event[key], str) and re.fullmatch(pattern, event[key], flags=re.ASCII) is not None
+    if (not all(matches(key, r"[a-zA-Z0-9_-]{22,64}") for key in ("event_id", "room_id"))
+        or event["kind"] not in ("created", "joined", "started", "left", "closed")
+        or type(event["occurred_at"]) is not int or not 0 <= event["occurred_at"] <= 4102444800
+        or type(event["participant_id"]) is not int or not 0 <= event["participant_id"] <= 4294967295
+        or event["client_runtime"] not in ("browser", "native", "unknown")
+        or not matches("game_version", r"[a-zA-Z0-9._-]{0,64}")
+        or not matches("reason", r"[a-z0-9_-]{0,48}")):
+        raise ValueError("invalid relay event")
+    participant = event["kind"] in ("joined", "left")
+    if participant != (event["participant_id"] > 0) or (not participant and
+        (event["client_runtime"] != "unknown" or event["game_version"] != "")):
+        raise ValueError("invalid relay participant")
+    connection.executescript(Path(__file__).with_name("relay_analytics.sql").read_text())
+    with connection:
+        connection.execute("""INSERT OR IGNORE INTO analytics_relay_events
+            (event_id,room_id,kind,occurred_at,received_at,participant_id,client_runtime,game_version,reason)
+            VALUES (?,?,?,?,?,?,?,?,?)""",
+            (event["event_id"], event["room_id"], event["kind"], event["occurred_at"], int(time.time()),
+             event["participant_id"], event["client_runtime"], event["game_version"], event["reason"]))
+
+
 def summary(connection: sqlite3.Connection) -> dict[str, int]:
     row = connection.execute("""SELECT COUNT(*) AS started,
         SUM(CASE WHEN ended_at IS NOT NULL THEN 1 ELSE 0 END) AS finished,
@@ -360,7 +391,10 @@ def summary(connection: sqlite3.Connection) -> dict[str, int]:
 
 def main() -> int:
     try:
-        request = json.load(sys.stdin)
+        raw_request = sys.stdin.read(MAX_PAYLOAD_BYTES + 4097)
+        if len(raw_request.encode("utf-8")) > MAX_PAYLOAD_BYTES + 4096:
+            raise ValueError("request exceeds storage limit")
+        request = json.loads(raw_request)
         if not isinstance(request, dict):
             raise ValueError("request must be an object")
         database_path = request.get("database")
@@ -372,6 +406,9 @@ def main() -> int:
             if action == "record":
                 record(connection, request)
                 response: dict[str, Any] = {"ok": True}
+            elif action == "relay_record":
+                relay_record(connection, request)
+                response = {"ok": True}
             elif action in {"health", "summary"}:
                 response = {"ok": True, **summary(connection)}
             else:

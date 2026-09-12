@@ -152,3 +152,86 @@ Compatibility checks: `python3 -m unittest discover -s scripts/tests -p
  'test_analytics_runtime.py'`; PHP adapter checks run with
 `php scripts/tests/test_analytics_runtime.php /tmp/isolated-test/games.sqlite`.
 Never point the fixture at the production database.
+
+## Relay participants (additive, not deployed)
+
+`relay-events.php` is a separate service endpoint. Existing game clients and
+server-list responses are unchanged. The relay does not mount or open SQLite.
+The service records authenticated lifecycle events in `analytics_relay_events`;
+`analytics_relay_participants` is a queryable view over join/leave events. A
+mixed room has separate native and browser participant rows. The legacy
+`analytics_matches.client_runtime` remains the reporting client's metadata.
+A room's lifetime is not a completed match and must not be counted as one.
+
+The relay sends a POST with exactly these fields (maximum 4096 bytes):
+
+```json
+{
+  "schema_version": 1,
+  "event_id": "event-6e6a0fc80a754ff0a111741f1cf77794",
+  "room_id": "room-6474d59e947d473881de1e5766d24a9d",
+  "kind": "joined",
+  "occurred_at": 1789190000,
+  "participant_id": 1,
+  "client_runtime": "browser",
+  "game_version": "1.0.655",
+  "reason": ""
+}
+```
+
+`event_id` is a unique service-generated id reused on delivery retries.
+`room_id` is an internal service-generated identifier, **never the invitation
+code or admission ticket**. IDs contain 22–64 ASCII letters/digits/underscores/
+hyphens. Kinds are `created`, `joined`, `started`, `left`, `closed`. Joined/left
+require a positive service-assigned participant ID; other events use ID zero,
+runtime `unknown`, and an empty game version. Participant runtime is `browser`,
+`native` or `unknown` and remains explicitly **client reported**. Versions are
+at most 64 ASCII letters/digits/dots/underscores/hyphens. Reasons are at most 48
+lowercase letters/digits/underscores/hyphens and should be fixed reason codes.
+Extra fields are rejected, preventing accidental storage of packet bodies,
+chat or credentials. `transport=wss` and `source=relay_service_v1` are assigned
+by this trusted-service endpoint, not accepted from a game client's payload.
+This reflects the authenticated relay's observation; SQLite cannot verify a
+player's operating system or the relay's external TLS termination itself.
+
+Authentication uses a dedicated random server-only `DUNE_RELAY_ANALYTICS_KEY`
+(minimum 32 bytes of key text) configured in both services. Do not put it in
+WASM, JavaScript served to players, source control, query strings or logs.
+The relay signs the **exact UTF-8 body bytes**:
+
+```text
+X-Dune-Relay-Timestamp: <current 10-digit Unix seconds>
+X-Dune-Relay-Signature: lowercase_hex(HMAC-SHA256(key, timestamp + "\n" + body))
+```
+
+The endpoint fails closed when unconfigured. It checks the signature in
+constant time and accepts timestamps within five minutes. Replayed valid
+requests cannot duplicate or rewrite a row because `event_id` is a primary
+key and inserts never update existing events. Delivery retries use the same
+event body/id with a fresh request timestamp/signature. Out-of-order leave and
+join delivery remains queryable. Keep the relay's outbound queue bounded,
+retry only transient failures, and report aggregate delivery failures without
+logging credentials. Event delivery must not block the game loop.
+
+Before deployment, restrict this route to the relay service at the proxy/
+firewall, require HTTPS and normal certificate validation for a remote relay,
+apply a small request/rate limit, and configure a retention job for old events
+(e.g. a chosen 90-day retention). Loopback HTTP is suitable only for local tests
+or an explicitly secured same-host internal hop. Keep analytics service
+credentials separate from deployment/SSH credentials. This change creates no
+keys, server configuration, deployment, scheduled retention or public service.
+
+```sql
+SELECT room_id,
+       SUM(client_runtime = 'browser') AS browser_players,
+       SUM(client_runtime = 'native') AS native_players
+FROM analytics_relay_participants
+GROUP BY room_id
+HAVING browser_players > 0 AND native_players > 0;
+```
+
+Checks use temporary databases: `python3 -m unittest discover -s scripts/tests
+-p 'test_*analytics*.py'`, `php scripts/tests/test_relay_analytics.php`, and
+`php scripts/tests/test_relay_analytics.php --python`. The suite exercises the
+real HTTP boundary, both SQLite adapters, authentication failures, size/field
+limits, mixed rooms, duplicate/out-of-order events, and legacy record isolation.
