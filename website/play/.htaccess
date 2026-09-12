@@ -11,7 +11,7 @@ Options -Indexes
   Header always set X-Frame-Options "DENY"
 
   <FilesMatch "\.(wasm|data|js|css)$">
-    Header always set Cache-Control "public, max-age=3600, must-revalidate"
+    Header always set Cache-Control "public, max-age=0, must-revalidate"
   </FilesMatch>
   <FilesMatch "^(index\.html|build\.json)$">
     Header always set Cache-Control "no-store"

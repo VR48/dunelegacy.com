@@ -1,20 +1,21 @@
 {
-    "artifacts":  [
-                      "index.html",
-                      "shell.css",
-                      "shell.js",
-                      "dunecity.js",
-                      "dunecity.wasm",
-                      "dunecity.data"
-                  ],
-    "sha256":  {
-                   "index.html":  "0938521f131cefe5b4dac34a71f4d43340dd4e65a825de9a895bb80042b9ec10",
-                   "shell.css":  "710ae949a38cc3dfec7da47b38c39304e0a4a97b49048fa3e69af77b3cf8ca06",
-                   "shell.js":  "221607fa0f017adba246d10907ade78b60bfcf61fc1cab9bc9972879c58d8444",
-                   "dunecity.js":  "0143155cc8194b04e027193b89ad77206d5327f6ee6b32c3002c02917511af22",
-                   "dunecity.wasm":  "f6067988d59b1307c5c094add88b5e9c0b74e2945ac73b91218cc9d00fac6dab",
-                   "dunecity.data":  "b9436e6d16ccb1f8fcba476c79ff0353c43db092fd54f603ca2552182afa171d"
-               },
-    "version":  "1.0.535",
-    "builtAtUtc":  "2026-09-06T04:22:56.9698813Z"
+  "version": "1.0.654",
+  "sourceCommit": "fccf978e8e50f4f023487c4bd4cc3cd8ecff551f",
+  "builtAtUtc": "2026-09-12T04:38:20.003158+00:00",
+  "artifacts": [
+    "index.html",
+    "dunecity.js",
+    "dunecity.wasm",
+    "dunecity.data",
+    "shell.js",
+    "shell.css"
+  ],
+  "sha256": {
+    "index.html": "0938521f131cefe5b4dac34a71f4d43340dd4e65a825de9a895bb80042b9ec10",
+    "dunecity.js": "c681cbd04c3e9a84cdac1dd49e26252e3d20088110e9ace917723b0ae24c9a5d",
+    "dunecity.wasm": "e9d0c054ae1d3da1da0ffece462a75ec81c8393f04e2d2f6068bdf94140c05b2",
+    "dunecity.data": "4ceb7d76dd8b318ba9c635c7a05d2951a75425b09124b0bc1a37b1ea966e14f5",
+    "shell.js": "2b9a5d5cdd1496cf92417e72b1a24fda53d48e6a18af9788a0f23d7d5757be08",
+    "shell.css": "819445a30ce3f58fbf08fa56870eb404dfc837c9f0338a02e2600d4950c375bc"
+  }
 }
