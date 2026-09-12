@@ -1,16 +1,18 @@
 -- Additive: existing native/server-list and match-summary tables are untouched.
 CREATE TABLE IF NOT EXISTS analytics_relay_events (
-    event_id TEXT PRIMARY KEY,
-    room_id TEXT NOT NULL,
+    event_id TEXT PRIMARY KEY NOT NULL CHECK(length(event_id) BETWEEN 22 AND 64 AND event_id NOT GLOB '*[^A-Za-z0-9_-]*'),
+    room_id TEXT NOT NULL CHECK(length(room_id) BETWEEN 22 AND 64 AND room_id NOT GLOB '*[^A-Za-z0-9_-]*'),
     kind TEXT NOT NULL CHECK(kind IN ('created','joined','started','left','closed')),
-    occurred_at INTEGER NOT NULL,
-    received_at INTEGER NOT NULL,
-    participant_id INTEGER NOT NULL,
+    occurred_at INTEGER NOT NULL CHECK(typeof(occurred_at)='integer' AND occurred_at BETWEEN 0 AND 4102444800),
+    received_at INTEGER NOT NULL CHECK(typeof(received_at)='integer' AND received_at BETWEEN 0 AND 4102444800),
+    participant_id INTEGER NOT NULL CHECK(typeof(participant_id)='integer' AND participant_id BETWEEN 0 AND 4294967295),
     client_runtime TEXT NOT NULL CHECK(client_runtime IN ('browser','native','unknown')),
-    game_version TEXT NOT NULL,
-    reason TEXT NOT NULL,
+    game_version TEXT NOT NULL CHECK(length(game_version)<=64 AND game_version NOT GLOB '*[^A-Za-z0-9._-]*'),
+    reason TEXT NOT NULL CHECK(length(reason)<=48 AND reason NOT GLOB '*[^a-z0-9_-]*'),
     transport TEXT NOT NULL DEFAULT 'wss' CHECK(transport = 'wss'),
-    source TEXT NOT NULL DEFAULT 'relay_service_v1' CHECK(source = 'relay_service_v1')
+    source TEXT NOT NULL DEFAULT 'relay_service_v1' CHECK(source = 'relay_service_v1'),
+    CHECK((kind IN ('joined','left') AND participant_id>0) OR
+          (kind IN ('created','started','closed') AND participant_id=0 AND client_runtime='unknown' AND game_version=''))
 );
 CREATE INDEX IF NOT EXISTS analytics_relay_room_idx
     ON analytics_relay_events(room_id, occurred_at);

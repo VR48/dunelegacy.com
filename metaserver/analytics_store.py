@@ -351,6 +351,10 @@ def record(connection: sqlite3.Connection, request: dict[str, Any]) -> None:
         store_players(connection, match_id, payload)
 
 
+class RelayEventConflict(ValueError):
+    pass
+
+
 def relay_record(connection: sqlite3.Connection, request: dict[str, Any]) -> None:
     """Trusted service events only. The PHP endpoint authenticates before invoking this helper."""
     event = request.get("event")
@@ -374,11 +378,20 @@ def relay_record(connection: sqlite3.Connection, request: dict[str, Any]) -> Non
         raise ValueError("invalid relay participant")
     connection.executescript(Path(__file__).with_name("relay_analytics.sql").read_text())
     with connection:
-        connection.execute("""INSERT OR IGNORE INTO analytics_relay_events
+        inserted = connection.execute("""INSERT INTO analytics_relay_events
             (event_id,room_id,kind,occurred_at,received_at,participant_id,client_runtime,game_version,reason)
-            VALUES (?,?,?,?,?,?,?,?,?)""",
+            VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(event_id) DO NOTHING""",
             (event["event_id"], event["room_id"], event["kind"], event["occurred_at"], int(time.time()),
              event["participant_id"], event["client_runtime"], event["game_version"], event["reason"]))
+        if inserted.rowcount == 0:
+            existing = connection.execute("""SELECT room_id,kind,occurred_at,participant_id,
+                client_runtime,game_version,reason FROM analytics_relay_events WHERE event_id=?""",
+                (event["event_id"],)).fetchone()
+            expected = tuple(event[key] for key in ("room_id","kind","occurred_at","participant_id",
+                                                    "client_runtime","game_version","reason"))
+            if existing != expected:
+                raise RelayEventConflict("conflicting relay event id")
+
 
 
 def summary(connection: sqlite3.Connection) -> dict[str, int]:
@@ -407,8 +420,11 @@ def main() -> int:
                 record(connection, request)
                 response: dict[str, Any] = {"ok": True}
             elif action == "relay_record":
-                relay_record(connection, request)
-                response = {"ok": True}
+                try:
+                    relay_record(connection, request)
+                    response = {"ok": True, "status": "recorded"}
+                except RelayEventConflict:
+                    response = {"ok": True, "status": "conflict"}
             elif action in {"health", "summary"}:
                 response = {"ok": True, **summary(connection)}
             else:

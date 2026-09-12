@@ -207,7 +207,8 @@ X-Dune-Relay-Signature: lowercase_hex(HMAC-SHA256(key, timestamp + "\n" + body))
 The endpoint fails closed when unconfigured. It checks the signature in
 constant time and accepts timestamps within five minutes. Replayed valid
 requests cannot duplicate or rewrite a row because `event_id` is a primary
-key and inserts never update existing events. Delivery retries use the same
+key and inserts never update existing events. An identical retry returns 200;
+reuse of an ID with different immutable event fields returns 409. Delivery retries use the same
 event body/id with a fresh request timestamp/signature. Out-of-order leave and
 join delivery remains queryable. Keep the relay's outbound queue bounded,
 retry only transient failures, and report aggregate delivery failures without

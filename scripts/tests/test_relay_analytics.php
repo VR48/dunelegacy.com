@@ -4,7 +4,11 @@ mkdir($directory, 0700);
 define('DATA_DIR', $directory);
 require_once __DIR__ . '/../../metaserver/relay_analytics.php';
 function recordRelayTest($event) {
-    if (in_array("--python", $_SERVER["argv"], true)) return analyticsPythonRequest("relay_record", ["event"=>$event]) !== null;
+    if (in_array("--python", $_SERVER["argv"], true)) {
+        $result=analyticsPythonRequest("relay_record", ["event"=>$event]);
+        if ($result !== null && ($result['status'] ?? '') === 'conflict') throw new RelayAnalyticsConflict();
+        return $result !== null;
+    }
     return relayAnalyticsRecord($event);
 }
 function checkRelay($condition, $message) {
@@ -33,6 +37,12 @@ try {
     }
     checkRelay(recordRelayTest($event), 'record');
     checkRelay(recordRelayTest($event), 'idempotent retry');
+    $conflict = $event; $conflict['client_runtime']='native';
+    $caught=false;
+    try { recordRelayTest($conflict); } catch (RelayAnalyticsConflict $error) { $caught=true; }
+    checkRelay($caught, 'conflicting event id refused');
+    $invalid=$event; $invalid['participant_id']=0;
+    checkRelay(!recordRelayTest($invalid), 'internal caller validation');
     $native = $event; $native['event_id'] = 'event-' . str_repeat('c',32);
     $native['participant_id'] = 2; $native['client_runtime'] = 'native';
     checkRelay(recordRelayTest($native), 'native participant');

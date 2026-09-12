@@ -35,17 +35,35 @@ function relayAnalyticsEvent($raw) {
     return $event;
 }
 
+class RelayAnalyticsConflict extends RuntimeException {}
+
 function relayAnalyticsRecord(array $event) {
+    // Keep internal callers subject to exactly the same validation as HTTP callers.
+    if (relayAnalyticsEvent(json_encode($event)) === null) return false;
     $database = analyticsDatabase();
-    if ($database === null) return analyticsPythonRequest('relay_record', ['event' => $event]) !== null;
+    if ($database === null) {
+        $result = analyticsPythonRequest('relay_record', ['event' => $event]);
+        if ($result !== null && ($result['status'] ?? '') === 'conflict') throw new RelayAnalyticsConflict();
+        return $result !== null;
+    }
     try {
         $database->exec(file_get_contents(__DIR__ . '/relay_analytics.sql'));
-        $statement = $database->prepare('INSERT OR IGNORE INTO analytics_relay_events
+        $statement = $database->prepare('INSERT INTO analytics_relay_events
             (event_id, room_id, kind, occurred_at, received_at, participant_id, client_runtime, game_version, reason)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(event_id) DO NOTHING');
         $statement->execute([$event['event_id'], $event['room_id'], $event['kind'], $event['occurred_at'], time(),
                              $event['participant_id'], $event['client_runtime'], $event['game_version'], $event['reason']]);
+        if ($statement->rowCount() === 0) {
+            $lookup = $database->prepare('SELECT room_id,kind,occurred_at,participant_id,client_runtime,game_version,reason
+                FROM analytics_relay_events WHERE event_id=?');
+            $lookup->execute([$event['event_id']]);
+            $expected = [$event['room_id'],$event['kind'],$event['occurred_at'],$event['participant_id'],
+                         $event['client_runtime'],$event['game_version'],$event['reason']];
+            if ($lookup->fetch(PDO::FETCH_NUM) !== $expected) throw new RelayAnalyticsConflict();
+        }
         return true;
+    } catch (RelayAnalyticsConflict $error) {
+        throw $error;
     } catch (Throwable $error) {
         error_log('Relay analytics storage unavailable');
         return false;

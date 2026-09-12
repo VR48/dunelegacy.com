@@ -39,9 +39,21 @@ class RelayAnalyticsTests(unittest.TestCase):
         store.relay_record(self.db, {'event': event()})
         conflict = event()
         conflict['client_runtime'] = 'native'
-        store.relay_record(self.db, {'event': conflict})
+        with self.assertRaises(store.RelayEventConflict):
+            store.relay_record(self.db, {'event': conflict})
         self.assertEqual(self.db.execute('SELECT client_runtime,joined_at,left_at FROM analytics_relay_participants').fetchone(),
                          ('browser', 1789190001, 1789190003))
+
+    def test_sql_constraints_reject_invalid_rows(self):
+        import sqlite3
+        store.relay_record(self.db, {'event': event()})
+        for field, value in [('event_id','x'),('occurred_at',-1),('participant_id',0),('reason','private body'),('room_id','short')]:
+            row=event(2); row[field]=value
+            with self.subTest(field=field), self.assertRaises(sqlite3.IntegrityError):
+                self.db.execute("""INSERT INTO analytics_relay_events
+                    (event_id,room_id,kind,occurred_at,received_at,participant_id,client_runtime,game_version,reason)
+                    VALUES (?,?,?,?,?,?,?,?,?)""", tuple(row[key] for key in ('event_id','room_id','kind','occurred_at'))+
+                    (1789190000,)+tuple(row[key] for key in ('participant_id','client_runtime','game_version','reason')))
 
     def test_rejects_secrets_unbounded_invalid_and_forged_transport_fields(self):
         invalid = [dict(ticket='secret'), dict(transport='udp'), dict(schema_version=True),
@@ -56,8 +68,6 @@ class RelayAnalyticsTests(unittest.TestCase):
                     store.relay_record(self.db, {'event': row})
         self.assertEqual(self.db.execute('SELECT COUNT(*) FROM analytics_matches').fetchone()[0], 1)
 
-if __name__ == '__main__':
-    unittest.main()
 
 # Exercise the real HTTP boundary; all data, credentials and database are disposable fixtures.
 import hashlib
@@ -120,7 +130,12 @@ class RelayEndpointTests(unittest.TestCase):
         self.assertEqual(self.post(json.dumps({**event(),'ticket':'do not store'}).encode()), 400)
         self.assertEqual(self.post(raw), 200)
         self.assertEqual(self.post(raw), 200)
+        conflict = {**event(), 'client_runtime':'native'}
+        self.assertEqual(self.post(json.dumps(conflict).encode()), 409)
         import sqlite3
         with sqlite3.connect(Path(self.temp.name)/'games.sqlite') as connection:
             self.assertEqual(connection.execute('select count(*) from analytics_relay_events').fetchone()[0],1)
             self.assertEqual(connection.execute('select count(*) from analytics_matches').fetchone()[0],0)
+
+if __name__ == '__main__':
+    unittest.main()

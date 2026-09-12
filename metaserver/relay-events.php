@@ -18,5 +18,9 @@ if (!relayAnalyticsAuthenticate($raw, $_SERVER['HTTP_X_DUNE_RELAY_TIMESTAMP'] ??
         $_SERVER['HTTP_X_DUNE_RELAY_SIGNATURE'] ?? '', $key, time())) relayResponse(401, 'authentication');
 $event = relayAnalyticsEvent($raw);
 if ($event === null) relayResponse(400, 'event');
-if (!relayAnalyticsRecord($event)) relayResponse(503, 'storage');
+try {
+    if (!relayAnalyticsRecord($event)) relayResponse(503, 'storage');
+} catch (RelayAnalyticsConflict $error) {
+    relayResponse(409, 'conflict');
+}
 relayResponse(200, 'recorded');
