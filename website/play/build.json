@@ -11,7 +11,7 @@
     "shell.css"
   ],
   "sha256": {
-    "index.html": "699020b7cd29c4da2d2db223f56311a670a696d2ba288386bb550cf44368d07b",
+    "index.html": "12fdef22ae32c5636b614963d65c170d7a52f1073bb16c3f83d96163a564531b",
     "dunecity.js": "9fe431fe8a3618f4692294c9d696726e389ec7194916e6d38c12d7474978cd66",
     "dunecity.wasm": "2c0245d2a43c965ae1301c1b984fea890d84229af382749dcd5dac73ead15b50",
     "dunecity.data": "4ceb7d76dd8b318ba9c635c7a05d2951a75425b09124b0bc1a37b1ea966e14f5",
