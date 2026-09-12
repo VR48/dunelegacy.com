@@ -83,7 +83,8 @@ header .container {
 
 nav {
     display: flex;
-    gap: 25px;
+    flex-wrap: wrap;
+    gap: 12px 20px;
 }
 
 nav a {
@@ -594,3 +595,37 @@ footer a:hover {
 @media (max-width: 420px) { .stat-card { padding: 14px; } .stat-card strong { font-size: 1.15rem; } }
 
 #download-statistics { scroll-margin-top: 120px; }
+
+/* Shared-house co-op guide */
+nav a[aria-current="page"] { color: var(--primary); border-bottom: 2px solid currentColor; }
+.hero .coop-hero-link { font-size: 1rem; margin: 24px auto 12px; }
+.coop-hero { padding: 70px 0; }
+.hero .coop-eyebrow, .coop-guide .coop-eyebrow { color: var(--primary); font-size: .85rem; letter-spacing: .15em; font-weight: 700; margin-bottom: 16px; }
+.coop-content { max-width: 960px; }
+.coop-intro { padding: 40px 0; }
+.coop-availability { border-left: 3px solid var(--primary); padding: 20px 24px; background: var(--darker); }
+.coop-availability h2 { font-size: 1.15rem; text-align: left; margin-bottom: 8px; }
+.section .coop-content p { text-align: left; margin-bottom: 16px; }
+.coop-content a { color: var(--primary); text-underline-offset: 3px; }
+.coop-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 32px; }
+.coop-facts article { padding: 24px; background: var(--darker); border: 1px solid #554827; border-radius: 8px; }
+.coop-facts h3, .coop-steps h3 { color: var(--primary); margin-bottom: 8px; font-size: 1.15rem; }
+.coop-facts p:last-child, .coop-steps p:last-child { margin-bottom: 0; }
+.coop-guide { scroll-margin-top: 140px; }
+.coop-guide h2 { text-align: left; margin-bottom: 28px; }
+.coop-steps { list-style: none; counter-reset: step; display: grid; gap: 28px; }
+.coop-steps li { counter-increment: step; position: relative; padding-left: 64px; }
+.coop-steps li::before { content: counter(step, decimal-leading-zero); position: absolute; left: 0; top: 0; color: var(--primary); border-top: 2px solid var(--primary); padding-top: 8px; width: 40px; font-size: 1.3rem; font-weight: 700; }
+.coop-save-options { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 28px 0; }
+.coop-guide details { border-bottom: 1px solid #554827; padding: 18px 0; }
+.coop-guide summary { cursor: pointer; font-weight: 600; color: var(--primary); }
+.coop-guide details p { padding-top: 12px; }
+.coop-guide .coop-help { margin-top: 28px; }
+@media (max-width: 1000px) { header .container { gap: 16px; } }
+@media (max-width: 650px) {
+    .coop-facts { grid-template-columns: 1fr; gap: 16px; }
+    .coop-hero { padding: 44px 0; }
+    .coop-steps li { padding-left: 50px; }
+    .coop-availability { padding: 16px; }
+    .coop-guide { scroll-margin-top: 290px; }
+}
