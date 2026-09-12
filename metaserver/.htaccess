@@ -1,2 +1,10 @@
 RewriteEngine On
 RewriteRule ^analytics_store\.py$ - [F,L,NC]
+
+# Only the same-host relay may publish signed lifecycle events. HMAC is still required.
+<Files "relay-events.php">
+  Require ip 127.0.0.1 ::1 192.81.217.88
+  LimitRequestBody 4096
+</Files>
+RewriteCond %{HTTPS} !=on
+RewriteRule ^relay-events\.php$ - [F,L]
