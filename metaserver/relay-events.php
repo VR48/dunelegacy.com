@@ -10,8 +10,11 @@ function relayResponse($code, $message) {
     exit;
 }
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') relayResponse(405, 'method');
-$key = getenv('DUNE_RELAY_ANALYTICS_KEY');
-if (!is_string($key) || strlen($key) < 32) relayResponse(503, 'disabled');
+// Inline environment key, then an operator-named key file, then this deployment's fixed path.
+// Nothing here reports which source was used, and no branch ever echoes or logs key material.
+$key = relayAnalyticsResolveKey(getenv('DUNE_RELAY_ANALYTICS_KEY'),
+    getenv('DUNE_RELAY_ANALYTICS_KEY_FILE') ?: getenv('RELAY_ANALYTICS_KEY_FILE'));
+if ($key === null) relayResponse(503, 'disabled');
 $raw = file_get_contents('php://input', false, null, 0, RELAY_ANALYTICS_MAX_BYTES + 1);
 if (strlen($raw) > RELAY_ANALYTICS_MAX_BYTES) relayResponse(413, 'size');
 if (!relayAnalyticsAuthenticate($raw, $_SERVER['HTTP_X_DUNE_RELAY_TIMESTAMP'] ?? '',

@@ -355,13 +355,91 @@ class RelayEventConflict(ValueError):
     pass
 
 
-def relay_record(connection: sqlite3.Connection, request: dict[str, Any]) -> None:
-    """Trusted service events only. The PHP endpoint authenticates before invoking this helper."""
-    event = request.get("event")
-    keys = {"schema_version", "event_id", "room_id", "kind", "occurred_at", "participant_id",
-            "client_runtime", "game_version", "reason"}
-    if not isinstance(event, dict) or set(event) != keys or type(event["schema_version"]) is not int or event["schema_version"] != 1:
+RELAY_SCHEMA_VERSIONS = (1, 2)
+# Server-observed ingress values the store is willing to record.  Never a client's claim.
+RELAY_TRANSPORTS = ("wss", "https-poll")
+# Schema 1 has no transport field and always meant a wss relay, so it keeps that meaning.
+RELAY_LEGACY_TRANSPORT = "wss"
+RELAY_BASE_FIELDS = ("schema_version", "event_id", "room_id", "kind", "occurred_at",
+                     "participant_id", "client_runtime", "game_version", "reason")
+# Fields an event id owns for life.  A retry may repeat them, never rewrite one.
+RELAY_IMMUTABLE_FIELDS = ("room_id", "kind", "occurred_at", "participant_id", "client_runtime",
+                          "game_version", "reason", "transport")
+RELAY_ROW_FIELDS = ("event_id", "room_id", "kind", "occurred_at", "received_at", "participant_id",
+                    "client_runtime", "game_version", "reason", "transport", "source")
+
+
+def relay_schema_statements() -> list[str]:
+    """The schema-2 DDL, split into statements and checked for the migration markers."""
+    sql = Path(__file__).with_name("relay_analytics.sql").read_text()
+    if "'https-poll'" not in sql or "'server_observed'" not in sql:
+        raise ValueError("relay analytics schema file is missing or not schema 2")
+    body = "\n".join(line for line in sql.splitlines() if not line.lstrip().startswith("--"))
+    return [statement.strip() for statement in body.split(";") if statement.strip()]
+
+
+def relay_migrate(connection: sqlite3.Connection) -> None:
+    """Bring an existing database up to the schema-2 lifecycle table.
+
+    SQLite cannot widen a CHECK constraint in place, so a schema-1 table
+    (CHECK(transport='wss')) is rebuilt: the old table is renamed, the schema-2 table is created
+    from relay_analytics.sql, every old row is copied through the new CHECKs, the row count is
+    verified, and only then is the old table dropped.  All of it is one transaction, so a failure
+    at any point leaves the original schema-1 table, its rows and its indexes as they were.  The
+    view is rebuilt with it because it used to report the literal 'wss'.
+    """
+    statements = relay_schema_statements()
+    table_sql = connection.execute("SELECT sql FROM sqlite_master WHERE type='table'"
+                                   " AND name='analytics_relay_events'").fetchone()
+    view_sql = connection.execute("SELECT sql FROM sqlite_master WHERE type='view'"
+                                  " AND name='analytics_relay_participants'").fetchone()
+    table_stale = table_sql is not None and "https-poll" not in (table_sql[0] or "")
+    view_stale = view_sql is not None and "server_observed" not in (view_sql[0] or "")
+    if connection.in_transaction:
+        connection.commit()
+    if not table_stale and not view_stale:
+        for statement in statements:
+            connection.execute(statement)
+        if connection.in_transaction:
+            connection.commit()
+        return
+    columns = ", ".join(RELAY_ROW_FIELDS)
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        connection.execute("DROP VIEW IF EXISTS analytics_relay_participants")
+        if table_stale:
+            before = connection.execute("SELECT COUNT(*) FROM analytics_relay_events").fetchone()[0]
+            # Fails rather than overwrites if an older copy is somehow still present.
+            connection.execute("ALTER TABLE analytics_relay_events"
+                               " RENAME TO analytics_relay_events_schema1")
+            connection.execute("DROP INDEX IF EXISTS analytics_relay_room_idx")
+            for statement in statements:
+                connection.execute(statement)
+            connection.execute(f"INSERT INTO analytics_relay_events ({columns})"
+                               f" SELECT {columns} FROM analytics_relay_events_schema1")
+            after = connection.execute("SELECT COUNT(*) FROM analytics_relay_events").fetchone()[0]
+            if after != before:
+                raise ValueError("relay analytics migration lost rows")
+            connection.execute("DROP TABLE analytics_relay_events_schema1")
+        else:
+            for statement in statements:
+                connection.execute(statement)
+        connection.commit()
+    except BaseException:
+        connection.rollback()
+        raise
+
+
+def relay_normalize(event: Any) -> dict[str, Any]:
+    """Validate one event and return it in storage form: the nine schema-1 fields plus an
+    explicit transport.  Either shape is accepted, so an already normalised record stays valid
+    input.  A schema-1 record may only ever mean the legacy wss transport."""
+    if (not isinstance(event, dict) or not set(RELAY_BASE_FIELDS) <= set(event)
+            or not set(event) <= set(RELAY_BASE_FIELDS) | {"transport"}
+            or type(event["schema_version"]) is not int
+            or event["schema_version"] not in RELAY_SCHEMA_VERSIONS):
         raise ValueError("invalid relay event")
+
     def matches(key: str, pattern: str) -> bool:
         return isinstance(event[key], str) and re.fullmatch(pattern, event[key], flags=re.ASCII) is not None
     if (not all(matches(key, r"[a-zA-Z0-9_-]{22,64}") for key in ("event_id", "room_id"))
@@ -376,22 +454,37 @@ def relay_record(connection: sqlite3.Connection, request: dict[str, Any]) -> Non
     if participant != (event["participant_id"] > 0) or (not participant and
         (event["client_runtime"] != "unknown" or event["game_version"] != "")):
         raise ValueError("invalid relay participant")
-    connection.executescript(Path(__file__).with_name("relay_analytics.sql").read_text())
+    transport = event.get("transport")
+    if event["schema_version"] == 1:
+        if transport is not None and transport != RELAY_LEGACY_TRANSPORT:
+            raise ValueError("invalid relay transport")
+        transport = RELAY_LEGACY_TRANSPORT
+    elif not isinstance(transport, str) or transport not in RELAY_TRANSPORTS:
+        raise ValueError("invalid relay transport")
+    return {**{field: event[field] for field in RELAY_BASE_FIELDS}, "transport": transport}
+
+
+def relay_record(connection: sqlite3.Connection, request: dict[str, Any]) -> None:
+    """Trusted service events only. The PHP endpoint authenticates before invoking this helper."""
+    event = relay_normalize(request.get("event"))
+    relay_migrate(connection)
     with connection:
         inserted = connection.execute("""INSERT INTO analytics_relay_events
-            (event_id,room_id,kind,occurred_at,received_at,participant_id,client_runtime,game_version,reason)
-            VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(event_id) DO NOTHING""",
+            (event_id,room_id,kind,occurred_at,received_at,participant_id,client_runtime,game_version,reason,transport)
+            VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(event_id) DO NOTHING""",
             (event["event_id"], event["room_id"], event["kind"], event["occurred_at"], int(time.time()),
-             event["participant_id"], event["client_runtime"], event["game_version"], event["reason"]))
+             event["participant_id"], event["client_runtime"], event["game_version"], event["reason"],
+             event["transport"]))
         if inserted.rowcount == 0:
-            existing = connection.execute("""SELECT room_id,kind,occurred_at,participant_id,
-                client_runtime,game_version,reason FROM analytics_relay_events WHERE event_id=?""",
+            # An id already used for a different event never changes what is stored, including a
+            # schema-1 retry that would otherwise relabel an https-poll room as wss.
+            fields = ",".join(RELAY_IMMUTABLE_FIELDS)
+            existing = connection.execute(
+                f"SELECT {fields} FROM analytics_relay_events WHERE event_id=?",
                 (event["event_id"],)).fetchone()
-            expected = tuple(event[key] for key in ("room_id","kind","occurred_at","participant_id",
-                                                    "client_runtime","game_version","reason"))
+            expected = tuple(event[key] for key in RELAY_IMMUTABLE_FIELDS)
             if existing != expected:
                 raise RelayEventConflict("conflicting relay event id")
-
 
 
 def summary(connection: sqlite3.Connection) -> dict[str, int]:

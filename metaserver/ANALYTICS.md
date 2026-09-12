@@ -167,7 +167,7 @@ The relay sends a POST with exactly these fields (maximum 4096 bytes):
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "event_id": "event-6e6a0fc80a754ff0a111741f1cf77794",
   "room_id": "room-6474d59e947d473881de1e5766d24a9d",
   "kind": "joined",
@@ -175,7 +175,8 @@ The relay sends a POST with exactly these fields (maximum 4096 bytes):
   "participant_id": 1,
   "client_runtime": "browser",
   "game_version": "1.0.655",
-  "reason": ""
+  "reason": "",
+  "transport": "https-poll"
 }
 ```
 
@@ -189,30 +190,107 @@ runtime `unknown`, and an empty game version. Participant runtime is `browser`,
 at most 64 ASCII letters/digits/dots/underscores/hyphens. Reasons are at most 48
 lowercase letters/digits/underscores/hyphens and should be fixed reason codes.
 Extra fields are rejected, preventing accidental storage of packet bodies,
-chat or credentials. `transport=wss` and `source=relay_service_v1` are assigned
-by this trusted-service endpoint, not accepted from a game client's payload.
+chat or credentials. `source=relay_service_v1` is assigned by this
+trusted-service endpoint, not accepted from a game client's payload.
 This reflects the authenticated relay's observation; SQLite cannot verify a
 player's operating system or the relay's external TLS termination itself.
 
-Authentication uses a dedicated random server-only `DUNE_RELAY_ANALYTICS_KEY`
-(minimum 32 bytes of key text) configured in both services. Do not put it in
-WASM, JavaScript served to players, source control, query strings or logs.
-The relay signs the **exact UTF-8 body bytes**:
+### Schema 2: the server-observed transport
+
+Schema 1 had no `transport` field, and the column was pinned to the literal
+`wss`. The relay now also serves an HTTPS polling ingress, which is a different
+connection and must not be recorded as a WebSocket one.
+
+Schema 2 adds exactly one field, `transport`, with an allowlist of `wss` and
+`https-poll`. It is **server observed**: the relay publishes the ingress its
+operator configured it to serve (`RELAY_OBSERVED_TRANSPORT`), the endpoint
+stores only allowlisted values, and no client claim is read anywhere on the
+path. `client_runtime` stays the client's word for itself; the two are
+independent, and both are queryable side by side.
+
+Compatibility, in both the PDO and the Python backend:
+
+- a schema-1 body (the nine fields, no `transport`) is still accepted and still
+  means `wss`, so a relay that has not been updated keeps reporting correctly;
+- a schema-1 body that carries a `transport` field is rejected as an extra
+  field, exactly like any other unexpected key;
+- a schema-2 body must name an allowlisted transport. A missing, empty,
+  differently cased, whitespace-padded or unknown value (`ws`, `udp`, `https`)
+  is a 400, not a default;
+- schema versions other than 1 and 2 are rejected.
+
+### Migration and raw table versus view semantics
+
+SQLite cannot widen `CHECK(transport = 'wss')` in place, so an existing
+database is migrated rather than left half-correct. `relayAnalyticsMigrate()`
+(PHP/PDO) and `relay_migrate()` (Python) do the same thing, keyed on the stored
+table SQL, in one transaction: drop the view, rename the schema-1 table, create
+the schema-2 table from `relay_analytics.sql`, copy every row through the new
+CHECK constraints, verify the row count, then drop the old table. A failure at
+any point rolls back to the untouched schema-1 table, its rows and its index;
+the endpoint answers `503 storage` rather than storing a mislabelled row. The
+migration is a no-op once the marker `'https-poll'` is present in the table SQL.
+No other table is touched: `analytics_matches` and its player/item tables,
+including their rows and indexes, are outside this migration entirely.
+
+Reporting semantics after the migration:
+
+- `analytics_relay_events` is the raw record. `transport` is per event, so it
+  reflects the ingress that was serving *that* event. Rows stored before the
+  migration read `wss` because that is what schema 1 meant; they are not
+  retroactively reclassified, and `wss` therefore covers both "observed as wss"
+  and "recorded before schema 2 existed";
+- `analytics_relay_participants` is a view, one row per `(room_id,
+  participant_id)`. Its `transport` is the joined event's transport, falling
+  back to the participant's other events when only a leave was delivered. A
+  participant whose events somehow disagree is reported under one of them, so
+  query the raw table when per-event transport matters;
+- the view also carries `runtime_source = 'client_reported'` and
+  `transport_source = 'server_observed'` so a query cannot silently confuse the
+  two kinds of evidence.
+
+Event ids are immutable across schemas. A retry may repeat a stored event
+exactly (200); reusing an id with any different immutable field, *including a
+different transport*, is a 409 and never rewrites the row. That covers the
+downgrade case specifically: an `https-poll` event that comes back as a
+schema-1 (wss) body, or as a schema-2 body naming `wss`, is refused. Delivery
+retries use the same event body/id with a fresh request timestamp/signature.
+Out-of-order leave and join delivery remains queryable.
+
+### Authentication and the receiver key
+
+Authentication uses a dedicated random server-only key (minimum 32 bytes of key
+text, printable ASCII without spaces) configured in both services. Do not put
+it in WASM, JavaScript served to players, source control, query strings or
+logs. The relay signs the **exact UTF-8 body bytes**:
 
 ```text
 X-Dune-Relay-Timestamp: <current 10-digit Unix seconds>
 X-Dune-Relay-Signature: lowercase_hex(HMAC-SHA256(key, timestamp + "\n" + body))
 ```
 
-The endpoint fails closed when unconfigured. It checks the signature in
-constant time and accepts timestamps within five minutes. Replayed valid
-requests cannot duplicate or rewrite a row because `event_id` is a primary
-key and inserts never update existing events. An identical retry returns 200;
-reuse of an ID with different immutable event fields returns 409. Delivery retries use the same
-event body/id with a fresh request timestamp/signature. Out-of-order leave and
-join delivery remains queryable. Keep the relay's outbound queue bounded,
-retry only transient failures, and report aggregate delivery failures without
-logging credentials. Event delivery must not block the game loop.
+The endpoint resolves the key in this order and fails closed if none of them
+yields a usable one:
+
+1. `DUNE_RELAY_ANALYTICS_KEY` in the environment;
+2. `DUNE_RELAY_ANALYTICS_KEY_FILE`, or `RELAY_ANALYTICS_KEY_FILE`, naming a
+   file;
+3. this deployment's fixed path, `/var/www/data/dunecity-relay/analytics.key`.
+
+The fixed path is the documented default for this server because its Apache
+environment carries no key: it sits on the persistent data volume, outside
+`DocumentRoot`, and is expected to be `www-data`-readable only (`0640`). The
+file is opened read-only and bounded; a trailing newline is ignored. A missing,
+short, malformed or world-readable file is refused and the endpoint answers
+`503 disabled`. No branch reports which source was used or echoes key material
+into a response or a log.
+
+It checks the signature in constant time and accepts timestamps within five
+minutes. Replayed valid requests cannot duplicate or rewrite a row because
+`event_id` is a primary key and inserts never update existing events. Keep the
+relay's outbound queue bounded, retry only transient failures, and report
+aggregate delivery failures without logging credentials. Event delivery must
+not block the game loop.
 
 Before deployment, restrict this route to the relay service at the proxy/
 firewall, require HTTPS and normal certificate validation for a remote relay,
@@ -223,16 +301,28 @@ credentials separate from deployment/SSH credentials. This change creates no
 keys, server configuration, deployment, scheduled retention or public service.
 
 ```sql
+-- Mixed rooms, independently of how each participant reached the relay.
 SELECT room_id,
        SUM(client_runtime = 'browser') AS browser_players,
        SUM(client_runtime = 'native') AS native_players
 FROM analytics_relay_participants
 GROUP BY room_id
 HAVING browser_players > 0 AND native_players > 0;
+
+-- Transport against runtime. 'wss' also covers rows stored before schema 2.
+SELECT transport, client_runtime, COUNT(*) AS participants
+FROM analytics_relay_participants
+GROUP BY transport, client_runtime;
 ```
 
 Checks use temporary databases: `python3 -m unittest discover -s scripts/tests
 -p 'test_*analytics*.py'`, `php scripts/tests/test_relay_analytics.php`, and
 `php scripts/tests/test_relay_analytics.php --python`. The suite exercises the
-real HTTP boundary, both SQLite adapters, authentication failures, size/field
-limits, mixed rooms, duplicate/out-of-order events, and legacy record isolation.
+real HTTP boundary, both SQLite adapters, authentication and key-file
+resolution failures, size/field limits, mixed rooms, schema 1 and schema 2
+records, unknown/forged/missing transports, duplicate, out-of-order and
+downgrading events, and legacy record isolation. The migration itself runs
+against `scripts/tests/fixtures/relay_analytics_schema1.sql`, a frozen copy of
+the deployed schema-1 table and view, and asserts that its rows, constraints and
+index survive. The relay repository's `test/verify-php-delivery.py` drives the
+real Node publisher against this endpoint over both transports.
