@@ -1,7 +1,8 @@
 <?php
 require_once __DIR__ . '/../../metaserver/feedback_service.php';
 function check($value, $message) { if(!$value) throw new RuntimeException($message); }
-$db = feedbackDatabase(':memory:');
+foreach([false, true] as $forcePython) {
+$db = feedbackDatabase(':memory:', $forcePython);
 $input = ['request_id' => str_repeat('a', 32), 'title' => 'Café & issue', 'details' => "Something broke\n#1", 'context' => 'Atreides: QuantBot Brutal'];
 $calls = [];
 $github = function($method, $path, $payload, $token) use (&$calls) {
@@ -54,3 +55,31 @@ for($i=0; $i<7; ++$i) {
 check(str_contains($result, 'limit reached'), 'rate limit missing');
 check(!str_contains($db->query('SELECT ip FROM feedback_attempts LIMIT 1')->fetchColumn(), '127.'), 'stored raw IP');
 echo "Feedback service tests passed (mock GitHub; no public issues created).\n";
+
+}
+
+// Independent Python connections see committed reservations and cannot repost a pending issue.
+$storagePath = tempnam(sys_get_temp_dir(), 'feedback-store-');
+try {
+    $first = feedbackDatabase($storagePath, true);
+    $second = feedbackDatabase($storagePath, true);
+    $request = ['request_id' => str_repeat('e', 32), 'title' => 'Concurrent request', 'details' => 'Test', 'context' => 'QuantBot Easy'];
+    $upstreamCalls = 0;
+    $upstream = function() use (&$upstreamCalls, $second, $request) {
+        ++$upstreamCalls;
+        $duplicate = feedbackHandle('POST', $request, 'same-ip', 'test-token', $second, function() {
+            throw new RuntimeException('Concurrent duplicate reached GitHub');
+        });
+        check(str_contains($duplicate, 'still being processed'), 'pending reservation not shared');
+        return [201, ['html_url' => 'https://github.com/ggtothemax/dunecity/issues/999']];
+    };
+    check(str_starts_with(feedbackHandle('POST', $request, 'same-ip', 'test-token', $first, $upstream), 'OK'), 'shared database submission failed');
+    check(feedbackHandle('POST', $request, 'same-ip', 'test-token', $second, $upstream) === 'OK https://github.com/ggtothemax/dunecity/issues/999', 'second connection missed cached success');
+    check($upstreamCalls === 1, 'duplicate creation');
+    $first->exec('BEGIN IMMEDIATE');
+    $first->exec('DELETE FROM feedback_requests');
+    $first->exec('ROLLBACK');
+    check((int)$second->query('SELECT COUNT(*) FROM feedback_requests')->fetchColumn() === 1, 'rollback did not preserve reservation');
+    unset($first, $second, $upstream);
+} finally { unlink($storagePath); }
+echo "Independent Python storage connections and transaction rollback passed.\n";

@@ -1,5 +1,5 @@
 RewriteEngine On
-RewriteRule ^analytics_store\.py$ - [F,L,NC]
+RewriteRule ^(analytics_store|feedback_store)\.py$ - [F,L,NC]
 
 # Only the same-host relay may publish signed lifecycle events. HMAC is still required.
 <Files "relay-events.php">

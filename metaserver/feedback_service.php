@@ -1,7 +1,11 @@
 <?php
 // Fixed-repository feedback service. Never accept a token, repository or upstream URL from a client.
-function feedbackDatabase(string $path): PDO {
-    $db = new PDO('sqlite:' . $path, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+require_once __DIR__ . '/feedback_storage.php';
+function feedbackDatabase(string $path, bool $forcePython = false) {
+    umask(0007);
+    $db = !$forcePython && class_exists('PDO') && in_array('sqlite', PDO::getAvailableDrivers(), true)
+        ? new PDO('sqlite:' . $path, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION])
+        : new FeedbackPythonDatabase($path);
     $db->exec('PRAGMA busy_timeout=5000');
     $db->exec('CREATE TABLE IF NOT EXISTS feedback_requests (
         id TEXT PRIMARY KEY, digest TEXT NOT NULL, created INTEGER NOT NULL,
@@ -32,7 +36,7 @@ function feedbackIssueUrl($issue): string {
     $url = is_array($issue) ? ($issue['html_url'] ?? '') : '';
     return is_string($url) && preg_match('~^https://github\.com/ggtothemax/dunecity/issues/[1-9][0-9]*$~D', $url) ? $url : '';
 }
-function feedbackHandle(string $method, array $input, string $ip, string $token, PDO $db, callable $github): string {
+function feedbackHandle(string $method, array $input, string $ip, string $token, $db, callable $github): string {
     if($method !== 'POST') return 'ERROR Use Send feedback in the game.';
     foreach(['request_id' => 32, 'title' => 400, 'details' => 8000, 'context' => 8000] as $key => $max) {
         if(!isset($input[$key]) || !is_string($input[$key]) || strlen($input[$key]) > $max
@@ -50,7 +54,7 @@ function feedbackHandle(string $method, array $input, string $ip, string $token,
     $db->exec('BEGIN IMMEDIATE');
     try {
         $query = $db->prepare('SELECT * FROM feedback_requests WHERE id=?'); $query->execute([$id]);
-        $existing = $query->fetch(PDO::FETCH_ASSOC);
+        $existing = $query->fetch(2);
         if($existing && !hash_equals($existing['digest'], $digest)) {
             $db->exec('COMMIT'); return 'ERROR Request text changed. Please reopen the form and try again.';
         }

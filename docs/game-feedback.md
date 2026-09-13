@@ -8,6 +8,13 @@ id for retry reconciliation. It never attaches IP addresses or human player name
 
 ## Provision and deploy
 
+Storage uses PDO SQLite when available, otherwise the existing Python 3 SQLite
+runtime through a bounded private worker. This needs no administrator install.
+The worker holds one connection per request so reservation transactions remain
+atomic. Its script is blocked by Apache and never receives credentials or drafts.
+Deployment checks the Apache storage path using an invalid submission that creates
+no issue. Tests run the same behavior suite against both storage backends.
+
 Create a fine-grained GitHub personal access token restricted to **ggtothemax/dunecity**,
 with **Issues: read and write** and GitHub's required Metadata read permission.
 Do not grant Contents access or distribute this token with desktop/browser builds.

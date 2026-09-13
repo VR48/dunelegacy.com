@@ -36,6 +36,8 @@ jobs:
           php -l metaserver/analytics.php
           php -l metaserver/feedback.php
           php -l metaserver/feedback_service.php
+          php -l metaserver/feedback_storage.php
+          python3 -m py_compile metaserver/feedback_store.py
           php scripts/tests/test_feedback.php
           python3 -m py_compile metaserver/analytics_store.py
           php -l website/p2p/index.php
@@ -115,6 +117,9 @@ jobs:
       - name: Verify production security headers
         run: |
           set -euo pipefail
+          # Exercises the Apache storage backend without creating an issue.
+          test "$(curl --fail --silent --show-error --data '' https://dunelegacy.com/metaserver/feedback.php)" = \
+            'ERROR Invalid feedback. Please check the text and try again.'
           curl --fail --silent --show-error --retry 5 --retry-delay 2 \
             --data 'command=gamestats&phase=health' \
             https://dunelegacy.com/metaserver/metaserver.php \
