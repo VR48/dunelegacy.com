@@ -50,6 +50,14 @@ const FIELD_RULES = [
     'bye'          => '/^[01]$/D',
 ];
 
+/** Optional local deployment hook; notification failures cannot veto a committed lobby. */
+function notifyLobby(string $kind, array $result): void
+{
+    if (!function_exists('dunecityP2PNotifyLobby')) return;
+    try { dunecityP2PNotifyLobby($kind, $result['notification'] ?? []); }
+    catch (Throwable) { error_log('P2P lobby notification unavailable'); }
+}
+
 function requireField(array $form, string $name): string
 {
     $value = $form[$name] ?? null;
@@ -217,6 +225,7 @@ try {
                 'everStarted' => $result['everStarted'],
             ]);
             if ($phase === 'match' && $result['phaseChanged']) {
+                notifyLobby('started', $result);
                 $analytics->record('started', [
                     'room_log_id' => $result['logId'] ?? null,
                     'peers_admitted' => $result['peers'],
@@ -300,6 +309,9 @@ try {
             'game_version'    => $appVersion,
             'runtime_claimed' => $runtime,
         ]);
+        if ($result['role'] === 'host' && !($result['recovered'] ?? false)) {
+            notifyLobby('hosted', $result);
+        }
         $lines = [
             ['status', 'ok'],
             ['protocol', (string)Limits::PROTOCOL_VERSION],

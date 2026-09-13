@@ -277,6 +277,7 @@ final class Signaling
                 'code'        => (string)$state['code'],
                 'logId'       => (string)$state['logId'],
                 'hostName'    => (string)$state['hostName'],
+                'notification' => self::notificationSnapshot($state),
                 'peers'       => count($state['peers']),
                 'outstanding' => count($state['grants']),
             ];
@@ -725,6 +726,7 @@ final class Signaling
             }
             return [$state, ['phase' => (string)$state['phase'], 'epoch' => (int)$state['epoch'],
                              'phaseChanged' => $phaseChanged,
+                             'notification' => self::notificationSnapshot($state),
                              'everStarted' => (bool)$state['everStarted'],
                              'startId' => $state['startId'] ?? '', 'roster' => $roster,
                              'logId' => $state['logId'],
@@ -804,6 +806,20 @@ final class Signaling
         $state['signals'] = array_values(array_filter($state['signals'] ?? [],
             static fn(array $r) => $now - (int)$r['at'] <= Limits::SIGNAL_TTL_MS));
         return $state;
+    }
+
+    /** Trusted deployment notification fields. Never include invitation or transport secrets. */
+    private static function notificationSnapshot(array $state): array
+    {
+        return [
+            'room_log_id' => (string)$state['logId'],
+            'mode' => (string)$state['mode'],
+            'visibility' => (string)$state['visibility'],
+            'host' => (string)$state['hostName'],
+            'version' => (string)$state['appVersion'],
+            'players' => count($state['peers']),
+            'max_players' => (int)$state['maxPeers'],
+        ];
     }
 
     /** Only listing fields, derived from current authoritative room state. */
