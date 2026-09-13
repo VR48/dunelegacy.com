@@ -7,17 +7,17 @@ $calls = [];
 $github = function($method, $path, $payload, $token) use (&$calls) {
     $calls[] = [$method, $path, $payload];
     check($token === 'test-repo-scoped-token', 'token not supplied server-side');
-    return [201, ['html_url' => 'https://github.com/VR48/dunecity/issues/123']];
+    return [201, ['html_url' => 'https://github.com/ggtothemax/dunecity/issues/123']];
 };
 $send = function($data, $token = 'test-repo-scoped-token', $ip = '127.0.0.1') use ($db, $github) {
     return feedbackHandle('POST', $data, $ip, $token, $db, $github);
 };
 check(str_starts_with($send($input, ''), 'ERROR'), 'unconfigured service accepted feedback');
 check(count($calls) === 0, 'unconfigured service made an upstream call');
-check($send($input) === 'OK https://github.com/VR48/dunecity/issues/123', 'creation failed');
+check($send($input) === 'OK https://github.com/ggtothemax/dunecity/issues/123', 'creation failed');
 check(str_contains($calls[0][2]['body'], 'Atreides: QuantBot Brutal'), 'AI context missing');
 check(str_contains($calls[0][2]['body'], 'dunecity-feedback:' . $input['request_id']), 'reconciliation marker missing');
-check($send($input) === 'OK https://github.com/VR48/dunecity/issues/123' && count($calls) === 1, 'retry duplicated issue');
+check($send($input) === 'OK https://github.com/ggtothemax/dunecity/issues/123' && count($calls) === 1, 'retry duplicated issue');
 $changed = $input; $changed['details'] = 'Different';
 check(str_starts_with($send($changed), 'ERROR') && count($calls) === 1, 'id accepted different content');
 foreach(['title' => [], 'details' => str_repeat('x', 8001), 'request_id' => '../../bad'] as $key => $value) {
@@ -36,15 +36,15 @@ check(str_starts_with(feedbackHandle('POST', $pending, '::1', 'test-repo-scoped-
 $db->exec('UPDATE feedback_requests SET created=created-30 WHERE id="' . $pending['request_id'] . '"');
 $recover = function($method) use ($pending) {
     check($method === 'GET', 'uncertain request was posted again');
-    return [200, [['body' => '<!-- dunecity-feedback:' . $pending['request_id'] . ' -->', 'html_url' => 'https://github.com/VR48/dunecity/issues/456']]];
+    return [200, [['body' => '<!-- dunecity-feedback:' . $pending['request_id'] . ' -->', 'html_url' => 'https://github.com/ggtothemax/dunecity/issues/456']]];
 };
-check(feedbackHandle('POST', $pending, '::1', 'test-repo-scoped-token', $db, $recover) === 'OK https://github.com/VR48/dunecity/issues/456', 'reconciliation failed');
+check(feedbackHandle('POST', $pending, '::1', 'test-repo-scoped-token', $db, $recover) === 'OK https://github.com/ggtothemax/dunecity/issues/456', 'reconciliation failed');
 // Explicit rejection is retryable; reservation still prevents concurrent duplicate POSTs.
 $rejected = $input; $rejected['request_id'] = str_repeat('d', 32);
 feedbackHandle('POST', $rejected, 'reject-ip', 'test-repo-scoped-token', $db, fn() => [403, []]);
 $retry = function($method) use ($db, $rejected) {
     check($db->query('SELECT state FROM feedback_requests WHERE id="' . $rejected['request_id'] . '"')->fetchColumn() === 'pending', 'retry not reserved');
-    return [201, ['html_url' => 'https://github.com/VR48/dunecity/issues/789']];
+    return [201, ['html_url' => 'https://github.com/ggtothemax/dunecity/issues/789']];
 };
 check(str_starts_with(feedbackHandle('POST', $rejected, 'reject-ip', 'test-repo-scoped-token', $db, $retry), 'OK'), 'rejection could not be retried');
 for($i=0; $i<7; ++$i) {

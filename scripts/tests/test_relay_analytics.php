@@ -169,6 +169,12 @@ assert "https-poll" in c.execute("select sql from sqlite_master where name='anal
 PYTHON;
     [$status, $error] = relayPython($script);
     checkRelay($status===0, 'database assertions: '.$error);
+    $direct = array_merge($poll, ['schema_version'=>3, 'event_id'=>'direct-'.str_repeat('d',32), 'transport'=>'direct-p2p']);
+    checkRelay(relayAnalyticsEvent(json_encode($direct)) !== null, 'schema 3 direct record accepted');
+    checkRelay(recordRelayTest($direct) && recordRelayTest($direct), 'direct record retry is idempotent');
+    checkRelay(relayAnalyticsNormalize(array_merge($direct,['schema_version'=>2])) === null, 'schema 2 cannot pretend to be direct');
+    [$status,$error] = relayPython("import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); assert c.execute(\"select count(*),source from analytics_relay_events where transport='direct-p2p'\").fetchone()==(1,'signaling_service_v1')");
+    checkRelay($status===0,'direct database assertions: '.$error);
     echo 'Relay analytics key resolution, schema 1 + 2 and ' . ($usePython ? 'Python fallback' : 'PDO')
         . " storage passed (migrated from the frozen schema-1 fixture)\n";
 } finally {

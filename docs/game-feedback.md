@@ -1,14 +1,14 @@
 # In-game feedback service
 
 `POST https://dunelegacy.com/metaserver/feedback.php` creates public issues in
-`VR48/dunecity`. Players need no GitHub account. The game sends only the summary,
+`ggtothemax/dunecity`. Players need no GitHub account. The game sends only the summary,
 feedback text, and the game details shown in its dialog (version, platform, mod,
 house, mission, and AI types/difficulties). The server attaches an opaque request
 id for retry reconciliation. It never attaches IP addresses or human player names.
 
 ## Provision and deploy
 
-Create a fine-grained GitHub personal access token restricted to **VR48/dunecity**,
+Create a fine-grained GitHub personal access token restricted to **ggtothemax/dunecity**,
 with **Issues: read and write** and GitHub's required Metadata read permission.
 Do not grant Contents access or distribute this token with desktop/browser builds.
 GitHub documents the permission for [Create an issue](https://docs.github.com/en/rest/issues/issues#create-an-issue).
@@ -19,7 +19,8 @@ Store the credential as the website repository's Actions secret
 The data directory has the www-data setgid bit. It stays outside the published web
 root and survives code deployments. A missing Actions secret preserves an existing
 server token; an unconfigured server returns an explicit error instead of success.
-Rotate the secret and redeploy before token expiry. To revoke access, revoke the
+The production token uses no expiration, as requested by the maintainer.
+To rotate it, replace the secret and redeploy. To revoke access, revoke the
 GitHub token and remove the server token file.
 
 The website repository contains the authoritative endpoint source. Deploy through
@@ -32,7 +33,7 @@ not capture POST bodies or authorization headers.
 
 Form fields: `request_id` (32 lowercase hexadecimal characters), `title` (100 Unicode
 characters), `details` (2,000 Unicode characters), `context` (8,000 bytes).
-Success is exactly `OK https://github.com/VR48/dunecity/issues/<number>`.
+Success is exactly `OK https://github.com/ggtothemax/dunecity/issues/<number>`.
 Application errors start with `ERROR `; clients retain drafts and offer retry.
 No browser opens until the player chooses **View request** after confirmed success.
 
