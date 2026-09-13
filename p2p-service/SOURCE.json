@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/VR48/dunecity",
-  "commit": "792344ba89ecc81e94c94183b2b5be9240b56dc4",
+  "commit": "b7db7199455d9b756043118b7412c1d1e9359d06",
   "sha256": {
     "src/Analytics.php": "d6869217c2b6c517eaa6a7b7efcc89ad1d51e7ee9221966a83bd2d7cfa961ed5",
     "src/Config.php": "49bdef0812607ec229c7fb80889a0c5c43f44e471c92d2974f4c11422e824f00",
