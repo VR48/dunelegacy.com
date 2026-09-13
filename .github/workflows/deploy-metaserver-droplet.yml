@@ -41,6 +41,8 @@ jobs:
           php scripts/tests/test_feedback.php
           python3 -m py_compile metaserver/analytics_store.py
           php -l website/p2p/index.php
+          php -l metaserver/p2p_notifications.php
+          php scripts/tests/test_p2p_notifications.php
           python3 deploy/install-p2p-service.py --source p2p-service --target "$RUNNER_TEMP/p2p-install-check"
       
       - name: Configure verified SSH transport

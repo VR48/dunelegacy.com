@@ -4,6 +4,19 @@
 declare(strict_types=1);
 if (!defined('DATA_DIR')) define('DATA_DIR', '/var/www/data');
 require_once dirname(__DIR__) . '/metaserver/relay_analytics.php';
+require_once dirname(__DIR__) . '/metaserver/p2p_notifications.php';
+
+/** Trusted signaling callback, after host seating or an authenticated host start. */
+function dunecityP2PNotifyLobby(string $kind, array $event): void {
+    P2PNotifications::configured()->enqueue($kind, $event);
+}
+
+register_shutdown_function(static function (): void {
+    // FPM can finish the response first; Apache delivery is still bounded to two seconds.
+    if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+    try { P2PNotifications::configured()->drain(); }
+    catch (Throwable) { error_log('P2P Discord delivery unavailable'); }
+});
 
 /** Only the installed signaling service calls this hook; there is no HTTP event input here. */
 function dunecityP2PRecordEvent(array $event): void {

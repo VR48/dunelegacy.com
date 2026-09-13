@@ -31,3 +31,27 @@ and `python3 deploy/check-web-security.py`. After deployment, check
 `https://dunelegacy.com/p2p/v1/health`, origin rejection, a fresh public room and
 browser/native participation rows. A successful health check does not establish
 gameplay or Internet NAT reachability; verify those in actual matches.
+
+## Discord announcements
+
+The entrypoint connects the trusted signaling notification hook to
+`metaserver/p2p_notifications.php`. It reuses `/var/www/data/discord_webhook.txt`
+(or `DISCORD_WEBHOOK_URL`) and announces custom/campaign lobby creation and starts
+for both public and private rooms. Invitation codes and transport credentials are
+never included. Current signaling does not receive map/mod metadata, so messages
+use the known host, mode, version, visibility and player counts only.
+
+The private `discord-p2p` outbox deduplicates by room log ID and event kind, keeps
+at most 256 jobs for an hour, and drains one due job on subsequent P2P requests.
+Delivery is globally paced and network calls hold no queue/room locks. HTTP 429
+and transient failures retry up to five attempts; retry delays are respected up
+to fifteen minutes. Permanent authorization/not-found failures are logged and
+stopped. `wait=true` requires a confirmed Discord message ID; diagnostics contain
+only event IDs, HTTP status and confirmed message IDs. A timeout after Discord has
+accepted a message can still cause a duplicate on retry. Retries require traffic;
+this does not install a daemon. FPM finishes the game response before delivery;
+on Apache each delivery adds at most two seconds to that request.
+
+Check `php scripts/tests/test_p2p_notifications.php` and the signaling integration
+suite before publishing. Verify the configured webhook with a read-only GET. A
+live test post needs explicit authorization; local tests use a fake sender.
