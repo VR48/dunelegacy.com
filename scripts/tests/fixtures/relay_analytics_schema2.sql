@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS analytics_relay_events (
     client_runtime TEXT NOT NULL CHECK(client_runtime IN ('browser','native','unknown')),
     game_version TEXT NOT NULL CHECK(length(game_version)<=64 AND game_version NOT GLOB '*[^A-Za-z0-9._-]*'),
     reason TEXT NOT NULL CHECK(length(reason)<=48 AND reason NOT GLOB '*[^a-z0-9_-]*'),
-    transport TEXT NOT NULL DEFAULT 'wss' CHECK(transport IN ('wss','https-poll','direct-p2p')),
-    source TEXT NOT NULL DEFAULT 'relay_service_v1' CHECK(source IN ('relay_service_v1','signaling_service_v1')),
+    transport TEXT NOT NULL DEFAULT 'wss' CHECK(transport IN ('wss','https-poll')),
+    source TEXT NOT NULL DEFAULT 'relay_service_v1' CHECK(source = 'relay_service_v1'),
     CHECK((kind IN ('joined','left') AND participant_id>0) OR
           (kind IN ('created','started','closed') AND participant_id=0 AND client_runtime='unknown' AND game_version=''))
 );
@@ -41,6 +41,6 @@ SELECT room_id, participant_id,
        MAX(CASE WHEN kind='left' THEN occurred_at END) AS left_at,
        COALESCE(MAX(CASE WHEN kind='joined' THEN transport END), MAX(transport)) AS transport,
        'client_reported' AS runtime_source,
-       CASE WHEN MAX(transport)='direct-p2p' THEN 'signaling_service' ELSE 'server_observed' END AS transport_source
+       'server_observed' AS transport_source
 FROM analytics_relay_events WHERE participant_id > 0
 GROUP BY room_id, participant_id;

@@ -4,11 +4,12 @@ require_once __DIR__ . '/analytics.php';
 const RELAY_ANALYTICS_MAX_BYTES = 4096;
 /**
  * Accepted record schemas. Schema 1 has no transport field and always meant a wss relay, so it
- * keeps that meaning forever. Schema 2 states the server-observed transport explicitly.
+ * keeps that meaning forever. Schema 2 states the server-observed relay transport explicitly.
+ * Schema 3 records direct-P2P participation observed by the signaling service, not packet routing.
  */
-const RELAY_ANALYTICS_SCHEMA_VERSIONS = [1, 2];
+const RELAY_ANALYTICS_SCHEMA_VERSIONS = [1, 2, 3];
 /** Server-observed ingress values the endpoint is willing to store. Never a client's claim. */
-const RELAY_ANALYTICS_TRANSPORTS = ['wss', 'https-poll'];
+const RELAY_ANALYTICS_TRANSPORTS = ['wss', 'https-poll', 'direct-p2p'];
 const RELAY_ANALYTICS_LEGACY_TRANSPORT = 'wss';
 const RELAY_ANALYTICS_BASE_FIELDS = ['schema_version', 'event_id', 'room_id', 'kind', 'occurred_at',
                                      'participant_id', 'client_runtime', 'game_version', 'reason'];
@@ -103,6 +104,7 @@ function relayAnalyticsNormalize($event) {
     } elseif (!is_string($transport) || !in_array($transport, RELAY_ANALYTICS_TRANSPORTS, true)) {
         return null;
     }
+    if (($version === 3) !== ($transport === 'direct-p2p')) return null;
     $normalized = [];
     foreach (RELAY_ANALYTICS_BASE_FIELDS as $field) $normalized[$field] = $event[$field];
     $normalized['transport'] = $transport;
@@ -116,28 +118,28 @@ function relayAnalyticsEvent($raw) {
     // Reject extra fields so tickets, room invitation codes and packet bodies cannot be stored,
     // and so a schema-1 body cannot smuggle in a transport the schema does not have.
     $keys = RELAY_ANALYTICS_BASE_FIELDS;
-    if ($event['schema_version'] === 2) $keys[] = 'transport';
+    if (in_array($event['schema_version'], [2, 3], true)) $keys[] = 'transport';
     if (array_diff(array_keys($event), $keys) || array_diff($keys, array_keys($event))) return null;
     return relayAnalyticsNormalize($event);
 }
 
 class RelayAnalyticsConflict extends RuntimeException {}
 
-/** The schema-2 DDL, checked for the marker the migration below keys on. */
+/** The schema-3 DDL, checked for the marker the migration below keys on. */
 function relayAnalyticsSchemaSql() {
     $sql = @file_get_contents(__DIR__ . '/relay_analytics.sql');
-    if (!is_string($sql) || strpos($sql, "'https-poll'") === false
-        || strpos($sql, "'server_observed'") === false) {
-        throw new RuntimeException('relay analytics schema file is missing or not schema 2');
+    if (!is_string($sql) || strpos($sql, "'direct-p2p'") === false
+        || strpos($sql, "'signaling_service'") === false) {
+        throw new RuntimeException('relay analytics schema file is missing or not schema 3');
     }
     return $sql;
 }
 
 /**
- * Brings an existing database up to the schema-2 lifecycle table.
+ * Brings an existing database up to the schema-3 lifecycle table.
  *
  * SQLite cannot widen a CHECK constraint in place, so a schema-1 table (CHECK(transport='wss'))
- * is rebuilt: the old table is renamed, the schema-2 table is created from relay_analytics.sql,
+ * is rebuilt: the old table is renamed, the schema-3 table is created from relay_analytics.sql,
  * every old row is copied through the new CHECKs, the row count is verified, and only then is
  * the old table dropped. All of it is one transaction, so a failure at any point leaves the
  * original schema-1 table, its rows and its indexes exactly as they were. The view is rebuilt
@@ -149,8 +151,8 @@ function relayAnalyticsMigrate(PDO $database) {
         AND name='analytics_relay_events'")->fetchColumn();
     $viewSql = $database->query("SELECT sql FROM sqlite_master WHERE type='view'
         AND name='analytics_relay_participants'")->fetchColumn();
-    $tableStale = is_string($tableSql) && strpos($tableSql, 'https-poll') === false;
-    $viewStale = is_string($viewSql) && strpos($viewSql, 'server_observed') === false;
+    $tableStale = is_string($tableSql) && strpos($tableSql, 'direct-p2p') === false;
+    $viewStale = is_string($viewSql) && strpos($viewSql, 'signaling_service') === false;
     if (!$tableStale && !$viewStale) {
         $database->exec($schema);
         return;
@@ -195,11 +197,12 @@ function relayAnalyticsRecord(array $event) {
         relayAnalyticsMigrate($database);
         $statement = $database->prepare('INSERT INTO analytics_relay_events
             (event_id, room_id, kind, occurred_at, received_at, participant_id, client_runtime,
-             game_version, reason, transport)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(event_id) DO NOTHING');
+             game_version, reason, transport, source)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(event_id) DO NOTHING');
         $statement->execute([$event['event_id'], $event['room_id'], $event['kind'], $event['occurred_at'], time(),
                              $event['participant_id'], $event['client_runtime'], $event['game_version'],
-                             $event['reason'], $event['transport']]);
+                             $event['reason'], $event['transport'],
+                             $event['transport'] === 'direct-p2p' ? 'signaling_service_v1' : 'relay_service_v1']);
         if ($statement->rowCount() === 0) {
             // An id already used for a different event never changes what is stored, including a
             // schema-1 retry that would otherwise relabel an https-poll room as wss.

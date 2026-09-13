@@ -355,9 +355,9 @@ class RelayEventConflict(ValueError):
     pass
 
 
-RELAY_SCHEMA_VERSIONS = (1, 2)
+RELAY_SCHEMA_VERSIONS = (1, 2, 3)
 # Server-observed ingress values the store is willing to record.  Never a client's claim.
-RELAY_TRANSPORTS = ("wss", "https-poll")
+RELAY_TRANSPORTS = ("wss", "https-poll", "direct-p2p")
 # Schema 1 has no transport field and always meant a wss relay, so it keeps that meaning.
 RELAY_LEGACY_TRANSPORT = "wss"
 RELAY_BASE_FIELDS = ("schema_version", "event_id", "room_id", "kind", "occurred_at",
@@ -370,19 +370,19 @@ RELAY_ROW_FIELDS = ("event_id", "room_id", "kind", "occurred_at", "received_at",
 
 
 def relay_schema_statements() -> list[str]:
-    """The schema-2 DDL, split into statements and checked for the migration markers."""
+    """The schema-3 DDL, split into statements and checked for the migration markers."""
     sql = Path(__file__).with_name("relay_analytics.sql").read_text()
-    if "'https-poll'" not in sql or "'server_observed'" not in sql:
-        raise ValueError("relay analytics schema file is missing or not schema 2")
+    if "'direct-p2p'" not in sql or "'signaling_service'" not in sql:
+        raise ValueError("relay analytics schema file is missing or not schema 3")
     body = "\n".join(line for line in sql.splitlines() if not line.lstrip().startswith("--"))
     return [statement.strip() for statement in body.split(";") if statement.strip()]
 
 
 def relay_migrate(connection: sqlite3.Connection) -> None:
-    """Bring an existing database up to the schema-2 lifecycle table.
+    """Bring an existing database up to the schema-3 lifecycle table.
 
     SQLite cannot widen a CHECK constraint in place, so a schema-1 table
-    (CHECK(transport='wss')) is rebuilt: the old table is renamed, the schema-2 table is created
+    (CHECK(transport='wss')) is rebuilt: the old table is renamed, the schema-3 table is created
     from relay_analytics.sql, every old row is copied through the new CHECKs, the row count is
     verified, and only then is the old table dropped.  All of it is one transaction, so a failure
     at any point leaves the original schema-1 table, its rows and its indexes as they were.  The
@@ -393,8 +393,8 @@ def relay_migrate(connection: sqlite3.Connection) -> None:
                                    " AND name='analytics_relay_events'").fetchone()
     view_sql = connection.execute("SELECT sql FROM sqlite_master WHERE type='view'"
                                   " AND name='analytics_relay_participants'").fetchone()
-    table_stale = table_sql is not None and "https-poll" not in (table_sql[0] or "")
-    view_stale = view_sql is not None and "server_observed" not in (view_sql[0] or "")
+    table_stale = table_sql is not None and "direct-p2p" not in (table_sql[0] or "")
+    view_stale = view_sql is not None and "signaling_service" not in (view_sql[0] or "")
     if connection.in_transaction:
         connection.commit()
     if not table_stale and not view_stale:
@@ -461,6 +461,8 @@ def relay_normalize(event: Any) -> dict[str, Any]:
         transport = RELAY_LEGACY_TRANSPORT
     elif not isinstance(transport, str) or transport not in RELAY_TRANSPORTS:
         raise ValueError("invalid relay transport")
+    if (event['schema_version'] == 3) != (transport == 'direct-p2p'):
+        raise ValueError('invalid direct-play schema/transport combination')
     return {**{field: event[field] for field in RELAY_BASE_FIELDS}, "transport": transport}
 
 
@@ -470,11 +472,11 @@ def relay_record(connection: sqlite3.Connection, request: dict[str, Any]) -> Non
     relay_migrate(connection)
     with connection:
         inserted = connection.execute("""INSERT INTO analytics_relay_events
-            (event_id,room_id,kind,occurred_at,received_at,participant_id,client_runtime,game_version,reason,transport)
-            VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(event_id) DO NOTHING""",
+            (event_id,room_id,kind,occurred_at,received_at,participant_id,client_runtime,game_version,reason,transport,source)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(event_id) DO NOTHING""",
             (event["event_id"], event["room_id"], event["kind"], event["occurred_at"], int(time.time()),
              event["participant_id"], event["client_runtime"], event["game_version"], event["reason"],
-             event["transport"]))
+             event["transport"], "signaling_service_v1" if event["transport"] == "direct-p2p" else "relay_service_v1"))
         if inserted.rowcount == 0:
             # An id already used for a different event never changes what is stored, including a
             # schema-1 retry that would otherwise relabel an https-poll room as wss.
