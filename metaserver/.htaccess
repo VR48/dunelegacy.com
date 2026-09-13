@@ -8,3 +8,10 @@ RewriteRule ^analytics_store\.py$ - [F,L,NC]
 </Files>
 RewriteCond %{HTTPS} !=on
 RewriteRule ^relay-events\.php$ - [F,L]
+
+# Feedback uses a bounded POST over HTTPS, never a GET containing private draft text.
+<Files "feedback.php">
+  LimitRequestBody 65536
+</Files>
+RewriteCond %{HTTPS} !=on
+RewriteRule ^feedback\.php$ - [F,L]

@@ -62,6 +62,8 @@ Auto-deploys via GitHub Actions (~20 sec)
 
 ---
 
+In-game anonymous GitHub issue submission is documented in [game feedback](docs/game-feedback.md), including the repo-scoped token and deployment secret.
+
 ## Prerequisites
 
 ```bash

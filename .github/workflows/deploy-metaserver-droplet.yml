@@ -32,6 +32,9 @@ jobs:
         run: |
           php -l metaserver/metaserver.php
           php -l metaserver/analytics.php
+          php -l metaserver/feedback.php
+          php -l metaserver/feedback_service.php
+          php scripts/tests/test_feedback.php
           python3 -m py_compile metaserver/analytics_store.py
       
       - name: Configure verified SSH transport
@@ -84,6 +87,7 @@ jobs:
         env:
           DROPLET_IP: ${{ secrets.METASERVER_DROPLET_IP }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          FEEDBACK_GITHUB_TOKEN: ${{ secrets.FEEDBACK_GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           SSH_ARGS=(-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
@@ -91,6 +95,12 @@ jobs:
             dunelegacy-deploy@"$DROPLET_IP":/home/dunelegacy-deploy/deploy-release.sh
           ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" \
             'bash /home/dunelegacy-deploy/deploy-release.sh'
+
+          if [ -n "$FEEDBACK_GITHUB_TOKEN" ]; then
+            printf '%s' "$FEEDBACK_GITHUB_TOKEN" \
+              | ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" \
+                  'umask 027; token_file=$(mktemp /var/www/data/.feedback-token.XXXXXX); cat > "$token_file"; chmod 0640 "$token_file"; mv -f "$token_file" /var/www/data/feedback_github_token.txt'
+          fi
 
           if [ -n "$DISCORD_WEBHOOK_URL" ]; then
             printf '%s' "$DISCORD_WEBHOOK_URL" \
