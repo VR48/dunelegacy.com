@@ -55,3 +55,15 @@ on Apache each delivery adds at most two seconds to that request.
 Check `php scripts/tests/test_p2p_notifications.php` and the signaling integration
 suite before publishing. Verify the configured webhook with a read-only GET. A
 live test post needs explicit authorization; local tests use a fake sender.
+
+Verified 14 September 2026 (Sydney): game service PR37/source709d0a2 and website
+e4edc3b deployed successfully in run34765919342. Read-only webhook inspection
+confirmed the existing Dune Multiplayer Server channel. Stefan authorized two
+live test messages. An actual private custom admission/host session/start emitted
+Discord messages1548718423914057941 (Lobby Created) and1548718476431069229
+(Starting); both were read back through Discord and contain no invitation/session
+credentials or mentions. Repeating the start emitted no duplicate. The temporary
+test lobby was removed. Local tests passed166 signaling cases plus notifier
+payload/deduplication/privacy/rate-limit/transient/permanent-error cases and the
+service installer/security checks. Evidence is in the local project outputs:
+`outputs/dunecity-menu-acceptance/discord-live-verification.json`.
