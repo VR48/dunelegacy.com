@@ -36,6 +36,22 @@ class RelayAnalyticsTests(unittest.TestCase):
         self.db.close()
         self.temp.cleanup()
 
+    def test_schema2_migration_preserves_rows_and_adds_direct_play(self):
+        self.db.executescript((REPO/'scripts/tests/fixtures/relay_analytics_schema2.sql').read_text())
+        self.db.execute("""INSERT INTO analytics_relay_events
+            (event_id,room_id,kind,occurred_at,received_at,participant_id,client_runtime,game_version,reason,transport)
+            VALUES (?,?,?,?,?,?,?,?,?,?)""", ('old-event-'+'a'*24,'old-room-'+'b'*24,
+            'joined',1789190000,1789190001,1,'native','1.0.661','','https-poll'))
+        self.db.commit()
+        before=self.db.execute('SELECT * FROM analytics_relay_events').fetchall()
+        direct=event(500,2,'browser',schema=3,transport='direct-p2p')
+        store.relay_record(self.db,{'event':direct});store.relay_record(self.db,{'event':direct})
+        self.assertEqual(before,self.db.execute("SELECT * FROM analytics_relay_events WHERE transport='https-poll'").fetchall())
+        self.assertEqual(('browser','direct-p2p','client_reported','signaling_service'),self.db.execute(
+            "SELECT client_runtime,transport,runtime_source,transport_source FROM analytics_relay_participants WHERE transport='direct-p2p'").fetchone())
+        self.assertEqual('signaling_service_v1',self.db.execute("SELECT source FROM analytics_relay_events WHERE transport='direct-p2p'").fetchone()[0])
+        self.assertEqual(1,self.db.execute("SELECT COUNT(*) FROM analytics_matches WHERE match_id='legacy-match'").fetchone()[0])
+
     def test_mixed_room_events_are_idempotent_and_keep_legacy_match(self):
         for row in (event(), event(), event(2, 2, 'native'), event(3, kind='left')):
             store.relay_record(self.db, {'event': row})

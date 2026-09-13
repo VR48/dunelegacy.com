@@ -6,6 +6,8 @@ on:
     paths:
       - 'website/**'
       - 'metaserver/**'
+      - 'p2p-service/**'
+      - 'deploy/**'
       - '.github/workflows/deploy-metaserver-droplet.yml'
   workflow_dispatch:  # Allow manual deployment
 
@@ -33,6 +35,8 @@ jobs:
           php -l metaserver/metaserver.php
           php -l metaserver/analytics.php
           python3 -m py_compile metaserver/analytics_store.py
+          php -l website/p2p/index.php
+          python3 deploy/install-p2p-service.py --source p2p-service --target "$RUNNER_TEMP/p2p-install-check"
       
       - name: Configure verified SSH transport
         env:
