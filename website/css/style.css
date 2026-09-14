@@ -629,3 +629,16 @@ nav a[aria-current="page"] { color: var(--primary); border-bottom: 2px solid cur
     .coop-availability { padding: 16px; }
     .coop-guide { scroll-margin-top: 290px; }
 }
+
+/* Monthly downloads share the existing gold statistics palette. */
+.monthly-downloads { margin: 24px 0 18px; padding: 20px 16px; border: 1px solid #514619; border-radius: 8px; background: var(--dark); }
+.monthly-downloads h3 { margin: 0 0 16px; font-size: 1rem; color: var(--primary); }
+.monthly-scroll { overflow-x: auto; }
+.monthly-chart { display: grid; grid-template-columns: repeat(12, minmax(48px, 1fr)); gap: 12px; min-width: 720px; }
+.monthly-column { display: flex; flex-direction: column; align-items: center; }
+.monthly-count { font-size: .875rem; color: #eee; font-variant-numeric: tabular-nums; }
+.monthly-track { height: 150px; width: 100%; display: flex; align-items: flex-end; border-bottom: 1px solid #665b32; margin: 8px 0; }
+.monthly-bar { width: 100%; background: var(--primary); border-radius: 3px 3px 0 0; }
+.monthly-current { background: #a98b36; }
+.monthly-label { font-size: .875rem; white-space: nowrap; color: #ddd; }
+.monthly-downloads figcaption { font-size: .875rem; color: #bbb; margin-top: 16px; text-align: left; }

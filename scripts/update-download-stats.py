@@ -66,6 +66,40 @@ def gh_window(assets, history, start, end):
     return total
 
 
+def calendar_months(now):
+    """Twelve UTC calendar months, oldest first, including this month so far."""
+    index = now.year * 12 + now.month - 1
+    for offset in range(11, -1, -1):
+        year, month = divmod(index - offset, 12)
+        start = dt.datetime(year, month + 1, 1, tzinfo=UTC)
+        next_year, next_month = divmod(index - offset + 1, 12)
+        end = dt.datetime(next_year, next_month + 1, 1, tzinfo=UTC)
+        yield start, end
+
+
+def monthly_stats(assets, history, sf, now):
+    months = []
+    for start, end in calendar_months(now):
+        key = start.strftime('%Y-%m')
+        current = start <= now < end
+        s = sf['months'][key] if 'months' in sf else sum(
+            n for date, n in sf['downloads'] if date.startswith(key))
+        g = None
+        if current:
+            g = gh_window(assets, history, start, now)
+        else:
+            samples = [sample for sample in history if start <= stamp(sample['at']) < end]
+            if samples:
+                last = max(samples, key=lambda sample: sample['at'])
+                historical = {key: dict(assets[key], count=count)
+                              for key, count in last['counts'].items() if key in assets}
+                g = gh_window(historical, history, start, stamp(last['at']))
+        months.append({'month': key, 'sourceforge': s, 'github': g,
+                       'total': s + (g or 0), 'partial_month': current,
+                       'lower_bound': True})
+    return months
+
+
 def compile_stats(state, releases, sf, now):
     if not isinstance(sf.get('total'), int) or not isinstance(sf.get('downloads'), list):
         raise ValueError('Invalid SourceForge response; retain last good publication')
@@ -102,6 +136,7 @@ def compile_stats(state, releases, sf, now):
                 historical = {key:dict(assets[key],count=count) for key,count in last['counts'].items() if key in assets}
                 g = gh_window(historical,history,start,stamp(last['at']))
         years.append({'year':year, 'github':g, 'sourceforge':s, 'total':None if g is None else g+s})
+    months = monthly_stats(assets, history, sf, now)
     counts = {key:a['count'] for key,a in assets.items()}
     history.append({'at':now.isoformat(), 'counts':counts, 'sourceforge':sf['total']})
     # Hourly detail for two days; one sample per UTC day for long-term intervals.
@@ -114,7 +149,7 @@ def compile_stats(state, releases, sf, now):
     state['snapshots'] = list(older.values()) + recent
     gtotal = sum(counts.values())
     platforms = {p:sum(a['count'] for a in assets.values() if a['platform']==p) for p in ['windows','macos','linux','android']}
-    return {'generated':now.isoformat(), 'total':{'github':gtotal,'sourceforge':sf['total'],'total':gtotal+sf['total'],'lower_bound':True}, 'year':period(year_start), 'month':period(month_start), 'day':day, 'years':years, 'platforms':platforms}
+    return {'generated':now.isoformat(), 'total':{'github':gtotal,'sourceforge':sf['total'],'total':gtotal+sf['total'],'lower_bound':True}, 'year':period(year_start), 'month':period(month_start), 'day':day, 'years':years, 'months':months, 'platforms':platforms}
 
 
 def main():
@@ -127,6 +162,7 @@ def main():
     month = (now.date()-dt.timedelta(days=29)).isoformat()
     ranges = {'total':('2000-01-01',today), 'month':(month,today)}
     ranges.update({str(y):(f'{y}-01-01', today if y == now.year else f'{y}-12-31') for y in range(now.year,now.year-5,-1)})
+    ranges.update({start.strftime('%Y-%m'):(start.date().isoformat(), min(now.date(), (end-dt.timedelta(days=1)).date()).isoformat()) for start,end in calendar_months(now)})
     def fetch_range(item):
         key,(start,end)=item
         result,_=request_json(f'https://sourceforge.net/projects/dunelegacy/files/stats/json?start_date={start}&end_date={end}')
@@ -135,6 +171,7 @@ def main():
     with ThreadPoolExecutor(max_workers=3) as pool:
         totals=dict(pool.map(fetch_range,ranges.items()))
     sf={'total':totals['total'], 'downloads':[], 'periods':{month:totals['month'],f'{now.year}-01-01':totals[str(now.year)]}, 'years':{str(y):totals[str(y)] for y in range(now.year,now.year-5,-1)}}
+    sf['months'] = {start.strftime('%Y-%m'):totals[start.strftime('%Y-%m')] for start,end in calendar_months(now)}
     stats = compile_stats(state, releases, sf, now)
     STATE.parent.mkdir(exist_ok=True)
     DATA.mkdir(exist_ok=True)

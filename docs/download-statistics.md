@@ -10,7 +10,11 @@ The older downloads.json/history files are historical evidence, no longer read.
 
 The homepage shows total, calendar year to date, 30 UTC calendar days including
 today, and a roughly 24-hour snapshot difference. It also lists five calendar
-years. Missing GitHub history is marked incomplete; partial counts say “At least”.
+years and a bar chart of the last 12 UTC calendar months (current month partial).
+Totals are displayed without a prefix, as requested. Missing GitHub history remains
+explicit in the chart note and metadata; monthly bars sum the recorded sources.
+Historical GitHub months use only counts observed within that month, never today’s
+lifetime count. A missing historical GitHub month is null, not an asserted zero.
 24-hour numbers begin only when a baseline exists between 24 and 22.5 hours ago.
 SourceForge has reporting latency, so these are reported download increments,
 not exact download-event timestamps. Counts include repeat/automated downloads

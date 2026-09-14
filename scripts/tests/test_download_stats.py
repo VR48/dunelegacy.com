@@ -32,6 +32,29 @@ class StatsTests(unittest.TestCase):
         self.assertEqual(result['month']['sourceforge'],556)
         self.assertEqual(result['year']['sourceforge'],700)
 
+    def test_monthly_history_does_not_use_current_lifetime_counts(self):
+        assets={'old':{'created':'2025-01-01T00:00:00Z','count':9999},
+                'aug':{'created':'2026-08-10T00:00:00Z','count':8888}}
+        history=[{'at':'2026-08-01T00:00:00Z','counts':{'old':100}},
+                 {'at':'2026-08-31T23:00:00Z','counts':{'old':110,'aug':20}},
+                 {'at':'2026-09-01T00:00:00Z','counts':{'old':115,'aug':22}}]
+        now=m.stamp('2026-09-14T00:00:00Z')
+        sf={'months':{start.strftime('%Y-%m'):50 for start,end in m.calendar_months(now)}}
+        months=m.monthly_stats(assets,history,sf,now)
+        self.assertEqual(len(months),12)
+        self.assertEqual(months[0]['month'],'2025-10')
+        self.assertEqual(months[-2]['github'],30)
+        self.assertEqual(months[-2]['total'],80)
+        self.assertIsNone(months[0]['github'])
+        self.assertEqual(months[0]['total'],50)
+        self.assertTrue(months[-1]['partial_month'])
+        self.assertFalse(months[-2]['partial_month'])
+
+    def test_calendar_months_cross_year_and_leap_day(self):
+        months=list(m.calendar_months(m.stamp('2024-02-29T12:00:00Z')))
+        self.assertEqual(months[0][0].strftime('%Y-%m-%d'),'2023-03-01')
+        self.assertEqual(months[-1][1].strftime('%Y-%m-%d'),'2024-03-01')
+
     def test_invalid_source_does_not_publish_zero(self):
         with self.assertRaises(ValueError):m.compile_stats({},[],{},dt.datetime.now(m.UTC))
 

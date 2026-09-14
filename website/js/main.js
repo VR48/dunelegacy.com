@@ -24,7 +24,7 @@ async function refreshDownloadStatistics() {
         for (const key of ['total', 'year', 'month', 'day']) {
             const target = document.querySelector(`[data-stat="${key}"]`);
             if (!target) continue;
-            target.textContent = stats[key] ? 'At least ' + formatCount(stats[key].total) : 'Collecting';
+            target.textContent = stats[key] ? formatCount(stats[key].total) : 'Collecting';
         }
         if (stats.day) {
             document.getElementById('stats-day-note')?.replaceChildren(document.createTextNode(
@@ -37,13 +37,13 @@ async function refreshDownloadStatistics() {
             status.classList.toggle('stats-stale', stale);
         }
         const source = document.getElementById('stats-sources');
-        if (source) source.textContent = 'Recorded totals: SourceForge ' + formatCount(stats.total.sourceforge) + ' · GitHub at least ' + formatCount(stats.total.github) + '.';
+        if (source) source.textContent = 'Recorded totals: SourceForge ' + formatCount(stats.total.sourceforge) + ' · GitHub ' + formatCount(stats.total.github) + '.';
         const table = document.getElementById('stats-years');
         if (table) {
             table.replaceChildren();
             for (const year of stats.years) {
                 const row = document.createElement('tr');
-                [year.year, formatCount(year.sourceforge), year.github === null ? 'Not tracked' : 'At least ' + formatCount(year.github), year.total === null ? 'Incomplete' : 'At least ' + formatCount(year.total)].forEach((value, index) => {
+                [year.year, formatCount(year.sourceforge), year.github === null ? 'Not tracked' : formatCount(year.github), year.total === null ? 'Incomplete' : formatCount(year.total)].forEach((value, index) => {
                     const cell = document.createElement(index === 0 ? 'th' : 'td');
                     if (index === 0) cell.scope = 'row';
                     cell.textContent = value;
@@ -52,6 +52,7 @@ async function refreshDownloadStatistics() {
                 table.append(row);
             }
         }
+        renderMonthlyDownloads(stats.months);
         document.querySelectorAll('.download-card[data-platform]').forEach(card => {
             const target = card.querySelector('.download-count');
             const count = stats.platforms[card.dataset.platform];
@@ -66,4 +67,38 @@ setInterval(refreshDownloadStatistics, 15 * 60 * 1000);
 
 function formatCount(value) {
     return Number(value).toLocaleString();
+}
+
+
+function renderMonthlyDownloads(months) {
+    const chart = document.getElementById('stats-monthly-chart');
+    if (!chart) return;
+    chart.replaceChildren();
+    if (!Array.isArray(months) || months.length !== 12) {
+        chart.textContent = 'Monthly download history is being collected.';
+        return;
+    }
+    const maximum = Math.max(1, ...months.map(month => month.total));
+    for (const month of months) {
+        const date = new Date(month.month + '-01T00:00:00Z');
+        const label = date.toLocaleDateString('en', {month: 'short', year: '2-digit', timeZone: 'UTC'});
+        const column = document.createElement('div');
+        column.className = 'monthly-column';
+        const value = document.createElement('span');
+        value.className = 'monthly-count';
+        value.textContent = formatCount(month.total);
+        const track = document.createElement('div');
+        track.className = 'monthly-track';
+        const bar = document.createElement('div');
+        bar.className = 'monthly-bar' + (month.partial_month ? ' monthly-current' : '');
+        bar.style.height = (month.total / maximum * 100) + '%';
+        track.append(bar);
+        const caption = document.createElement('span');
+        caption.className = 'monthly-label';
+        caption.textContent = label + (month.partial_month ? '*' : '');
+        column.title = label + ': SourceForge ' + formatCount(month.sourceforge)
+            + (month.github === null ? '; GitHub history unavailable' : '; GitHub ' + formatCount(month.github));
+        column.append(value, track, caption);
+        chart.append(column);
+    }
 }
