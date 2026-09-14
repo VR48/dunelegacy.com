@@ -24,9 +24,15 @@ async function refreshDownloadStatistics() {
         for (const key of ['total', 'year', 'month', 'day']) {
             const target = document.querySelector(`[data-stat="${key}"]`);
             if (!target) continue;
-            target.textContent = stats[key] ? formatCount(stats[key].total) : 'Collecting';
+            target.textContent = stats[key] ? formatCount(stats[key].total) : 'Unavailable';
         }
         if (stats.day) {
+            const seconds = (new Date(stats.generated) - new Date(stats.day.since)) / 1000;
+            const hours = seconds / 3600;
+            const title = document.getElementById('stats-day-title');
+            if (title) title.textContent = Math.abs(hours - 24) <= 1.5 ? 'Last 24 hours'
+                : hours >= 1 ? 'Last ' + Math.round(hours) + ' hours'
+                : 'Last ' + Math.max(1, Math.round(seconds / 60)) + ' minutes';
             document.getElementById('stats-day-note')?.replaceChildren(document.createTextNode(
                 'Since ' + new Date(stats.day.since).toLocaleString()));
         }

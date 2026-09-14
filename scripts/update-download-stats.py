@@ -117,12 +117,15 @@ def compile_stats(state, releases, sf, now):
         s = sf['periods'][start.date().isoformat()] if 'periods' in sf else sum(n for date, n in sf['downloads'] if start.date().isoformat() <= date[:10] <= now.date().isoformat())
         return {'github': g, 'sourceforge': s, 'total': g+s, 'since': start.isoformat(), 'lower_bound': True}
     day_start = now - dt.timedelta(hours=24)
-    baseline = next(iter(sorted((s for s in history if day_start <= stamp(s['at']) <= day_start + dt.timedelta(hours=1, minutes=30)), key=lambda s:s['at'])), None)
+    # Scheduled collections can be delayed. Use the closest recorded baseline
+    # and publish its actual interval instead of hiding available history.
+    previous = [sample for sample in history if stamp(sample['at']) < now]
+    baseline = min(previous, key=lambda sample: abs(stamp(sample['at']) - day_start)) if previous else None
     day = None
     if baseline:
         g = gh_window(assets, [baseline], stamp(baseline['at']), now)
         s = max(0, sf['total'] - baseline['sourceforge'])
-        day = {'github': g, 'sourceforge': s, 'total': g+s, 'since': baseline['at'], 'lower_bound': True}
+        day = {'github': g, 'sourceforge': s, 'total': g+s, 'since': baseline['at'], 'window_seconds': int((now-stamp(baseline['at'])).total_seconds()), 'lower_bound': True}
     years = []
     for year in range(now.year, now.year-5, -1):
         s = sf['years'][str(year)] if 'years' in sf else sum(n for date,n in sf['downloads'] if date.startswith(str(year)))

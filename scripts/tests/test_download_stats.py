@@ -55,6 +55,15 @@ class StatsTests(unittest.TestCase):
         self.assertEqual(months[0][0].strftime('%Y-%m-%d'),'2023-03-01')
         self.assertEqual(months[-1][1].strftime('%Y-%m-%d'),'2024-03-01')
 
+    def test_daily_total_survives_a_gap_around_24_hours(self):
+        state={'assets':{'old':{'created':'2025-01-01T00:00:00Z','count':120,'platform':'windows'}},
+               'snapshots':[{'at':'2026-09-12T06:00:00Z','counts':{'old':100},'sourceforge':500},
+                            {'at':'2026-09-12T12:00:00Z','counts':{'old':110},'sourceforge':510}]}
+        result=m.compile_stats(state,[],{'total':540,'downloads':[]},m.stamp('2026-09-13T08:00:00Z'))
+        self.assertEqual(result['day']['total'],60)
+        self.assertEqual(result['day']['since'],'2026-09-12T06:00:00Z')
+        self.assertEqual(result['day']['window_seconds'],26*3600)
+
     def test_invalid_source_does_not_publish_zero(self):
         with self.assertRaises(ValueError):m.compile_stats({},[],{},dt.datetime.now(m.UTC))
 

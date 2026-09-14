@@ -15,7 +15,10 @@ Totals are displayed without a prefix, as requested. Missing GitHub history rema
 explicit in the chart note and metadata; monthly bars sum the recorded sources.
 Historical GitHub months use only counts observed within that month, never today’s
 lifetime count. A missing historical GitHub month is null, not an asserted zero.
-24-hour numbers begin only when a baseline exists between 24 and 22.5 hours ago.
+The recent total uses the saved snapshot closest to 24 hours ago. If the actual
+interval differs by more than 90 minutes, the card title shows the actual rounded
+hours (or minutes); the note always gives its start timestamp. Scheduled gaps
+therefore never hide existing history or imply an exact 24-hour measurement.
 SourceForge has reporting latency, so these are reported download increments,
 not exact download-event timestamps. Counts include repeat/automated downloads
 and ancillary files; they are not unique players or installs. Keep metadata files
