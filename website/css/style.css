@@ -642,3 +642,6 @@ nav a[aria-current="page"] { color: var(--primary); border-bottom: 2px solid cur
 .monthly-current { background: #a98b36; }
 .monthly-label { font-size: .875rem; white-space: nowrap; color: #ddd; }
 .monthly-downloads figcaption { font-size: .875rem; color: #bbb; margin-top: 16px; text-align: left; }
+
+.usage-link { text-align: center; font-size: .9rem; margin-bottom: 16px; }
+.usage-link a { color: var(--primary); }

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game usage statistics — Dune Legacy &amp; Dune City</title>
+    <meta name="description" content="Explore recorded Dune Legacy and Dune City game sessions: daily and monthly activity, browser and desktop play, campaign levels, mods and AI opponents.">
+    <link rel="canonical" href="https://dunelegacy.com/usage.html">
+    <link rel="stylesheet" href="css/style.css?v=20260915-usage">
+    <link rel="stylesheet" href="css/usage.css?v=20260915-usage">
+    <link rel="icon" href="img/favicon.ico">
+    <script src="js/usage.js?v=20260915-usage" defer></script>
+</head>
+<body>
+<header><div class="container">
+    <div class="logo"><img src="img/logo.png" alt="" class="logo-img"><div class="logo-text"><h1><a href="/">Dune <span>Legacy</span></a></h1><p class="tagline">An open-source remake of Dune II</p></div></div>
+    <nav aria-label="Main navigation"><a href="play/">Play Online</a><a href="/#download">Download</a><a href="dune-city.html">DuneCity</a><a href="usage.html" aria-current="page">Usage stats</a><a href="/#download-statistics">Download stats</a></nav>
+</div></header>
+<main class="container usage-page">
+    <div class="usage-intro"><p class="eyebrow">The games behind the numbers</p><h2>Game usage</h2><p>Explore how Dune Legacy and Dune City are being played.</p></div>
+    <div class="usage-toolbar"><fieldset id="period-controls"><legend>Time period</legend><button type="button" data-period="day" aria-pressed="true">Last 24 hours</button><button type="button" data-period="month" aria-pressed="false">Last 30 days</button><button type="button" data-period="all" aria-pressed="false">All time</button></fieldset><p id="usage-status" role="status">Loading game statistics…</p></div>
+    <p id="period-range" class="usage-note"></p>
+    <noscript><p>Enable JavaScript to view the live usage tables and charts.</p></noscript>
+    <div id="usage-content" hidden>
+        <div class="usage-cards" id="usage-cards"></div>
+        <p class="usage-note">Counts are recorded game sessions, not unique players, installs or downloads. Repeat attempts and development games are included.</p>
+        <nav class="usage-jump" aria-label="Statistics sections"><a href="#activity">Activity</a><a href="#modes">Modes &amp; mods</a><a href="#campaign">Campaign</a><a href="#bots">AI players</a><a href="#outcomes">Outcomes &amp; duration</a></nav>
+        <section class="usage-panel" id="activity"><h3>Activity over time</h3>
+            <div class="usage-legend"><span class="browser-key">Browser</span><span class="native-key">Desktop</span><span class="unknown-key">Platform unknown</span></div>
+            <h4>Daily sessions</h4><p id="daily-note" class="usage-note"></p><div id="daily-chart" class="usage-chart-scroll"></div>
+            <h4>Monthly sessions</h4><p id="monthly-note" class="usage-note"></p><div id="monthly-chart" class="usage-chart-scroll"></div>
+            <p class="usage-note">Dates use UTC. First and current days/months may be partial. Dates before tracking began are not shown.</p>
+        </section>
+        <div class="usage-pair" id="modes">
+            <section class="usage-panel"><h3>Game modes</h3><div id="modes-table"></div><p class="usage-note">Network multiplayer is the reported game mode. Single-player can still have an internet connection or an AI sharing the player’s house.</p><p id="online-summary" class="usage-note"></p></section>
+            <section class="usage-panel"><h3>Mods</h3><div id="mods-table"></div><p id="platform-note" class="usage-note"></p></section>
+        </div>
+        <div class="usage-pair" id="campaign">
+            <section class="usage-panel"><h3>Campaign levels</h3><p class="usage-note">House and scenario variations combined into the game’s nine campaign levels. Select a platform column to rank by its starts. These are not individual player progression rates.</p><div id="levels-table"></div><details><summary>How scenarios are grouped</summary><p class="usage-note">Level 1: scenario 1 · Level 2: 2–4 · Level 3: 5–7 · Level 4: 8–10 · Level 5: 11–13 · Level 6: 14–16 · Level 7: 17–19 · Level 8: 20–21 · Level 9: 22.</p></details></section>
+            <section class="usage-panel"><h3>Popular custom &amp; multiplayer maps</h3><p class="usage-note">The 15 most-played map names in this period. Identically named maps are grouped together.</p><div id="maps-table"></div></section>
+        </div>
+        <section class="usage-panel" id="bots"><h3>AI opponents &amp; teammates</h3><p class="usage-note">Each count is a session containing that AI, relative to a recorded human. A game can contain several bot types or difficulties, so rows can overlap.</p>
+            <h4>Played against</h4><div id="opponents-table"></div>
+            <div class="usage-pair"><div><h4>Played with</h4><div id="assist-table"></div><p class="usage-note">Same-house bots share control. Allied-house bots control another house on the same team. Support and regular shared-control rows are subsets of same-house assistance.</p></div><div><h4>QuantBot opponent difficulty</h4><div id="difficulty-table"></div></div></div>
+            <details><summary>AI teammate types by mode</summary><div id="teammates-table"></div></details>
+        </section>
+        <section class="usage-panel" id="outcomes"><h3>Recorded outcomes</h3><div id="outcomes-table"></div><p class="usage-note">“No end report” can mean a running game, closed tab, crash or undelivered report. It does not establish abandonment or defeat. A multiplayer session can contain both a human win and a human loss.</p>
+            <h4>Game lengths</h4><div id="lengths-table"></div><p class="usage-note">Average, median and longest use sessions with both start and end reports. Times approximate real elapsed time between server reports, including pauses; they are not accelerated simulation time. Campaign level 1 is a subset of Campaign. Longest-game results refer to recorded humans.</p>
+            <h4>Quick exits from campaign level 1</h4><div id="quick-table"></div><p class="usage-note">A quick exit is a reported early exit within 60 seconds. The share of all starts is a confirmed minimum; missing end reports prevent a reliable overall quit rate.</p>
+        </section>
+        <p id="coverage-note" class="usage-note"></p>
+    </div>
+</main>
+<footer><div class="container"><p><a href="/">Dune Legacy &amp; Dune City</a> · <a href="/#download-statistics">Download statistics</a></p></div></footer>
+</body>
+</html>

@@ -326,3 +326,8 @@ against `scripts/tests/fixtures/relay_analytics_schema1.sql`, a frozen copy of
 the deployed schema-1 table and view, and asserts that its rows, constraints and
 index survive. The relay repository's `test/verify-php-delivery.py` drives the
 real Node publisher against this endpoint over both transports.
+
+## Public usage page
+
+The aggregate usage page and its reporting rules are documented in
+[usage-statistics.md](../docs/usage-statistics.md).
