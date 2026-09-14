@@ -1,0 +1,36 @@
+/* Reading layout for the player manual; keep the existing site palette. */
+.manual { max-width: 1080px; padding-top: 28px; padding-bottom: 64px; font-size: 1rem; line-height: 1.75; }
+.manual h2 { font-size: clamp(2rem, 5vw, 3.25rem); line-height: 1.15; margin: .4em 0; color: #f4d27a; }
+.manual h3 { font-size: 1.6rem; line-height: 1.3; margin: 0 0 1rem; color: #f4d27a; }
+.manual h4 { font-size: 1.15rem; margin: 1.5rem 0 .5rem; }
+.manual p { margin: .75rem 0 1.25rem; }
+.manual section { padding: 2.5rem 0; border-bottom: 1px solid #5b482a; scroll-margin-top: 130px; }
+.manual-kicker { font-family: monospace; letter-spacing: .15em; color: #d5b975; margin-top: 2rem !important; }
+.manual-lead { font-size: 1.2rem; max-width: 800px; }
+.manual-chapters, .manual-contents { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; padding: 1rem 0; }
+.manual-chapters { border-bottom: 2px solid #9f7d3b; }
+.manual a { color: #9be5ff; text-underline-offset: .2em; }
+.manual-chapters a, .manual-contents a { padding: .5rem 0; text-decoration: underline; }
+.manual-callout { border-left: 4px solid #9be5ff; background: #242119; padding: 1.25rem 1.5rem; margin: 1.5rem 0; }
+.manual-callout p:last-child { margin-bottom: 0; }
+.manual ol { padding-left: 1.65rem; }
+.manual li { padding-left: .5rem; margin-bottom: 1rem; }
+.manual li::marker { color: #f4d27a; font-weight: bold; }
+.income-flow { display: flex; align-items: center; flex-wrap: wrap; justify-content: center; gap: 1rem; padding: 1rem 0; }
+.income-flow span, .income-flow strong { border: 1px solid #8a713c; padding: .8rem 1rem; background: #242119; }
+.income-flow strong { color: #f4d27a; }
+.manual-table { overflow-x: auto; }
+.manual table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 1rem; }
+.manual th, .manual td { border: 1px solid #5b482a; padding: .8rem 1rem; text-align: left; vertical-align: top; }
+.manual th { background: #30291b; color: #f4d27a; }
+.manual-figure { margin: 2rem 0 0; }
+.manual-figure img { display: block; width: 100%; height: auto; border: 2px solid #8a713c; }
+.manual-figure figcaption { font-size: .9rem; color: #c9c1ad; margin-top: .75rem; }
+.repair-examples { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
+.repair-state { font-family: monospace; font-weight: bold; border: 2px solid currentColor; padding: .7rem 1rem; background: #292116; }
+.repair-on { color: #9fffb4; } .repair-off { color: #ffdc96; }
+.manual-skip { position: absolute; top: -100px; left: 12px; z-index: 10000; background: #15120c; padding: 1rem; color: white; }
+.manual-skip:focus { top: 8px; }
+.player-manual :focus-visible { outline: 3px solid #9be5ff; outline-offset: 4px; }
+@media (max-width: 600px) { .manual { padding-top: 12px; } .manual-callout { padding: 1rem; } .manual th, .manual td { padding: .6rem; } .manual-chapters { gap: .25rem 1rem; } }
+@media print { header, footer, .manual-chapters, .manual-contents, .manual-skip { display: none; } .manual, .manual * { color: #000 !important; background: white !important; } .manual section { break-inside: auto; } }
