@@ -17,12 +17,16 @@
   ],
   "gameTransport": "direct-webrtc",
   "sha256": {
-    "index.html": "1b9058122da3dbe90151a7922e94b38fc74b7ac895511acecf1eae435164780d",
+    "index.html": "0177b66272d6e2335b84aaf29aa1189a5380af144e03ea47597bc5bc4c7f1d29",
     "dunecity.js": "986057bcac53dded37303d816c3c921a7c9c64abb27b775198993a0ee96f66b4",
     "dunecity.wasm": "32c8d1826f251a4f32942cf8b3b284c24d8fb4bab9abb7e9d4470751a59216b7",
     "dunecity.data": "af6b163f8d362d1bccfa3f8a1cd95abc7af4e0981edbf78e49c266af80e19246",
     "p2p-direct.js": "2b947cbd9130e5951ed44144184e564774bee9baf9c5c0a93d58ccf5eeb02da2",
     "shell.js": "1d737377ff48a258c84d025d27bc027fdc293f6c8a949ecba1ca8159d8f62e56",
-    "shell.css": "819445a30ce3f58fbf08fa56870eb404dfc837c9f0338a02e2600d4950c375bc"
+    "shell.css": "371095228d53d61c81426a486bc49e448b1f24b1dc97d56768cec28ef5c48c3c"
+  },
+  "shellUpdate": {
+    "updatedAtUtc": "2026-09-14T04:43:03.843973+00:00",
+    "description": "Added a direct Play guide link; game binaries remain the 1.0.682 release."
   }
 }
