@@ -1,0 +1,58 @@
+/* One guide entry in the site header, usable with touch and keyboard. */
+header nav { align-items: center; }
+.play-guide-menu { position: relative; }
+.play-guide-menu summary {
+    display: flex;
+    align-items: center;
+    gap: .45em;
+    color: inherit;
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    list-style: none;
+}
+.play-guide-menu summary::-webkit-details-marker { display: none; }
+.play-guide-menu summary span { font-size: .8em; transition: transform .15s; }
+.play-guide-menu[open] summary span { transform: rotate(180deg); }
+.play-guide-menu summary:hover, .play-guide-menu[open] summary { color: #d4af37; }
+.play-guide-links {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 0;
+    z-index: 1001;
+    width: 240px;
+    max-height: 60vh;
+    overflow-y: auto;
+    margin: 0;
+    padding: 8px;
+    list-style: none;
+    text-align: left;
+    background: #141414;
+    border: 1px solid #8c742a;
+    border-radius: 4px;
+    box-shadow: 0 8px 24px #0009;
+}
+header .play-guide-links a {
+    display: block;
+    padding: 10px 12px;
+    min-height: 44px;
+    border: 0;
+    border-radius: 2px;
+    color: #f5f5f5;
+    font-size: 16px;
+    line-height: 1.5;
+    text-decoration: none;
+}
+header .play-guide-links a:hover, header .play-guide-links a:focus-visible {
+    background: #302919;
+    color: #f4d27a;
+}
+header .play-guide-links a[aria-current="page"] { color: #f4d27a; background: #242017; border: 0; }
+.play-guide-menu summary:focus-visible, .play-guide-links a:focus-visible { outline: 2px solid #9be5ff; outline-offset: 3px; }
+@media (max-width: 600px) {
+    header nav { position: relative; }
+    .play-guide-menu { position: static; }
+    .play-guide-links { left: 0; right: 0; width: auto; }
+    .play-guide-menu summary { min-height: 44px; }
+}
+@media print { .play-guide-menu { display: none; } }

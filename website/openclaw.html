@@ -318,6 +318,8 @@
             .oc-section h2 { font-size: 1.7em; }
         }
     </style>
+    <link rel="stylesheet" href="css/play-guide-menu.css">
+    <script src="js/play-guide-menu.js" defer></script>
 </head>
 <body>
     <header class="oc-header">
@@ -327,13 +329,22 @@
                 <strong>Open<span>Claw</span></strong>
             </a>
             <nav class="oc-nav">
+                <a href="play/">Play Online</a>
+                <details class="play-guide-menu">
+                    <summary>Play guide <span aria-hidden="true">▾</span></summary>
+                    <ul class="play-guide-links" aria-label="Play guides">
+                        <li><a href="how-to-play.html">Dune basics</a></li>
+                        <li><a href="dune-city-guide.html">Dune City</a></li>
+                        <li><a href="coop.html#ai-support">AI support</a></li>
+                        <li><a href="coop.html">Multiplayer co-op</a></li>
+                        <li><a href="modding.html">Modding guide</a></li>
+                    </ul>
+                </details>
                 <a href="#stats">Numbers</a>
                 <a href="#architecture">Architecture</a>
                 <a href="#work">Work</a>
                 <a href="/">Dune Legacy</a>
-                <a href="modding.html">Modding</a>
                 <a href="https://github.com/svan058" target="_blank">GitHub</a>
-                <a href="how-to-play.html">How to play</a>
             </nav>
         </div>
     </header>

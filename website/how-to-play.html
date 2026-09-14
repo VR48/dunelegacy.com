@@ -35,6 +35,8 @@
     <link rel="stylesheet" href="css/style.css?v=20260912-coop">
     <link rel="icon" type="image/x-icon" href="img/favicon.ico">
     <link rel="stylesheet" href="css/manual.css">
+    <link rel="stylesheet" href="css/play-guide-menu.css">
+    <script src="js/play-guide-menu.js" defer></script>
 </head>
 <body class="player-manual">
 <a class="manual-skip" href="#main-content">Skip to instructions</a>
@@ -49,17 +51,24 @@
             </div>
             <nav aria-label="Main navigation">
                 <a href="play/">Play Online</a>
+                <details class="play-guide-menu">
+                    <summary>Play guide <span aria-hidden="true">▾</span></summary>
+                    <ul class="play-guide-links" aria-label="Play guides">
+                        <li><a href="how-to-play.html" aria-current="page">Dune basics</a></li>
+                        <li><a href="dune-city-guide.html">Dune City</a></li>
+                        <li><a href="coop.html#ai-support">AI support</a></li>
+                        <li><a href="coop.html">Multiplayer co-op</a></li>
+                        <li><a href="modding.html">Modding guide</a></li>
+                    </ul>
+                </details>
                 <a href="/#download">Download</a>
                 <a href="dune-city.html">DuneCity</a>
-                <a href="how-to-play.html">How to play</a>
-                <a href="coop.html">Multiplayer Co-op</a>
-                <a href="modding.html">Modding</a>
                 <a href="https://discord.com/invite/6sAcZr6y3B" target="_blank" rel="noopener">Discord</a>
                 <a href="https://github.com/VR48/dunecity" target="_blank" rel="noopener">GitHub</a>
             </nav>
         </div>
     </header>
-<main id="main-content" class="container manual"><nav class="manual-chapters" aria-label="Player guide chapters"><a href="how-to-play.html">01 · Dune basics</a><a href="dune-city-guide.html">02 · Dune City</a><a href="coop.html#ai-support">03 · AI support</a><a href="coop.html#host">04 · Online &amp; co-op</a></nav>
+<main id="main-content" class="container manual">
 <p class="manual-kicker">FIELD MANUAL / 01</p><h2>How to play Dune</h2>
 <p class="manual-lead">Build a base, harvest spice, raise an army and complete the mission. New to Dune City? It adds a taxable city economy to this same game.</p>
 <div class="manual-callout"><strong>Need instructions during a match?</strong> Click the blue <strong>How to play</strong> button beside <strong>Give feedback</strong>. Its six chapters work offline. Short messages at the top introduce city building; enable <strong>Show Tutorial Hints</strong> in the main-menu Options to see them.</div>

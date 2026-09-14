@@ -35,6 +35,8 @@
     <link rel="stylesheet" href="css/style.css?v=20260912-coop">
     <link rel="icon" type="image/x-icon" href="img/favicon.ico">
     <link rel="stylesheet" href="css/manual.css">
+    <link rel="stylesheet" href="css/play-guide-menu.css">
+    <script src="js/play-guide-menu.js" defer></script>
 </head>
 <body class="player-manual">
 <a class="manual-skip" href="#main-content">Skip to instructions</a>
@@ -49,17 +51,24 @@
             </div>
             <nav aria-label="Main navigation">
                 <a href="play/">Play Online</a>
+                <details class="play-guide-menu">
+                    <summary>Play guide <span aria-hidden="true">▾</span></summary>
+                    <ul class="play-guide-links" aria-label="Play guides">
+                        <li><a href="how-to-play.html">Dune basics</a></li>
+                        <li><a href="dune-city-guide.html" aria-current="page">Dune City</a></li>
+                        <li><a href="coop.html#ai-support">AI support</a></li>
+                        <li><a href="coop.html">Multiplayer co-op</a></li>
+                        <li><a href="modding.html">Modding guide</a></li>
+                    </ul>
+                </details>
                 <a href="/#download">Download</a>
                 <a href="dune-city.html">DuneCity</a>
-                <a href="how-to-play.html">How to play</a>
-                <a href="coop.html">Multiplayer Co-op</a>
-                <a href="modding.html">Modding</a>
                 <a href="https://discord.com/invite/6sAcZr6y3B" target="_blank" rel="noopener">Discord</a>
                 <a href="https://github.com/VR48/dunecity" target="_blank" rel="noopener">GitHub</a>
             </nav>
         </div>
     </header>
-<main id="main-content" class="container manual"><nav class="manual-chapters" aria-label="Player guide chapters"><a href="how-to-play.html">01 · Dune basics</a><a href="dune-city-guide.html">02 · Dune City</a><a href="coop.html#ai-support">03 · AI support</a><a href="coop.html#host">04 · Online &amp; co-op</a></nav>
+<main id="main-content" class="container manual">
 <p class="manual-kicker">FIELD MANUAL / 02</p><h2>Build a city. Fund the war.</h2>
 <p class="manual-lead">Dune City brings ideas from classic SimCity into Dune II: homes and jobs, roads and traffic, pollution, crime, land value and tax management.</p>
 <div class="manual-callout"><h3>What am I trying to achieve?</h3><p>Run a healthy second economy that adds <strong>passive credits</strong> to your spice income. Spend those credits on your base and army to complete the mission. Enemy city economies can do the same, so falling behind economically can leave you outnumbered.</p><p><strong>The output is credits, not more spice.</strong> City taxes do not pass through a Refinery. Both income sources add to the same treasury.</p></div>
