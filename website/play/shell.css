@@ -35,5 +35,3 @@ progress { width: min(420px, 78vw); height: 10px; accent-color: #d6a735; }
     .app { grid-template-rows: minmax(0, 1fr); }
     .toolbar { display: none; }
 }
-
-.tool.tool-guide { flex: 0 0 auto; width: auto; padding: 0 10px; color: #9be5ff; font-size: 14px; text-decoration: none; white-space: nowrap; }
