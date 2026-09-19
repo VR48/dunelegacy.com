@@ -132,6 +132,8 @@ final class Signaling
                 $refusal = 'room_not_found';
             } elseif ($spec['publicOnly'] && $state['visibility'] !== 'public') {
                 $refusal = 'not_listed';
+            } elseif ((string)$state['appVersion'] !== (string)$spec['appVersion']) {
+                $refusal = 'version_mismatch';
             } elseif ((int)$state['gameProtocol'] !== (int)$spec['gameProtocol']
                       || (string)$state['contentHash'] !== (string)$spec['contentHash']) {
                 $refusal = 'content_mismatch';
@@ -141,7 +143,8 @@ final class Signaling
                 $refusal = 'room_full';
             }
             if ($refusal !== null) {
-                return [$state, ['error' => $refusal]];
+                return [$state, ['error' => $refusal, 'hostVersion' => (string)$state['appVersion'],
+                                 'clientVersion' => (string)$spec['appVersion']]];
             }
             $state = self::issueGrant($state, $grant, 'client', $spec, $now);
             $state['lastSeen'] = $now;
@@ -224,6 +227,10 @@ final class Signaling
                         $refusal = 'content_mismatch';
                     }
                 }
+            }
+            if ($refusal === null && (string)$state['appVersion'] !== (string)$claims['appVersion']) {
+                return [$state, ['error' => 'version_mismatch', 'hostVersion' => (string)$state['appVersion'],
+                                 'clientVersion' => (string)$claims['appVersion']]];
             }
             $role = (string)$record['role'];
             if ($refusal === null && $role === 'client'
@@ -383,6 +390,13 @@ final class Signaling
         return $state;
     }
 
+    private static function versionMismatchError(string $host, string $client): ServiceError
+    {
+        return new ServiceError(409, 'version_mismatch',
+            'Version mismatch. Host: ' . $host . '. Yours: ' . $client
+            . '. Both players must use the same game version. Update or switch versions, then try again.');
+    }
+
     /** Turns a refusal marker into the ServiceError it stands for. */
     private static function refuse(array $result): void
     {
@@ -393,6 +407,7 @@ final class Signaling
             'room_not_found' => new ServiceError(404, 'room_not_found', 'That room code is not open.'),
             'not_listed' => new ServiceError(404, 'room_not_found',
                 'That public game is no longer listed.'),
+            'version_mismatch' => self::versionMismatchError($result['hostVersion'], $result['clientVersion']),
             'content_mismatch' => new ServiceError(409, 'content_mismatch',
                 'This room needs the same game version and content as the host.'),
             'match_in_progress' => new ServiceError(409, 'match_in_progress',

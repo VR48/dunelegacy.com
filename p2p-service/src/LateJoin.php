@@ -22,7 +22,9 @@ trait LateJoinSignaling
             if (!$s || ($s['closed']??false) || $s['code']!==Store::normalizeRoomCode($code)
                 || (($claims['publicOnly']??false) && $s['visibility']!=='public'))
                 throw new ServiceError(404,'room_not_found','That game is no longer available.');
-            if ($s['gameProtocol']!==(int)$claims['gameProtocol'] || $s['contentHash']!==$claims['contentHash'] || $s['appVersion']!==$claims['appVersion'])
+            if ($s['appVersion']!==$claims['appVersion'])
+                throw self::versionMismatchError($s['appVersion'],$claims['appVersion']);
+            if ($s['gameProtocol']!==(int)$claims['gameProtocol'] || $s['contentHash']!==$claims['contentHash'])
                 throw new ServiceError(409,'content_mismatch','This game needs matching game and mod files.');
             if (!($s['allowLateJoin']??false) || $s['phase']!=='match' || !empty($s['joinWindow'])
                 || !isset($s['peers'][(string)$s['hostPeerId']]) || $now-(int)$s['peers'][(string)$s['hostPeerId']]['lastSeen']>=45000)
