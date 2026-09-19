@@ -67,3 +67,49 @@ test lobby was removed. Local tests passed166 signaling cases plus notifier
 payload/deduplication/privacy/rate-limit/transient/permanent-error cases and the
 service installer/security checks. Evidence is in the local project outputs:
 `outputs/dunecity-menu-acceptance/discord-live-verification.json`.
+
+## Public activity and waiting presence (client 1.0.725)
+
+`metaserver/public_activity.php` connects the trusted local
+`dunecityP2PRecordPublicActivity` hook to the additive `analytics_public_activity`
+table in `games.sqlite`. PHP/PDO and the existing Python fallback both support it.
+The table is created lazily on the first event; no existing match/lifecycle table
+is replaced. Apply `metaserver/public_activity.sql` ahead of time if an empty table
+is needed for administration. Back up SQLite before initial installation.
+
+Records contain accepted public chat text and its session display name, the host
+of a newly seated public game, newly seated public players, and an authoritative
+admitted roster when a public match starts. Roster details include peer IDs, names,
+roles and claimed runtime. Creation/join/start retries deduplicate by event ID;
+conflicting reuse is refused. Only public rooms enter this named history. The
+separate anonymous lifecycle and Discord behavior stay unchanged. No invitation
+codes, tokens, SDP, ICE or IP addresses enter the new table. Names are display
+identities, not verified accounts. There is no public ingestion/read endpoint.
+
+Server `analytics_enabled` controls capture. Client development diagnostics do not.
+The table is durable history, separate from the short chat display buffer; there
+is no automatic expiry or historical backfill. Hook/storage failures allow the
+user's accepted action to complete and report a generic server error; there is
+no named-event retry journal, so outages can leave gaps.
+
+The same packaged service supports `allMods=1` directory queries (legacy requests
+remain compatible) and `presence=1` chat polls. Presence counts sessions active
+within twenty seconds, across mods sharing a game protocol; at most twelve names
+are returned alongside the total. It excludes players whose waiting-screen poll
+has stopped. Presence is transient and is not written to analytics.
+
+Validation: `python3 scripts/tests/test_public_activity.py` checks PHP/Python
+validation, both storage paths, UTF-8 text, duplicate/conflicting events, complete
+start rosters and preservation of existing records. Run the game service's
+`test/test_public_activity.py` for authoritative event creation and presence.
+
+Example read-only queries against the private metaserver database:
+
+```sql
+SELECT datetime(occurred_at,'unixepoch') AS time, kind, player_name, message
+FROM analytics_public_activity ORDER BY occurred_at DESC LIMIT 50;
+SELECT a.room_id, a.occurred_at, json_extract(p.value,'$.name') AS player,
+       json_extract(p.value,'$.role') AS role, json_extract(p.value,'$.runtime') AS runtime
+FROM analytics_public_activity AS a, json_each(a.details_json,'$.players') AS p
+WHERE a.kind='public_game_started' ORDER BY a.occurred_at DESC;
+```

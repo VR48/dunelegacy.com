@@ -67,6 +67,7 @@ final class Signaling
                 'control'      => hash('sha256', $control),
                 'visibility'   => $spec['visibility'] === 'public' ? 'public' : 'private',
                 'mode'         => $spec['mode'],
+                'modName'      => $spec['modName'] ?? '',
                 'maxPeers'     => (int)$spec['maxPeers'],
                 'gameProtocol' => (int)$spec['gameProtocol'],
                 'contentHash'  => (string)$spec['contentHash'],
@@ -278,6 +279,7 @@ final class Signaling
                 'logId'       => (string)$state['logId'],
                 'hostName'    => (string)$state['hostName'],
                 'notification' => self::notificationSnapshot($state),
+                'publicActivity' => self::publicActivitySnapshot($state),
                 'peers'       => count($state['peers']),
                 'outstanding' => count($state['grants']),
             ];
@@ -727,6 +729,7 @@ final class Signaling
             return [$state, ['phase' => (string)$state['phase'], 'epoch' => (int)$state['epoch'],
                              'phaseChanged' => $phaseChanged,
                              'notification' => self::notificationSnapshot($state),
+                             'publicActivity' => self::publicActivitySnapshot($state),
                              'everStarted' => (bool)$state['everStarted'],
                              'startId' => $state['startId'] ?? '', 'roster' => $roster,
                              'logId' => $state['logId'],
@@ -808,6 +811,20 @@ final class Signaling
         return $state;
     }
 
+    /** Public activity contains display names, never invitation or transport credentials. */
+    private static function publicActivitySnapshot(array $state): array
+    {
+        if ($state['visibility'] !== 'public') return [];
+        $players=[];
+        foreach ($state['peers'] as $id => $peer) $players[]=[
+            'id'=>(int)$id, 'name'=>(string)$peer['name'], 'role'=>(string)$peer['role'],
+            'runtime'=>(string)$peer['runtime']];
+        return ['room_id'=>(string)$state['logId'], 'player_name'=>(string)$state['hostName'],
+            'mod_name'=>(string)($state['modName'] ?? ''), 'mode'=>(string)$state['mode'],
+            'game_version'=>(string)$state['appVersion'], 'players'=>$players,
+            'start_id'=>(string)($state['startId'] ?? '')];
+    }
+
     /** Trusted deployment notification fields. Never include invitation or transport secrets. */
     private static function notificationSnapshot(array $state): array
     {
@@ -837,6 +854,7 @@ final class Signaling
                 'peers' => count($state['peers']), 'outstanding' => count($state['grants']),
                 'maxPeers' => $state['maxPeers'], 'mode' => $state['mode'],
                 'gameProtocol' => $state['gameProtocol'], 'contentHash' => $state['contentHash'],
+                'modName' => $state['modName'] ?? '',
                 'createdAt' => $state['createdAt'],
             ]];
         });

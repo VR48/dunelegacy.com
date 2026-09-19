@@ -10,11 +10,12 @@ declare(strict_types=1);
  * that is in use. A channel is one (game protocol, content hash) pair, so players only ever see
  * chat from builds they could actually play with.
  *
- * Neither the token nor the message contents go into analytics or the log.
+ * Accepted public messages may be recorded by the trusted metaserver activity hook.
+ * Session tokens and client addresses never leave the private session state.
  */
 final class Lobby
 {
-    public function __construct(private readonly Store $store)
+    public function __construct(private readonly Store $store, private readonly ?PublicActivity $activity = null)
     {
     }
 
@@ -47,8 +48,9 @@ final class Lobby
         $now = $this->store->now();
         $channel = $gameProtocol . ':' . $contentHash;
 
-        return $this->store->withLock('lobby.json', function (array $state) use (
-            $action, $form, $channel, $address, $now
+        $accepted = null;
+        $lines = $this->store->withLock('lobby.json', function (array $state) use (
+            $action, $form, $channel, $address, $now, $gameProtocol, &$accepted
         ): array {
             $state = self::sweep($state, $now);
 
@@ -84,7 +86,7 @@ final class Lobby
                     'name' => $name, 'key' => $key, 'channel' => $channel, 'address' => $address,
                     'deadline' => $now + Limits::LOBBY_SESSION_LIFETIME_MS,
                     'expiresAt' => $now + Limits::LOBBY_SESSION_TTL_MS,
-                    'sends' => [],
+                    'sends' => [], 'lastSeen' => $now,
                 ];
                 return [$state, [['session', $token],
                                  ['cursor', (string)$state['channels'][$channel]['sequence']]]];
@@ -97,6 +99,7 @@ final class Lobby
                 throw new ServiceError(403, 'session_expired', 'Confirm your name again to use lobby chat.');
             }
             $session['expiresAt'] = $now + Limits::LOBBY_SESSION_TTL_MS;
+            $session['lastSeen'] = $now;
             $chan = $state['channels'][$channel] ?? ['history' => [], 'sequence' => 0];
 
             if ($action === 'say') {
@@ -116,6 +119,8 @@ final class Lobby
                 }
                 $state['channels'][$channel] = $chan;
                 $state['sessions'][$token] = $session;
+                $accepted=['player_name'=>$session['name'], 'message'=>$text,
+                    'channel_id'=>hash('sha256',$channel)];
                 return [$state, [['cursor', (string)$chan['sequence']]]];
             }
 
@@ -141,8 +146,21 @@ final class Lobby
             }
             $state['sessions'][$token] = $session;
             $state['channels'][$channel] = $chan;
+            if (($form['presence'] ?? '') === '1') {
+                $waiting=[];
+                foreach ($state['sessions'] as $candidate) {
+                    if (str_starts_with($candidate['channel'], $gameProtocol . ':')
+                        && $now-(int)($candidate['lastSeen'] ?? 0) < 20000) $waiting[]=$candidate['name'];
+                }
+                sort($waiting, SORT_NATURAL|SORT_FLAG_CASE);
+                $lines[]=['online', (string)count($waiting)];
+                foreach (array_slice($waiting,0,12) as $name) $lines[]=['waiting',bin2hex($name)];
+            }
             return [$state, $lines];
         });
+        // Persist only accepted messages, after the lobby lock is released.
+        if ($accepted !== null) $this->activity?->record('chat_message', $accepted);
+        return $lines;
     }
 
     /** Case- and compatibility-folded, so two names that render alike cannot both be claimed. */

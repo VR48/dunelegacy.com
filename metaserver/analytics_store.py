@@ -514,6 +514,10 @@ def main() -> int:
             if action == "record":
                 record(connection, request)
                 response: dict[str, Any] = {"ok": True}
+            elif action == "public_activity_record":
+                from public_activity_store import record as public_activity_record
+                public_activity_record(connection, request.get("event"))
+                response = {"ok": True}
             elif action == "relay_record":
                 try:
                     relay_record(connection, request)

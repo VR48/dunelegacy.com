@@ -4,7 +4,13 @@
 declare(strict_types=1);
 if (!defined('DATA_DIR')) define('DATA_DIR', '/var/www/data');
 require_once dirname(__DIR__) . '/metaserver/relay_analytics.php';
+require_once dirname(__DIR__) . '/metaserver/public_activity.php';
 require_once dirname(__DIR__) . '/metaserver/p2p_notifications.php';
+
+/** Accepted public messages and named public-game events from trusted local signaling. */
+function dunecityP2PRecordPublicActivity(array $event): void {
+    if (!publicActivityRecord($event)) error_log('Public activity storage unavailable');
+}
 
 /** Trusted signaling callback, after host seating or an authenticated host start. */
 function dunecityP2PNotifyLobby(string $kind, array $event): void {

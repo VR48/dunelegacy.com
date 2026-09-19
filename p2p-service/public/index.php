@@ -20,6 +20,7 @@ require __DIR__ . '/../src/Http.php';
 require __DIR__ . '/../src/Store.php';
 require __DIR__ . '/../src/Rate.php';
 require __DIR__ . '/../src/Analytics.php';
+require __DIR__ . '/../src/PublicActivity.php';
 require __DIR__ . '/../src/Sdp.php';
 require __DIR__ . '/../src/Rooms.php';
 require __DIR__ . '/../src/Signaling.php';
@@ -144,6 +145,7 @@ try {
     $log = new ServiceLog($store, $config->get('log_enabled') === true,
                           static fn(): string => $rooms->logSalt());
     $analytics = new Analytics($store, $config->get('analytics_enabled') === true);
+    $activity = new PublicActivity($store, $config->get('analytics_enabled') === true);
     $rate = new Rate($store);
     $address = $http->address();
     $method = $http->method();
@@ -226,6 +228,7 @@ try {
             ]);
             if ($phase === 'match' && $result['phaseChanged']) {
                 notifyLobby('started', $result);
+                if (!empty($result['publicActivity'])) $activity->record('public_game_started', $result['publicActivity']);
                 $analytics->record('started', [
                     'room_log_id' => $result['logId'] ?? null,
                     'peers_admitted' => $result['peers'],
@@ -282,7 +285,7 @@ try {
                'appVersion' => $appVersion, 'runtime' => $runtime];
 
     if (str_starts_with($path, '/v1/lobby/')) {
-        $lobby = new Lobby($store);
+        $lobby = new Lobby($store, $activity);
         $lines = $lobby->handle(substr($path, strlen('/v1/lobby/')), $form, $gameProtocol,
                                 $contentHash, $address);
         $http->send(200, array_merge([['status', 'ok'],
@@ -309,6 +312,13 @@ try {
             'game_version'    => $appVersion,
             'runtime_claimed' => $runtime,
         ]);
+        if (!($result['recovered'] ?? false) && !empty($result['publicActivity'])) {
+            $event=$result['publicActivity'];
+            $event['player_name']=$name;
+            $event['participant_id']=(int)$result['peer'];
+            $event['role']=$result['role'];
+            $activity->record($result['role']==='host' ? 'public_game_created' : 'public_game_joined', $event);
+        }
         if ($result['role'] === 'host' && !($result['recovered'] ?? false)) {
             notifyLobby('hosted', $result);
         }
@@ -345,14 +355,17 @@ try {
     if ($path === '/v1/admission/list') {
         $offset = array_key_exists('offset', $form)
             ? requireInteger($form, 'offset', 0, Limits::MAX_ROOMS) : 0;
-        $page = $rooms->listPublic($gameProtocol, $contentHash, $offset);
+        $allMods=($form['allMods'] ?? '') === '1';
+        $page = $rooms->listPublic($gameProtocol, $contentHash, $offset, $allMods);
         $lines = [['status', 'ok'], ['protocol', (string)Limits::PROTOCOL_VERSION],
                   ['next', (string)$page['next']]];
         foreach ($page['games'] as $game) {
             // Hex names cannot inject a delimiter or a line break. Private invitations and
             // grants are never part of discovery.
-            $lines[] = ['game', implode('|', [(string)$game['code'], (string)$game['peers'],
-                (string)$game['maxPeers'], (string)$game['mode'], bin2hex((string)$game['hostName'])])];
+            $row=[(string)$game['code'], (string)$game['peers'], (string)$game['maxPeers'],
+                  (string)$game['mode'], bin2hex((string)$game['hostName'])];
+            if ($allMods) { $row[]=(string)$game['contentHash']; $row[]=bin2hex((string)($game['modName'] ?? '')); }
+            $lines[] = ['game', implode('|', $row)];
         }
         $http->send(200, $lines, false);
         return;
@@ -361,7 +374,9 @@ try {
     if ($path === '/v1/admission/host') {
         $mode = optionalField($form, 'mode', 'custom');
         $requested = requireInteger($form, 'maxPeers', 2, Limits::MAX_PEERS_PER_ROOM);
+        $modName=isset($form['mod']) && $form['mod']!=='' ? Lobby::decodeText($form['mod'],64) : '';
         $spec = array_merge($claims, [
+            'modName' => $modName,
             'mode'       => $mode,
             'maxPeers'   => $mode === 'coop' ? 2 : $requested,
             'visibility' => optionalField($form, 'visibility', 'private'),
