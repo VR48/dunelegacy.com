@@ -295,7 +295,7 @@ final class Rooms
      * A stale count can hide a joinable room or offer a full one; the join itself is authoritative
      * either way.
      */
-    public function listPublic(int $gameProtocol, string $contentHash, int $offset, bool $allMods = false): array
+    public function listPublic(int $gameProtocol, string $contentHash, int $offset, bool $allMods = false, bool $details = false): array
     {
         $now = $this->store->now();
         $result = $this->store->withLock('index.json', function (array $state) use ($now): array {
@@ -312,8 +312,10 @@ final class Rooms
             $room = $signaling->directorySnapshot((string)$hint['id']);
             if ($room === null) continue;
             if (($room['pending'] ?? false) !== true
-                && $room['visibility'] === 'public' && $room['phase'] === 'lobby'
-                && ($room['everStarted'] ?? false) !== true && ($room['hostSeated'] ?? false) === true
+                && $room['visibility'] === 'public'
+                && ((!($room['everStarted'] ?? false) && $room['phase'] === 'lobby')
+                    || ($details && ($room['allowLateJoin'] ?? false) && ($room['hostActive'] ?? false) && $room['phase'] === 'match'))
+                && ($room['hostSeated'] ?? false) === true
                 && (string)$room['hostName'] !== ''
                 && (int)$room['peers'] + (int)$room['outstanding'] < (int)$room['maxPeers']
                 && (int)$room['gameProtocol'] === $gameProtocol

@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/LateJoin.php';
 
 /**
  * Introducing two admitted players to each other, and nothing else.
@@ -24,6 +25,7 @@ declare(strict_types=1);
  */
 final class Signaling
 {
+    use LateJoinSignaling;
     public function __construct(private readonly Store $store, private readonly Config $config)
     {
     }
@@ -68,6 +70,10 @@ final class Signaling
                 'visibility'   => $spec['visibility'] === 'public' ? 'public' : 'private',
                 'mode'         => $spec['mode'],
                 'modName'      => $spec['modName'] ?? '',
+                'mapName'      => $spec['mapName'] ?? '',
+                'allowLateJoin'=> $spec['allowLateJoin'] ?? false,
+                'startedAt'    => 0,
+                'joinRequests' => [],
                 'maxPeers'     => (int)$spec['maxPeers'],
                 'gameProtocol' => (int)$spec['gameProtocol'],
                 'contentHash'  => (string)$spec['contentHash'],
@@ -221,7 +227,8 @@ final class Signaling
             }
             $role = (string)$record['role'];
             if ($refusal === null && $role === 'client'
-                && ($state['phase'] !== 'lobby' || $state['everStarted'] === true)) {
+                && ($state['phase'] !== 'lobby' || ($state['everStarted'] === true
+                    && (empty($record['lateRequest']) || ($state['joinWindow']??'')!==$record['lateRequest'] || ($record['name']??'')!==$name)))) {
                 $refusal = 'match_in_progress';
             }
             if ($refusal === null && self::reservedSeats($state) >= (int)$state['maxPeers']) {
@@ -261,6 +268,7 @@ final class Signaling
                 'gameVersion' => (string)$claims['appVersion'],
                 'token'    => hash('sha256', $token),
                 'joinedAt' => $now,
+                'lateRequest' => $record['lateRequest'] ?? '',
                 'lastSeen' => $now,
                 'epoch'    => (int)$state['epoch'],
             ];
@@ -268,6 +276,7 @@ final class Signaling
                 $state['hostPeerId'] = $peerId;
                 $state['hostName']   = $name;
             }
+            if(!empty($record['lateRequest'])) $state['joinRequests'][$record['lateRequest']]['state']='joined';
             $state['lastSeen'] = $now;
             $answer = [
                 'peer'        => $peerId,
@@ -715,19 +724,22 @@ final class Signaling
                 $state['grants'] = [];
                 $state['redemptions'] = [];
             }
+            $resuming=!empty($state['joinWindow']);
+            if($phase==='match') $state['joinWindow']='';
             $phaseChanged = (string)$state['phase'] !== $phase;
             if ($phaseChanged) {
                 $state['phase'] = $phase;
                 $state['epoch'] = (int)$state['epoch'] + 1;
                 if ($phase === 'match') {
                     $state['everStarted'] = true;
+                    if (empty($state['startedAt'])) $state['startedAt'] = $now;
                 }
                 foreach ($state['peers'] as $peerId => $peer) {
                     $state['peers'][$peerId]['epoch'] = (int)$state['epoch'];
                 }
             }
             return [$state, ['phase' => (string)$state['phase'], 'epoch' => (int)$state['epoch'],
-                             'phaseChanged' => $phaseChanged,
+                             'phaseChanged' => $phaseChanged, 'resuming' => $resuming,
                              'notification' => self::notificationSnapshot($state),
                              'publicActivity' => self::publicActivitySnapshot($state),
                              'everStarted' => (bool)$state['everStarted'],
@@ -855,6 +867,10 @@ final class Signaling
                 'maxPeers' => $state['maxPeers'], 'mode' => $state['mode'],
                 'gameProtocol' => $state['gameProtocol'], 'contentHash' => $state['contentHash'],
                 'modName' => $state['modName'] ?? '',
+                'mapName' => $state['mapName'] ?? '',
+                'allowLateJoin' => $state['allowLateJoin'] ?? false,
+                'elapsed' => empty($state['startedAt']) ? 0 : max(0, intdiv($now-(int)$state['startedAt'],1000)),
+                'hostActive' => isset($state['peers'][(string)$state['hostPeerId']]) && $now-(int)$state['peers'][(string)$state['hostPeerId']]['lastSeen'] < 45000,
                 'createdAt' => $state['createdAt'],
             ]];
         });

@@ -26,10 +26,10 @@ require __DIR__ . '/../src/Rooms.php';
 require __DIR__ . '/../src/Signaling.php';
 require __DIR__ . '/../src/Lobby.php';
 
-const ADMISSION_PATHS = ['/v1/admission/host', '/v1/admission/join', '/v1/admission/list',
+const ADMISSION_PATHS = ['/v1/admission/request', '/v1/admission/request-status', '/v1/admission/host', '/v1/admission/join', '/v1/admission/list',
                          '/v1/admission/visibility', '/v1/lobby/enter', '/v1/lobby/poll',
                          '/v1/lobby/say'];
-const SIGNALING_PATHS = ['/v1/p2p/session', '/v1/p2p/poll', '/v1/p2p/signal', '/v1/p2p/phase',
+const SIGNALING_PATHS = ['/v1/p2p/join-requests', '/v1/p2p/session', '/v1/p2p/poll', '/v1/p2p/signal', '/v1/p2p/phase',
                          '/v1/p2p/leave'];
 
 /** Field shapes, as strict as the client's own. Anything not in this table is not a field. */
@@ -48,6 +48,9 @@ const FIELD_RULES = [
     'kind'         => '/^(offer|answer|candidate)$/D',
     'phase'        => '/^(lobby|match)$/D',
     'roster'       => '/^[1-9][0-9]{0,4}(,[1-9][0-9]{0,4}){0,15}$/D',
+    'cancel'       => '/^[01]$/D',
+    'request'      => '/^[0-9a-f]{64}$/D',
+    'action'       => '/^(list|approve|decline|abort)$/D',
     'bye'          => '/^[01]$/D',
 ];
 
@@ -191,6 +194,11 @@ try {
         $signaling = new Signaling($store, $config);
         $maxPayload = (int)$config->get('max_signal_payload_bytes');
 
+        if ($path === '/v1/p2p/join-requests') {
+            $lines=$signaling->manageLateJoin($token,optionalField($form,'action','list'),optionalField($form,'request',''));
+            $http->send(200,array_merge([['status','ok'],['protocol',(string)Limits::PROTOCOL_VERSION]],$lines),true);
+            return;
+        }
         if ($path === '/v1/p2p/poll') {
             $cursor = requireInteger($form, 'cursor', 0, 1000000000);
             $result = $signaling->poll($token, $cursor, $maxPayload);
@@ -226,14 +234,15 @@ try {
                 'phase' => $result['phase'], 'epoch' => $result['epoch'],
                 'everStarted' => $result['everStarted'],
             ]);
-            if ($phase === 'match' && $result['phaseChanged']) {
+            if ($phase === 'match' && $result['phaseChanged'] && !($result['resuming']??false)) {
                 notifyLobby('started', $result);
-                if (!empty($result['publicActivity'])) $activity->record('public_game_started', $result['publicActivity']);
                 $analytics->record('started', [
                     'room_log_id' => $result['logId'] ?? null,
                     'peers_admitted' => $result['peers'],
                 ]);
             }
+            if ($phase==='match' && $result['phaseChanged'] && !empty($result['publicActivity']))
+                $activity->record('public_game_started',$result['publicActivity']);
             $http->send(200, [['status', 'ok'], ['protocol', (string)Limits::PROTOCOL_VERSION],
                               ['phase', $result['phase']], ['startId', $result['startId']],
                               ['roster', $result['roster']]], true);
@@ -260,7 +269,7 @@ try {
     // Everything else carries the compatibility claims
     // ------------------------------------------------------------------------------------
     if ($path !== '/v1/p2p/session') {
-        $polling = in_array($path, ['/v1/admission/list', '/v1/lobby/poll', '/v1/lobby/say'], true);
+        $polling = in_array($path, ['/v1/admission/list', '/v1/admission/request-status', '/v1/lobby/poll', '/v1/lobby/say'], true);
         $rate->charge(
             $polling ? 'poll' : 'admission',
             $address,
@@ -356,7 +365,8 @@ try {
         $offset = array_key_exists('offset', $form)
             ? requireInteger($form, 'offset', 0, Limits::MAX_ROOMS) : 0;
         $allMods=($form['allMods'] ?? '') === '1';
-        $page = $rooms->listPublic($gameProtocol, $contentHash, $offset, $allMods);
+        $details=($form['details'] ?? '') === '1';
+        $page = $rooms->listPublic($gameProtocol, $contentHash, $offset, $allMods, $details);
         $lines = [['status', 'ok'], ['protocol', (string)Limits::PROTOCOL_VERSION],
                   ['next', (string)$page['next']]];
         foreach ($page['games'] as $game) {
@@ -364,7 +374,8 @@ try {
             // grants are never part of discovery.
             $row=[(string)$game['code'], (string)$game['peers'], (string)$game['maxPeers'],
                   (string)$game['mode'], bin2hex((string)$game['hostName'])];
-            if ($allMods) { $row[]=(string)$game['contentHash']; $row[]=bin2hex((string)($game['modName'] ?? '')); }
+            if ($allMods || $details) { $row[]=(string)$game['contentHash']; $row[]=bin2hex((string)($game['modName'] ?? '')); }
+            if ($details) { $row[]=bin2hex($game['mapName']); $row[]=$game['phase']; $row[]=(string)$game['elapsed']; $row[]=$game['allowLateJoin'] ? '1':'0'; }
             $lines[] = ['game', implode('|', $row)];
         }
         $http->send(200, $lines, false);
@@ -377,6 +388,8 @@ try {
         $modName=isset($form['mod']) && $form['mod']!=='' ? Lobby::decodeText($form['mod'],64) : '';
         $spec = array_merge($claims, [
             'modName' => $modName,
+            'mapName' => !empty($form['map']) ? Lobby::decodeText($form['map'],120) : '',
+            'allowLateJoin' => ($form['allowLateJoin'] ?? '') === '1',
             'mode'       => $mode,
             'maxPeers'   => $mode === 'coop' ? 2 : $requested,
             'visibility' => optionalField($form, 'visibility', 'private'),
@@ -393,6 +406,20 @@ try {
         return;
     }
 
+    if ($path === '/v1/admission/request') {
+        $code=requireField($form,'room'); $roomId=$rooms->resolve($code);
+        $ticket=(new Signaling($store,$config))->requestLateJoin($roomId,$code,array_merge($claims,
+            ['publicOnly'=>optionalField($form,'publicOnly','0')==='1']),requireHexName($form,'name'));
+        $http->send(200,[['status','ok'],['protocol',(string)Limits::PROTOCOL_VERSION],['request',$ticket],['requestState','pending']],false);
+        return;
+    }
+    if ($path === '/v1/admission/request-status') {
+        $answer=(new Signaling($store,$config))->lateJoinStatus(requireField($form,'request'),$claims,optionalField($form,'cancel','0')==='1');
+        $lines=$answer['requestState']==='approved' ? admissionLines($config,$answer,$answer['grant'],false)
+            : [['status','ok'],['protocol',(string)Limits::PROTOCOL_VERSION]];
+        $lines[]=['requestState',$answer['requestState']];
+        $http->send(200,$lines,false); return;
+    }
     if ($path === '/v1/admission/join') {
         $code = requireField($form, 'room');
         $roomId = $rooms->resolve($code);
