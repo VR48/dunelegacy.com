@@ -194,7 +194,7 @@ final class Signaling
             if ($nonce !== '' && is_array($recovery) && $recovery['nonce'] === $nonce
                 && $recovery['name'] === $name && $recovery['claims'] === $claims
                 && isset($state['peers'][(string)$recovery['result']['peer']])
-                && !($state['closed'] ?? false) && $state['phase'] === 'lobby') {
+                && !($state['closed'] ?? false) && ($state['phase'] === 'lobby' || ($recovery['result']['spectator'] ?? false))) {
                 return [$state, array_merge($recovery['result'], ['recovered' => true])];
             }
             $record = null;
@@ -233,7 +233,11 @@ final class Signaling
                                  'clientVersion' => (string)$claims['appVersion']]];
             }
             $role = (string)$record['role'];
+            $spectator=(int)$state['gameProtocol']>=8 && ($record['spectator']??false);
+            if($refusal===null && $spectator && ($state['phase']!=='match'
+                || ($record['name']??'')!==$name || empty($record['lateRequest']))) $refusal='unauthorized';
             if ($refusal === null && $role === 'client'
+                && !$spectator
                 && ($state['phase'] !== 'lobby' || ($state['everStarted'] === true
                     && (empty($record['lateRequest']) || ($state['joinWindow']??'')!==$record['lateRequest'] || ($record['name']??'')!==$name)))) {
                 $refusal = 'match_in_progress';
@@ -276,6 +280,7 @@ final class Signaling
                 'token'    => hash('sha256', $token),
                 'joinedAt' => $now,
                 'lateRequest' => $record['lateRequest'] ?? '',
+                'spectator' => $spectator,
                 'lastSeen' => $now,
                 'epoch'    => (int)$state['epoch'],
             ];
@@ -289,6 +294,7 @@ final class Signaling
                 'peer'        => $peerId,
                 'session'     => $token,
                 'role'        => $role,
+                'spectator'   => $spectator,
                 'phase'       => (string)$state['phase'],
                 'maxPeers'    => (int)$state['maxPeers'],
                 'code'        => (string)$state['code'],
@@ -495,8 +501,10 @@ final class Signaling
             $lines = [];
             $budget = Limits::SIGNAL_MAX_RESPONSE_BYTES - 4096;
             foreach ($state['peers'] as $otherId => $other) {
+                if(!self::visiblePeer($state,$peerId,(int)$otherId)) continue;
                 $lines[] = ['peer', $otherId . '|' . $other['role'] . '|'
-                    . bin2hex((string)$other['name']) . '|' . bin2hex((string)$other['runtime'])];
+                    . bin2hex((string)$other['name']) . '|' . bin2hex((string)$other['runtime'])
+                    . ((int)$state['gameProtocol']>=8 ? '|'.(($other['spectator']??false)?'1':'0') : '')];
             }
             // The client refuses a snapshot that names more departures than a room can hold, one
             // that repeats a departure, or one that says a player both joined and left. The
@@ -519,7 +527,7 @@ final class Signaling
             foreach (($state['fp'] ?? []) as $pair => $binding) {
                 [$from, $to] = explode(':', (string)$pair, 2);
                 if ((int)$to === $peerId && (int)$from !== $peerId
-                    && isset($state['peers'][$from])) {
+                    && isset($state['peers'][$from]) && self::visiblePeer($state,$peerId,(int)$from)) {
                     $lines[] = ['fp', $from . '|' . $peerId . '|' . $binding['a'] . '|'
                                       . $binding['v']];
                 }
@@ -529,7 +537,8 @@ final class Signaling
             $highest = (int)$state['seq'];
             $sent = [];
             foreach (($state['signals'] ?? []) as $record) {
-                if ((int)$record['t'] !== $peerId || (int)$record['s'] <= $cursor) {
+                if ((int)$record['t'] !== $peerId || (int)$record['s'] <= $cursor
+                    || !self::visiblePeer($state,$peerId,(int)$record['f'])) {
                     continue;
                 }
                 if ($delivered >= Limits::SIGNAL_MAX_PER_POLL) {
@@ -600,7 +609,7 @@ final class Signaling
             $from = $who['peerId'];
             // Membership is the authorisation. A recipient that is not in this room right now,
             // in this epoch, is not addressable - there is no such thing as a cross-room send.
-            if ($from === $to || !isset($state['peers'][(string)$to])) {
+            if ($from === $to || !isset($state['peers'][(string)$to]) || !self::visiblePeer($state,$from,$to)) {
                 throw new ServiceError(403, 'forbidden', 'That player is not in this room.');
             }
             if ((int)$state['peers'][(string)$from]['epoch'] !== (int)$state['epoch']
@@ -733,7 +742,8 @@ final class Signaling
             if ($phase === 'match') {
                 // Controller slots remain a game rule; observers only need transport seats.
                 if(($state['allowLateJoin']??false) && (int)$state['gameProtocol']>=7) $state['maxPeers']=Limits::MAX_PEERS_PER_ROOM;
-                $ids = array_map('intval', array_keys($state['peers'])); sort($ids, SORT_NUMERIC);
+                $controllers=array_filter($state['peers'],static fn(array $p)=>!($p['spectator']??false));
+                $ids = array_map('intval', array_keys($controllers)); sort($ids, SORT_NUMERIC);
                 if ($roster !== implode(',', $ids)) {
                     throw new ServiceError(409, 'roster_changed', 'The players changed. Check the lobby before starting.');
                 }
@@ -790,6 +800,14 @@ final class Signaling
                 'logId'  => (string)$state['logId'],
             ]];
         });
+    }
+
+    /** Spectators have a host-only stream; they cannot contact another player's game. */
+    private static function visiblePeer(array $state, int $a, int $b): bool
+    {
+        if($a===$b || $a===(int)$state['hostPeerId'] || $b===(int)$state['hostPeerId']) return true;
+        return !($state['peers'][(string)$a]['spectator']??false)
+            && !($state['peers'][(string)$b]['spectator']??false);
     }
 
     private static function removePeer(array $state, int $peerId, int $now): array

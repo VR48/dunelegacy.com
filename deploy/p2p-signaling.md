@@ -114,13 +114,23 @@ FROM analytics_public_activity AS a, json_each(a.details_json,'$.players') AS p
 WHERE a.kind='public_game_started' ORDER BY a.occurred_at DESC;
 ```
 
-## Hot joining and spectators (client 1.0.728)
+## Hot joining and passive spectators (client 1.0.729)
 
-Protocol 7 adds automatic spectators and converts rejected player requests into
-spectator requests. Protocol 6 retains its prior rejection/queue behavior. The
-host still creates and approves the synchronized checkpoint; spectators never
-receive a controller slot. Co-op retains two controllers while allowing observers
-within the service's eight-connection bound. Client version checks are unchanged.
+Protocol 8 admits spectators without changing the running controller roster,
+match phase or epoch. The service binds the role to the approved name/claims,
+restricts each observer's signaling to the host and excludes viewers from start
+roster checks. The host sends an independent bounded checkpoint/tick stream;
+only the viewer loads and catches up. Viewer congestion, missing acknowledgements
+and departures do not delay active players. Rejected play requests become
+spectators. Exact client versions must match. Co-op retains two controllers and
+the service retains its eight-connection bound including observers.
+
+Older protocols retain their existing admission behavior. Gameplay state remains
+peer-to-peer; the metaserver does not relay snapshots or game commands. Spectator
+public seating events include the spectator flag in named activity history.
+The game repository's docs/late-join-protocol.md specifies packet limits and
+observer-only runtime continuation. Verified with 188 real-HTTP tests, busy
+three-peer stalls/timeouts and an actual browser over isolated public HTTPS.
 
 Keep `website/p2p/.htaccess` identical to `p2p-service/public/.htaccess`: the
 request, request-status and join-requests routes must reach PHP. The website

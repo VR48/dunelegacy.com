@@ -76,16 +76,22 @@ trait LateJoinSignaling
             if($action==='approve' || $action==='approve_spectator') {
                 $r=$s['joinRequests'][$id]??null;
                 if(!$r || !($s['allowLateJoin']??false)) throw new ServiceError(409,'request_expired','That request is no longer available.');
-                if(($s['joinWindow']??'')===$id && $r['state']==='approved') return [$s,[]];
+                if($r['state']==='approved') return [$s,[]];
                 if($r['state']!=='pending' || $s['phase']!=='match' || !empty($s['joinWindow']) || self::reservedSeats($s)>=(int)$s['maxPeers'])
                     throw new ServiceError(409,'join_busy','Another join is already being synchronized.');
                 $s['joinRequests'][$id]['spectator']=$action==='approve_spectator' || ($r['spectator']??false);
-                $s['joinWindow']=$id; $s['phase']='lobby'; ++$s['epoch'];
-                foreach($s['peers'] as &$p) $p['epoch']=$s['epoch']; unset($p);
+                // Protocol 8 observers are outside the controller roster. Admitting one must
+                // not invalidate player grants, reopen the lobby, or start a match barrier.
+                $passive=(int)$s['gameProtocol']>=8 && $s['joinRequests'][$id]['spectator'];
+                if(!$passive) {
+                    $s['joinWindow']=$id; $s['phase']='lobby'; ++$s['epoch'];
+                    foreach($s['peers'] as &$p) $p['epoch']=$s['epoch']; unset($p);
+                }
                 $grant=$s['id'].Store::randomHex(28);
                 $s=self::issueGrant($s,$grant,'client',$r['claims'],$now);
                 $s['grants'][hash('sha256',$grant)]['lateRequest']=$id;
                 $s['grants'][hash('sha256',$grant)]['name']=$r['name'];
+                $s['grants'][hash('sha256',$grant)]['spectator']=$passive;
                 $s['joinRequests'][$id]['state']='approved'; $s['joinRequests'][$id]['grant']=$grant;
             } elseif($action==='decline') {
                 if(isset($s['joinRequests'][$id]) && $s['joinRequests'][$id]['state']==='pending') {

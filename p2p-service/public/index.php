@@ -327,6 +327,7 @@ try {
             $event['player_name']=$name;
             $event['participant_id']=(int)$result['peer'];
             $event['role']=$result['role'];
+            $event['spectator']=(bool)($result['spectator']??false);
             $activity->record($result['role']==='host' ? 'public_game_created' : 'public_game_joined', $event);
         }
         if ($result['role'] === 'host' && !($result['recovered'] ?? false)) {
@@ -338,6 +339,7 @@ try {
             ['peer', (string)$result['peer']],
             ['session', $result['session']],
             ['role', $result['role']],
+            ['spectator', ($result['spectator']??false) ? '1' : '0'],
             ['maxPeers', (string)$result['maxPeers']],
             ['phase', $result['phase']],
             // The invitation code goes only to somebody who has just proved membership.
