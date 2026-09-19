@@ -48,9 +48,10 @@ const FIELD_RULES = [
     'kind'         => '/^(offer|answer|candidate)$/D',
     'phase'        => '/^(lobby|match)$/D',
     'roster'       => '/^[1-9][0-9]{0,4}(,[1-9][0-9]{0,4}){0,15}$/D',
+    'spectate'     => '/^[01]$/D',
     'cancel'       => '/^[01]$/D',
     'request'      => '/^[0-9a-f]{64}$/D',
-    'action'       => '/^(list|approve|decline|abort)$/D',
+    'action'       => '/^(list|approve|approve_spectator|decline|abort)$/D',
     'bye'          => '/^[01]$/D',
 ];
 
@@ -409,7 +410,7 @@ try {
     if ($path === '/v1/admission/request') {
         $code=requireField($form,'room'); $roomId=$rooms->resolve($code);
         $ticket=(new Signaling($store,$config))->requestLateJoin($roomId,$code,array_merge($claims,
-            ['publicOnly'=>optionalField($form,'publicOnly','0')==='1']),requireHexName($form,'name'));
+            ['publicOnly'=>optionalField($form,'publicOnly','0')==='1']),requireHexName($form,'name'),optionalField($form,'spectate','0')==='1');
         $http->send(200,[['status','ok'],['protocol',(string)Limits::PROTOCOL_VERSION],['request',$ticket],['requestState','pending']],false);
         return;
     }

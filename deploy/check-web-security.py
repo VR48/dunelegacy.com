@@ -87,6 +87,12 @@ def main() -> int:
         "Cache-Control \"no-store\"",
     )))
 
+    # Public routing must keep up with the separately installed PHP service.
+    service_routes = repo_root / "p2p-service" / "public" / ".htaccess"
+    public_routes = website / "p2p" / ".htaccess"
+    if service_routes.read_bytes() != public_routes.read_bytes():
+        errors.append("website/p2p/.htaccess must match the packaged signaling routes")
+
     parser = PlayPageParser()
     parser.feed((play / "index.html").read_text(encoding="utf-8"))
     errors.extend(parser.errors)

@@ -113,3 +113,16 @@ SELECT a.room_id, a.occurred_at, json_extract(p.value,'$.name') AS player,
 FROM analytics_public_activity AS a, json_each(a.details_json,'$.players') AS p
 WHERE a.kind='public_game_started' ORDER BY a.occurred_at DESC;
 ```
+
+## Hot joining and spectators (client 1.0.728)
+
+Protocol 7 adds automatic spectators and converts rejected player requests into
+spectator requests. Protocol 6 retains its prior rejection/queue behavior. The
+host still creates and approves the synchronized checkpoint; spectators never
+receive a controller slot. Co-op retains two controllers while allowing observers
+within the service's eight-connection bound. Client version checks are unchanged.
+
+Keep `website/p2p/.htaccess` identical to `p2p-service/public/.htaccess`: the
+request, request-status and join-requests routes must reach PHP. The website
+security check now rejects routing drift before deployment. Existing private
+configuration, runtime state and named activity history are preserved.

@@ -731,6 +731,8 @@ final class Signaling
             $state['peers'][(string)$who['peerId']]['lastSeen'] = $now;
             $state['lastSeen'] = $now;
             if ($phase === 'match') {
+                // Controller slots remain a game rule; observers only need transport seats.
+                if(($state['allowLateJoin']??false) && (int)$state['gameProtocol']>=7) $state['maxPeers']=Limits::MAX_PEERS_PER_ROOM;
                 $ids = array_map('intval', array_keys($state['peers'])); sort($ids, SORT_NUMERIC);
                 if ($roster !== implode(',', $ids)) {
                     throw new ServiceError(409, 'roster_changed', 'The players changed. Check the lobby before starting.');

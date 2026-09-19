@@ -15,10 +15,10 @@ trait LateJoinSignaling
         return $state;
     }
 
-    public function requestLateJoin(string $roomId, string $code, array $claims, string $name): string
+    public function requestLateJoin(string $roomId, string $code, array $claims, string $name, bool $spectate=false): string
     {
         $ticket=$roomId.Store::randomHex(28); $id=hash('sha256',$ticket); $now=$this->store->now();
-        return $this->store->withLock(self::file($roomId), function(array $s) use($ticket,$id,$now,$code,$claims,$name): array {
+        return $this->store->withLock(self::file($roomId), function(array $s) use($ticket,$id,$now,$code,$claims,$name,$spectate): array {
             if (!$s || ($s['closed']??false) || $s['code']!==Store::normalizeRoomCode($code)
                 || (($claims['publicOnly']??false) && $s['visibility']!=='public'))
                 throw new ServiceError(404,'room_not_found','That game is no longer available.');
@@ -37,7 +37,7 @@ trait LateJoinSignaling
             foreach($s['joinRequests'] as $r) if($r['name']===$name && in_array($r['state'],['pending','approved'],true))
                 throw new ServiceError(409,'request_pending','A request with that name is already waiting.');
             unset($claims['publicOnly']);
-            $s['joinRequests'][$id]=['name'=>$name,'claims'=>$claims,'state'=>'pending','createdAt'=>$now,'lastSeen'=>$now];
+            $s['joinRequests'][$id]=['name'=>$name,'spectator'=>$spectate,'claims'=>$claims,'state'=>'pending','createdAt'=>$now,'lastSeen'=>$now];
             return [$s,$ticket];
         });
     }
@@ -73,12 +73,13 @@ trait LateJoinSignaling
             if($who['peerId']!==(int)$s['hostPeerId']) throw new ServiceError(403,'forbidden','Only the host can manage join requests.');
             $s['peers'][(string)$who['peerId']]['lastSeen']=$now; $s['lastSeen']=$now;
             $s=self::sweepJoinRequests(self::expireGrants($s,$now),$now);
-            if($action==='approve') {
+            if($action==='approve' || $action==='approve_spectator') {
                 $r=$s['joinRequests'][$id]??null;
                 if(!$r || !($s['allowLateJoin']??false)) throw new ServiceError(409,'request_expired','That request is no longer available.');
                 if(($s['joinWindow']??'')===$id && $r['state']==='approved') return [$s,[]];
                 if($r['state']!=='pending' || $s['phase']!=='match' || !empty($s['joinWindow']) || self::reservedSeats($s)>=(int)$s['maxPeers'])
                     throw new ServiceError(409,'join_busy','Another join is already being synchronized.');
+                $s['joinRequests'][$id]['spectator']=$action==='approve_spectator' || ($r['spectator']??false);
                 $s['joinWindow']=$id; $s['phase']='lobby'; ++$s['epoch'];
                 foreach($s['peers'] as &$p) $p['epoch']=$s['epoch']; unset($p);
                 $grant=$s['id'].Store::randomHex(28);
@@ -87,7 +88,10 @@ trait LateJoinSignaling
                 $s['grants'][hash('sha256',$grant)]['name']=$r['name'];
                 $s['joinRequests'][$id]['state']='approved'; $s['joinRequests'][$id]['grant']=$grant;
             } elseif($action==='decline') {
-                if(isset($s['joinRequests'][$id]) && $s['joinRequests'][$id]['state']==='pending') $s['joinRequests'][$id]['state']='declined';
+                if(isset($s['joinRequests'][$id]) && $s['joinRequests'][$id]['state']==='pending') {
+                    if((int)$s['gameProtocol']>=7) $s['joinRequests'][$id]['spectator']=true;
+                    else $s['joinRequests'][$id]['state']='declined';
+                }
             } elseif($action==='abort') {
                 if(($s['joinWindow']??'')===$id) {
                     foreach($s['peers'] as $peerId=>$p) if(($p['lateRequest']??'')===$id) $s=self::removePeer($s,(int)$peerId,$now);
@@ -97,7 +101,7 @@ trait LateJoinSignaling
                 if(isset($s['joinRequests'][$id])) $s['joinRequests'][$id]['state']='declined';
             } elseif($action!=='list') throw new ServiceError(400,'bad_request','Unknown join request action.');
             $lines=[];
-            foreach($s['joinRequests'] as $key=>$r) if($r['state']==='pending') $lines[]=['request',$key.'|'.bin2hex($r['name'])];
+            foreach($s['joinRequests'] as $key=>$r) if($r['state']==='pending') $lines[]=['request',$key.'|'.bin2hex($r['name']).((int)$s['gameProtocol']>=7 ? '|'.(($r['spectator']??false)?'spectator':'player') : '')];
             return [$s,$lines];
         });
     }
