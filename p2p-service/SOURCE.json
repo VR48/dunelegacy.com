@@ -1,11 +1,11 @@
 {
   "repository": "https://github.com/VR48/dunecity",
-  "commit": "8416d26c56c8e32e2c64f2dbe7af787fa0481cbd",
+  "commit": "2697bf1fc53dcba6ab88c61a09a03caa6231ced2",
   "sha256": {
     "src/Analytics.php": "d6869217c2b6c517eaa6a7b7efcc89ad1d51e7ee9221966a83bd2d7cfa961ed5",
     "src/Config.php": "49bdef0812607ec229c7fb80889a0c5c43f44e471c92d2974f4c11422e824f00",
     "src/Http.php": "1f670844ec6623e9f777c9da7771865fa94c4a44865305c1577a474798dcf78c",
-    "src/LateJoin.php": "4320a8a35776bfee6a7f6163ac09eb599c0504ccd04790fd516d20f9b15dad3c",
+    "src/LateJoin.php": "ec41b28e9d132b86c5ca7bdf98606dfa41926bdb8752c0a76073afe7e4a950ce",
     "src/Limits.php": "61a302dc61e08d52183c3984dd54904a0648ecad7727fb3078b16bac3cdaf751",
     "src/Lobby.php": "d1065445fb94ef2c0e5d910d25947adbb99159843424f7acf9ec5f67cc998aec",
     "src/PublicActivity.php": "27f1b2fb70f880a446c61420b8a90d09dd897d64ebc83e07c7f91138cee65bf4",
@@ -15,6 +15,6 @@
     "src/Signaling.php": "ddb9fc7de1a1a0f25cb851f87fa83b574c35b272155cf584eb0fbfa0525b850b",
     "src/Store.php": "a1b5b0e6493aa3d40c0a7c6ffb1d66a2fa123a03c60bec6b7fbfda5ec2572a02",
     "public/.htaccess": "5753ade639016c5dfe18cb08b89b027b355f89e7ee69d1a712433665e6ccdce0",
-    "public/index.php": "7b859b42ce26ba3a89464bd0abe3b7b0c73bc99764e86d871d1566c733a3182e"
+    "public/index.php": "1c65c1eda5bac6515f59e057b11eb1b914db0dd9fe686d37d1f7206be19631c7"
   }
 }
