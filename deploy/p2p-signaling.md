@@ -127,7 +127,8 @@ the service retains its eight-connection bound including observers.
 
 Older protocols retain their existing admission behavior. Gameplay state remains
 peer-to-peer; the metaserver does not relay snapshots or game commands. Spectator
-public seating events include the spectator flag in named activity history.
+admission retains named public seating events; committed start rosters contain
+controllers. The current activity schema does not store a separate spectator flag.
 The game repository's docs/late-join-protocol.md specifies packet limits and
 observer-only runtime continuation. Verified with 188 real-HTTP tests, busy
 three-peer stalls/timeouts and an actual browser over isolated public HTTPS.
