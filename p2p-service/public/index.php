@@ -242,6 +242,8 @@ try {
                     'peers_admitted' => $result['peers'],
                 ]);
             }
+            if ($phase === 'match' && $result['phaseChanged'] && ($result['resuming'] ?? false)
+                && isset($result['notification']['joined_name'])) notifyLobby('hot_joined', $result);
             if ($phase==='match' && $result['phaseChanged'] && !empty($result['publicActivity']))
                 $activity->record('public_game_started',$result['publicActivity']);
             $http->send(200, [['status', 'ok'], ['protocol', (string)Limits::PROTOCOL_VERSION],
@@ -314,6 +316,8 @@ try {
         $result = $signaling->redeemAndSeat($grant, $claims, $name, $runtime,
             array_key_exists('nonce', $form) ? requireField($form, 'nonce') : '');
         $room = $result;
+        if (!($result['recovered'] ?? false) && ($result['spectator'] ?? false))
+            notifyLobby('hot_joined', $result);
         $rooms->touch(Signaling::roomIdFromSession($result['session']), array_merge($result,
             $result['role'] === 'host' ? ['hostSeated' => true] : []));
         if (!($result['recovered'] ?? false)) $analytics->record('joined', [

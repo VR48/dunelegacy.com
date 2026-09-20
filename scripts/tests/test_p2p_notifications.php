@@ -71,7 +71,45 @@ try {
     $invalid = new P2PNotifications($root . '/invalid', 'http://localhost/private', $transport, $clock);
     $invalid->enqueue('hosted', $event); $invalid->drain();
     check(!is_dir($root . '/invalid'), 'Only configured Discord HTTPS endpoints permitted');
-    check(P2PNotifications::payload('joined', $event) === null, 'No per-join spam');
+    check(P2PNotifications::payload('joined', $event) === null, 'Ordinary lobby joins remain quiet');
+    $named = ['room_log_id' => str_repeat('e',32), 'mode' => 'custom', 'visibility' => 'public',
+        'host' => 'Codex Web 733', 'version' => 'DuneCity1.0.733', 'players' => 2, 'max_players' => 8,
+        'player_names' => ['Codex Web 733', 'ggtothemax'], 'spectator_names' => []];
+    $start = P2PNotifications::payload('started', $named);
+    $fields = array_column($start['embeds'][0]['fields'], 'value', 'name');
+    check($fields['Started by'] === 'Codex Web 733', 'Name the player who starts the match');
+    check($fields['Players at start'] === "Codex Web 733\nggtothemax", 'List every starting human player');
+    check($start['embeds'][0]['description'] === 'Codex Web 733 started the match.', 'Named start description');
+
+    $watching = $named + ['participant_id' => 2, 'joined_name' => 'ggtothemax', 'joined_role' => 'spectator'];
+    $watching['players'] = 1; $watching['player_names'] = ['Codex Web 733']; $watching['spectator_names'] = ['ggtothemax'];
+    $playing = $named + ['participant_id' => 2, 'joined_name' => 'ggtothemax', 'joined_role' => 'player'];
+    $count = count($sent);
+    foreach ([$watching, $watching, $playing, $playing] as $join) {
+        $notifier->enqueue('hot_joined', $join); $now += 5; $notifier->drain();
+    }
+    check(count($sent) === $count + 2, 'Spectating and promotion each announce once per participant');
+    check($sent[$count]['embeds'][0]['description'] === 'ggtothemax joined the running match as a spectator.', 'Named spectator description');
+    check($sent[$count+1]['embeds'][0]['description'] === 'ggtothemax joined to play in the running match.', 'Named player description');
+    $another = $playing; $another['participant_id'] = 3; $another['joined_name'] = 'Chani';
+    $another['players'] = 3; $another['player_names'][] = 'Chani';
+    $notifier->enqueue('hot_joined', $another); $now += 5; $notifier->drain();
+    check(count($sent) === $count + 3, 'Another hot join in the same room is not suppressed');
+
+    $hostile = $playing; $hostile['host'] = '@everyone';
+    $hostile['joined_name'] = '[link](https://example.com) *name*';
+    $hostile['player_names'] = ['@everyone', $hostile['joined_name']];
+    $safe = P2PNotifications::payload('hot_joined', $hostile);
+    check($safe['allowed_mentions']['parse'] === [], 'Named hot joins cannot ping Discord');
+    check(str_contains($safe['embeds'][0]['description'], '\\[link\\]\\('), 'Display names cannot create Markdown links');
+    $long = $named; $long['players'] = 8; $long['player_names'] = array_fill(0,8,str_repeat('*',64));
+    foreach (P2PNotifications::payload('started', $long)['embeds'][0]['fields'] as $field)
+        check(strlen($field['value']) <= 1024, 'Long escaped rosters fit Discord field limits');
+    foreach (['participant_id' => 0, 'joined_role' => 'host', 'joined_name' => "bad\nname",
+              'player_names' => ['too','many','names'], 'spectator_names' => str_repeat('x',100)] as $key => $bad) {
+        $invalidEvent = $playing; $invalidEvent[$key] = $bad;
+        check(P2PNotifications::payload('hot_joined', $invalidEvent) === null, 'Reject invalid named event: '.$key);
+    }
     $event['players'] = 99;
     check(P2PNotifications::payload('hosted', $event) === null, 'Reject impossible player counts');
     echo "P2P Discord payload, deduplication, privacy, pacing and retry checks passed\n";
