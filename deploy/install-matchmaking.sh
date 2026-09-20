@@ -31,7 +31,7 @@ if [[ ! -d $RELEASE ]]; then
     ci --prefix "$STAGE/matchmaking-service" --omit=dev --ignore-scripts --no-audit --no-fund
   "$BASE/node/bin/node" --test "$STAGE/matchmaking-service/test/service.test.js"
   printf '%s\n' "$REVISION" > "$STAGE/matchmaking-service/REVISION"
-  chown -R root:root "$STAGE"; chmod -R go-w "$STAGE"
+  chown -R root:root "$STAGE"; chmod -R go-w "$STAGE"; chmod 0755 "$STAGE"
   mv "$STAGE" "$RELEASE"
 fi
 # Retain every prior release for rollback. The live service reads root-owned files.
@@ -40,7 +40,7 @@ mv -Tf "$BASE/current.new" "$BASE/current"
 install -m 0644 "$RELEASE/deploy/dunecity-matchmaking.service" /etc/systemd/system/dunecity-matchmaking.service
 systemd-analyze verify /etc/systemd/system/dunecity-matchmaking.service
 systemctl daemon-reload
-systemctl enable --now dunecity-matchmaking.service
+systemctl enable dunecity-matchmaking.service
 systemctl restart dunecity-matchmaking.service
 for attempt in $(seq 1 20); do
   if curl --fail --silent http://127.0.0.1:8788/health | python3 -c 'import json,sys;assert json.load(sys.stdin)["status"]=="ok"' 2>/dev/null; then break; fi
