@@ -142,3 +142,29 @@ Keep `website/p2p/.htaccess` identical to `p2p-service/public/.htaccess`: the
 request, request-status and join-requests routes must reach PHP. The website
 security check now rejects routing drift before deployment. Existing private
 configuration, runtime state and named activity history are preserved.
+
+## Workshop content service (client 1.0.740 candidate)
+
+The service snapshot adds immutable mod/map revision storage and six content API
+routes, plus admission/inspect for required content discovery before joining.
+Existing admission, room state and signaling contracts are preserved; no game
+protocol is forced in the preserved operator configuration. The new app still
+requires matching client versions when joining, as older releases did.
+
+Keep the public and private .htaccess files identical. Both route lists include
+the content endpoints and inspect; the outer request bound is 524288 bytes for
+hex-encoded manifests. PHP retains smaller limits on signaling requests.
+Content is stored under the existing private state directory, with worker-owned
+0700 directories, immutable SHA256 blobs, upload ownership capabilities and a
+bounded quota (20 GiB by default, configurable with content_quota_bytes).
+Existing runtime state, analytics and configuration are preserved by deployment.
+
+Before deployment, 207 real-HTTP/PHP and ingress-contract tests passed in the game
+checkout. Forty admission/grant/signaling/start tests passed with 1.0.737/protocol9
+claims and another forty with protocol8. These verify protocol compatibility,
+not old executable playback. The local 740 browser reaches Campaign gameplay
+automatically and retains the explicit Play Online pregame lobby.
+
+Rollback: restore the preceding service snapshot and matching public route file,
+leaving configuration, rooms and content state intact. Older clients can continue
+using their original routes; 740 sharing will be unavailable after rollback.
