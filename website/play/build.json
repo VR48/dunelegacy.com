@@ -1,7 +1,7 @@
 {
-  "version": "1.0.732",
-  "sourceCommit": "a319a104b83d9b53ce31ffcf7ee7d171cc5bad2e",
-  "builtAtUtc": "2026-09-19T23:09:59.668063+00:00",
+  "version": "1.0.734",
+  "sourceCommit": "c505255c6fd23ef92f2ec91a60c5eeb8c4bde8b7",
+  "builtAtUtc": "2026-09-20T03:11:40.428108+00:00",
   "artifacts": [
     "index.html",
     "dunecity.js",
@@ -17,9 +17,9 @@
   ],
   "gameTransport": "direct-webrtc",
   "sha256": {
-    "index.html": "914cf7ef9221261c8f1cdcdbee46369271387a9534f6d7390779902b295ac285",
-    "dunecity.js": "fbefcc8673b1b73e5e92579d92f35f22ef1010c98ba3b9f33ec639c4016fa874",
-    "dunecity.wasm": "acda7f73f5475e3cf80b602b666f9c6b1e3f8ff428eaaebcbf86d8de38297266",
+    "index.html": "057aa832f9c335ba7e0508bf4bb43ee8624c0b6f295a4313b71adc54093e21fe",
+    "dunecity.js": "7f929572ca7cd97f61f9deb6b68139083ef103ad3f28ac362d9d34e80d0bf826",
+    "dunecity.wasm": "e1ac11a30262db78be34a59cf1941f3c7adb3f0faf67631c87efbb0d0e7ff59f",
     "dunecity.data": "33e7e63a69a3b303bcc04db1ea1156881c3e4850f93f41aafddf4667cb119924",
     "p2p-direct.js": "0d73d4d28554dd94f9a09e28e6c28a23b15b3ccf34262028091d511957b6efc7",
     "shell.js": "1d737377ff48a258c84d025d27bc027fdc293f6c8a949ecba1ca8159d8f62e56",
