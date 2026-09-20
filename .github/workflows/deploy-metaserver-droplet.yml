@@ -7,6 +7,7 @@ on:
       - 'website/**'
       - 'metaserver/**'
       - 'p2p-service/**'
+      - 'matchmaking-service/**'
       - 'deploy/**'
       - '.github/workflows/deploy-metaserver-droplet.yml'
   workflow_dispatch:  # Allow manual deployment
@@ -49,6 +50,14 @@ jobs:
           php scripts/tests/test_p2p_notifications.php
           python3 deploy/install-p2p-service.py --source p2p-service --target "$RUNNER_TEMP/p2p-install-check"
       
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test matchmaking service
+        run: |
+          npm ci --prefix matchmaking-service --ignore-scripts
+          npm test --prefix matchmaking-service
+
       - name: Configure verified SSH transport
         env:
           DROPLET_IP: ${{ secrets.METASERVER_DROPLET_IP }}
