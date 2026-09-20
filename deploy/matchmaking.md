@@ -12,6 +12,9 @@ carries introductions and ICE/SDP, not game commands. No TURN server is added.
 ## Production installation
 
 Administrator access is required for the initial TLS proxy and systemd unit.
+`install-matchmaking.sh BUNDLE SHA256 FULL_COMMIT` performs the checked installation
+on the existing Linux x64 host. The bundle is a git archive containing
+`matchmaking-service` and the deployment files, supplied with its independent hash.
 Deploy reviewed, committed files and locked dependencies into a root-owned
 `/opt/dunecity-matchmaking/releases/<commit>` directory, then atomically switch
 `current`. The pinned Node 22.23.2 x64 archive SHA-256 is
