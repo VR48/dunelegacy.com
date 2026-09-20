@@ -18,7 +18,7 @@ final class P2PNotifications
 
     public static function payload(string $kind, array $event): ?array
     {
-        if (!in_array($kind, ['hosted', 'started'], true)
+        if (!in_array($kind, ['hosted', 'started', 'hot_joined'], true)
             || !preg_match('/^[a-f0-9]{32}$/D', $event['room_log_id'] ?? '')
             || !in_array($event['mode'] ?? '', ['custom', 'coop'], true)
             || !in_array($event['visibility'] ?? '', ['public', 'private'], true)
@@ -27,22 +27,60 @@ final class P2PNotifications
             || !preg_match('/^[A-Za-z0-9._-]{1,32}$/D', $event['version'] ?? '')
             || !is_string($event['host'] ?? null) || strlen($event['host']) > 64
             || preg_match('/[\x00-\x1f\x7f]/', $event['host'])) return null;
+        foreach (['player_names', 'spectator_names'] as $key) {
+            if (!array_key_exists($key, $event)) continue; // Older service snapshots remain deliverable.
+            if (!is_array($event[$key]) || !array_is_list($event[$key]) || count($event[$key]) > 8) return null;
+            foreach ($event[$key] as $name) if (!self::validName($name)) return null;
+        }
+        if (isset($event['player_names']) && count($event['player_names']) !== $event['players']) return null;
+        if ($event['players'] + count($event['spectator_names'] ?? []) > $event['max_players']) return null;
+        if ($kind === 'hot_joined' && (!self::validName($event['joined_name'] ?? null)
+            || !in_array($event['joined_role'] ?? '', ['player', 'spectator'], true)
+            || !is_int($event['participant_id'] ?? null) || $event['participant_id'] < 1 || $event['participant_id'] > 65535)) return null;
         $mode = $event['mode'] === 'coop' ? 'Campaign Co-op' : 'Custom Game';
         $private = $event['visibility'] === 'private';
+        $fields = [
+            ['name' => $kind === 'started' ? 'Started by' : 'Host', 'value' => self::displayName($event['host']), 'inline' => true],
+            ['name' => 'Players', 'value' => $event['players'] . '/' . $event['max_players'], 'inline' => true],
+            ['name' => 'Visibility', 'value' => $private ? 'Private' : 'Public', 'inline' => true],
+            ['name' => 'Version', 'value' => $event['version'], 'inline' => true],
+        ];
+        if ($kind === 'hot_joined') $fields[] = [
+            'name' => $event['joined_role'] === 'spectator' ? 'Joined as spectator' : 'Joined to play',
+            'value' => self::displayName($event['joined_name']), 'inline' => false,
+        ];
+        foreach (['player_names' => $kind === 'started' ? 'Players at start' : 'Playing', 'spectator_names' => 'Spectators'] as $key => $label) {
+            if (empty($event[$key])) continue;
+            $names = array_map([self::class, 'displayName'], $event[$key]);
+            $chunks = strlen(implode("\n", $names)) <= 1024 ? [$names] : array_chunk($names, 4);
+            foreach ($chunks as $i => $chunk) $fields[] = ['name' => $label . ($i ? ' (continued)' : ''),
+                'value' => implode("\n", $chunk), 'inline' => false];
+        }
         // No invitation codes, addresses, session credentials or client-provided URLs ever enter a message.
         return ['allowed_mentions' => ['parse' => []], 'embeds' => [[
-            'title' => $mode . ($kind === 'hosted' ? ' Lobby Created' : ' Starting'),
+            'title' => $mode . match ($kind) { 'hosted' => ' Lobby Created', 'started' => ' Starting', default => ' Hot Join' },
             'url' => 'https://dunelegacy.com/play/',
-            'description' => $kind === 'started' ? 'The host has started the match.' :
-                ($private ? 'Private lobby — ask the host for an invitation.' : 'Open Join Online in the game to join this public lobby.'),
-            'color' => $kind === 'started' ? 0x2ECC71 : 0xE67E22,
-            'fields' => [
-                ['name' => 'Host', 'value' => $event['host'] ?: 'Unnamed', 'inline' => true],
-                ['name' => 'Players', 'value' => $event['players'] . '/' . $event['max_players'], 'inline' => true],
-                ['name' => 'Visibility', 'value' => $private ? 'Private' : 'Public', 'inline' => true],
-                ['name' => 'Version', 'value' => $event['version'], 'inline' => true],
-            ],
+            'description' => $kind === 'hot_joined' ? self::displayName($event['joined_name']) .
+                ($event['joined_role'] === 'spectator' ? ' joined the running match as a spectator.' : ' joined to play in the running match.') :
+                ($kind === 'started' ? self::displayName($event['host']) . ' started the match.' :
+                ($private ? 'Private lobby — ask the host for an invitation.' : 'Open Join Online in the game to join this public lobby.')),
+            'color' => match ($kind) { 'started' => 0x2ECC71, 'hot_joined' => 0x3498DB, default => 0xE67E22 },
+            'fields' => $fields,
         ]]];
+    }
+
+    private static function validName(mixed $name): bool
+    {
+        return is_string($name) && $name !== '' && strlen($name) <= 64 && !preg_match('/[\x00-\x1f\x7f]/', $name);
+    }
+
+    private static function displayName(string $name): string
+    {
+        // Render player-chosen Markdown literally; allowed_mentions also prevents pings.
+        $escaped = str_replace('\\', '\\\\', $name ?: 'Unnamed');
+        foreach (['`', '*', '_', '~', '|', '>', '<', '[', ']', '(', ')'] as $char)
+            $escaped = str_replace($char, '\\' . $char, $escaped);
+        return $escaped;
     }
 
     private function enabled(): bool
@@ -80,7 +118,8 @@ final class P2PNotifications
     {
         $payload = self::payload($kind, $event);
         if ($payload === null) return;
-        $id = hash('sha256', $event['room_log_id'] . ':' . $kind);
+        $identity = $kind === 'hot_joined' ? ':' . $event['participant_id'] . ':' . $event['joined_role'] : '';
+        $id = hash('sha256', $event['room_log_id'] . ':' . $kind . $identity);
         $this->locked(static function (array &$state, int $now) use ($id, $payload): void {
             if (isset($state['jobs'][$id])) return;
             if (count($state['jobs']) >= 256) {

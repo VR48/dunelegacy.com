@@ -300,7 +300,7 @@ final class Signaling
                 'code'        => (string)$state['code'],
                 'logId'       => (string)$state['logId'],
                 'hostName'    => (string)$state['hostName'],
-                'notification' => self::notificationSnapshot($state),
+                'notification' => self::notificationSnapshot($state, $spectator ? $peerId : 0),
                 'publicActivity' => self::publicActivitySnapshot($state),
                 'peers'       => count($state['peers']),
                 'outstanding' => count($state['grants']),
@@ -752,6 +752,13 @@ final class Signaling
                 $state['redemptions'] = [];
             }
             $resuming=!empty($state['joinWindow']);
+            $joinedPeer = 0;
+            if ($phase === 'match' && $resuming) {
+                foreach ($state['peers'] as $id => $peer) {
+                    if (($peer['lateRequest'] ?? '') === $state['joinWindow'] && !($peer['spectator'] ?? false))
+                        $joinedPeer = (int)$id;
+                }
+            }
             if($phase==='match') $state['joinWindow']='';
             $phaseChanged = (string)$state['phase'] !== $phase;
             if ($phaseChanged) {
@@ -767,7 +774,7 @@ final class Signaling
             }
             return [$state, ['phase' => (string)$state['phase'], 'epoch' => (int)$state['epoch'],
                              'phaseChanged' => $phaseChanged, 'resuming' => $resuming,
-                             'notification' => self::notificationSnapshot($state),
+                             'notification' => self::notificationSnapshot($state, $joinedPeer),
                              'publicActivity' => self::publicActivitySnapshot($state),
                              'everStarted' => (bool)$state['everStarted'],
                              'startId' => $state['startId'] ?? '', 'roster' => $roster,
@@ -873,17 +880,31 @@ final class Signaling
     }
 
     /** Trusted deployment notification fields. Never include invitation or transport secrets. */
-    private static function notificationSnapshot(array $state): array
+    private static function notificationSnapshot(array $state, int $joinedPeer = 0): array
     {
-        return [
+        $players = []; $spectators = [];
+        foreach ($state['peers'] as $peer) {
+            if ($peer['spectator'] ?? false) $spectators[] = (string)$peer['name'];
+            else $players[] = (string)$peer['name'];
+        }
+        $event = [
             'room_log_id' => (string)$state['logId'],
             'mode' => (string)$state['mode'],
             'visibility' => (string)$state['visibility'],
             'host' => (string)$state['hostName'],
             'version' => (string)$state['appVersion'],
-            'players' => count($state['peers']),
+            'players' => count($players),
+            'player_names' => $players,
+            'spectator_names' => $spectators,
             'max_players' => (int)$state['maxPeers'],
         ];
+        if ($joinedPeer && isset($state['peers'][(string)$joinedPeer])) {
+            $peer = $state['peers'][(string)$joinedPeer];
+            $event['participant_id'] = $joinedPeer;
+            $event['joined_name'] = (string)$peer['name'];
+            $event['joined_role'] = ($peer['spectator'] ?? false) ? 'spectator' : 'player';
+        }
+        return $event;
     }
 
     /** Only listing fields, derived from current authoritative room state. */

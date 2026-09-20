@@ -36,12 +36,17 @@ gameplay or Internet NAT reachability; verify those in actual matches.
 
 The entrypoint connects the trusted signaling notification hook to
 `metaserver/p2p_notifications.php`. It reuses `/var/www/data/discord_webhook.txt`
-(or `DISCORD_WEBHOOK_URL`) and announces custom/campaign lobby creation and starts
-for both public and private rooms. Invitation codes and transport credentials are
-never included. Current signaling does not receive map/mod metadata, so messages
-use the known host, mode, version, visibility and player counts only.
+(or `DISCORD_WEBHOOK_URL`) and announces custom/campaign lobby creation, starts
+and hot joins for both public and private rooms. Starts name the host and list the
+human players present. Hot joins name the participant and distinguish spectator
+admission from an approved player joining when the host resumes. Human player and
+spectator rosters are separate; AI names are not available to signaling. Requests,
+approvals and aborted controller transfers do not announce a player join. Invitation
+codes and transport credentials are never included. Player names render as literal
+text, with mentions disabled. No map/mod metadata is claimed in these messages.
 
-The private `discord-p2p` outbox deduplicates by room log ID and event kind, keeps
+The private `discord-p2p` outbox deduplicates by room log ID and event kind (plus
+participant ID and role for hot joins, allowing spectator-to-player promotion), keeps
 at most 256 jobs for an hour, and drains one due job on subsequent P2P requests.
 Delivery is globally paced and network calls hold no queue/room locks. HTTP 429
 and transient failures retry up to five attempts; retry delays are respected up
