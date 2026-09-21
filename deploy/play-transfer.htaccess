@@ -1,0 +1,31 @@
+# Static Brotli avoids recompressing the large game on every cold request.
+# Gzip/identity keep using the package's existing configuration as fallbacks.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP:Accept-Encoding} "(^|,)\s*br\s*(;[^,]*)?(,|$)" [NC]
+  RewriteCond %{HTTP:Accept-Encoding} "!(^|,)\s*br\s*;\s*q=0(\.0*)?\s*(,|$)" [NC]
+  RewriteCond %{REQUEST_FILENAME}.br -f
+  RewriteRule ^(dunecity\.(data|wasm|js)|p2p-direct\.js|shell\.(js|css))$ $1.br [L]
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddEncoding br .br
+</IfModule>
+<FilesMatch "\.wasm\.br$">
+  ForceType application/wasm
+</FilesMatch>
+<FilesMatch "\.data\.br$">
+  ForceType application/octet-stream
+</FilesMatch>
+<FilesMatch "\.js\.br$">
+  ForceType text/javascript
+</FilesMatch>
+<FilesMatch "\.css\.br$">
+  ForceType text/css
+</FilesMatch>
+<IfModule mod_headers.c>
+  <FilesMatch "\.(wasm|data|js|css)(\.br)?$">
+    Header merge Vary Accept-Encoding
+    Header always set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+</IfModule>

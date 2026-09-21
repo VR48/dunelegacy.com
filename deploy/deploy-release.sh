@@ -24,7 +24,18 @@ git -C "$REPOSITORY_ROOT" archive origin/main p2p-service deploy \
 python3 "$REPOSITORY_ROOT/deploy/check-web-security.py"
 python3 "$PRIVATE_STAGING/deploy/install-p2p-service.py" \
     --source "$PRIVATE_STAGING/p2p-service" --group www-data
-rsync -a --delete --exclude='.well-known/' "$STAGING_ROOT/" "$WEB_ROOT/"
+if [[ -n "${PLAY_TRANSFER_ROOT:-}" ]]; then
+    python3 "$PRIVATE_STAGING/deploy/install-play-transfer.py" \
+        --source "$PLAY_TRANSFER_ROOT" --play "$STAGING_ROOT/play"
+fi
+# git archive stamps every staged file with the latest commit time, so mtime says
+# nothing about whether the bytes changed. Compare by content (--checksum) and
+# leave the mtime of skipped files alone (--no-times, after -a so it wins), so
+# Apache's size+mtime ETag and Last-Modified stay stable for byte-identical
+# assets and browsers keep revalidating the cached game download instead of
+# refetching it every hourly stats deploy.
+WEB_SYNC_ARGS=(-a --checksum --no-times --delete --exclude='.well-known/')
+rsync "${WEB_SYNC_ARGS[@]}" "$STAGING_ROOT/" "$WEB_ROOT/"
 
 install -d -m 0755 "$HOME/bin"
 git -C "$REPOSITORY_ROOT" show origin/main:deploy/query-analytics.py \
