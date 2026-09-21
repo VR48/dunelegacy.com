@@ -30,12 +30,19 @@ class TransferTests(unittest.TestCase):
                 'encodedSha256': hashlib.sha256(encoded).hexdigest(),
             }
         (self.play / '.htaccess').write_text('Options -Indexes\n')
+        (self.play / 'index.html').write_text('<script src="dunecity.js?v=test" async></script>')
+        (self.play / 'build.json').write_text(json.dumps({'artifacts': [], 'sha256': {}}))
         (self.source / 'transfer.json').write_text(json.dumps(self.manifest))
 
     def test_matching_release_installs_and_preserves_existing_rules(self):
         installer.install(self.source, self.play)
         self.assertEqual(len(list(self.play.glob('*.br'))), len(installer.NAMES))
         self.assertTrue((self.play / '.htaccess').read_text().startswith('Options -Indexes\n'))
+        html = (self.play / 'index.html').read_text()
+        self.assertLess(html.index('loading-progress.js'), html.index('dunecity.js'))
+        build = json.loads((self.play / 'build.json').read_text())
+        for name in ('index.html', 'loading-progress.js'):
+            self.assertEqual(build['sha256'][name], installer.digest(self.play / name))
 
     def test_new_release_fails_before_installing_any_encoding(self):
         (self.play / 'shell.css').write_text('new release')
