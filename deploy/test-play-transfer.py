@@ -62,6 +62,17 @@ class TransferTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Unexpected'):
             installer.install(self.source, self.play)
 
+    def test_engine_url_is_pinned_and_checksummed(self):
+        revision = 'a' * 40
+        installer.install(self.source, self.play, revision)
+        html = (self.play / 'index.html').read_text()
+        self.assertIn(f'/{revision}/website/play/dunecity.wasm', html)
+        self.assertIn(self.manifest['dunecity.wasm']['sourceSha256'], html)
+
+    def test_invalid_revision_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'full Git revision'):
+            installer.install(self.source, self.play, 'main')
+
 
 if __name__ == '__main__':
     unittest.main()

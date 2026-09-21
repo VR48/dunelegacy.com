@@ -15,7 +15,9 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def install(source, play):
+def install(source, play, revision=None):
+    if revision is not None and not re.fullmatch(r'[0-9a-f]{40}', revision):
+        raise ValueError('Expected a full Git revision for the engine delivery URL')
     manifest = json.loads((source / 'transfer.json').read_text())
     # Validate everything before copying anything. A concurrent release must not
     # pair an old compressed response with newer JavaScript or game data.
@@ -33,8 +35,13 @@ def install(source, play):
     helper = 'loading-progress.js'
     shutil.copyfile(Path(__file__).with_name(helper), play / helper)
     index = play / 'index.html'
+    attributes = ''
+    if revision:
+        engine_url = f'https://raw.githubusercontent.com/VR48/dunelegacy.com/{revision}/website/play/dunecity.wasm'
+        engine_hash = manifest['dunecity.wasm']['sourceSha256']
+        attributes = f' data-engine-url="{engine_url}" data-engine-sha256="{engine_hash}"'
     html, count = re.subn(r'(?=<script\b[^>]*\bsrc=[\"\']?dunecity\.js(?:[?\"\'\s>]))',
-                          '<script src="loading-progress.js"></script>', index.read_text())
+                          f'<script src="loading-progress.js"{attributes}></script>', index.read_text())
     if count != 1:
         raise ValueError('Expected one game script for the progress helper')
     index.write_text(html)
@@ -55,5 +62,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', type=Path, required=True)
     parser.add_argument('--play', type=Path, required=True)
+    parser.add_argument('--revision', help='Full website Git revision containing the unchanged engine')
     args = parser.parse_args()
-    install(args.source, args.play)
+    install(args.source, args.play, args.revision)

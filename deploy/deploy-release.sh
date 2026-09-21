@@ -26,7 +26,8 @@ python3 "$PRIVATE_STAGING/deploy/install-p2p-service.py" \
     --source "$PRIVATE_STAGING/p2p-service" --group www-data
 if [[ -n "${PLAY_TRANSFER_ROOT:-}" ]]; then
     python3 "$PRIVATE_STAGING/deploy/install-play-transfer.py" \
-        --source "$PLAY_TRANSFER_ROOT" --play "$STAGING_ROOT/play"
+        --source "$PLAY_TRANSFER_ROOT" --play "$STAGING_ROOT/play" \
+        --revision "$(git -C "$REPOSITORY_ROOT" rev-parse origin/main)"
 fi
 # git archive stamps every staged file with the latest commit time, so mtime says
 # nothing about whether the bytes changed. Compare by content (--checksum) and
