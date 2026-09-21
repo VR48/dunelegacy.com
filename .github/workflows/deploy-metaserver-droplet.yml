@@ -173,5 +173,12 @@ jobs:
               "https://dunelegacy.com/play/$asset" > /tmp/play-transfer-headers
             grep -qi '^content-encoding: br' /tmp/play-transfer-headers
             grep -qi '^vary:.*Accept-Encoding' /tmp/play-transfer-headers
-            grep -qi '^content-length:' /tmp/play-transfer-headers
+            if [ "$asset" = dunecity.data ]; then
+              if grep -qi '^content-length:' /tmp/play-transfer-headers; then
+                echo '::error::Compressed data length would misreport loader progress.'
+                exit 1
+              fi
+            else
+              grep -qi '^content-length:' /tmp/play-transfer-headers
+            fi
           done
