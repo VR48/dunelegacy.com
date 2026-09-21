@@ -32,3 +32,8 @@ jobs:
           python3 deploy/check-web-security.py
           python3 deploy/test-web-sync.py
           python3 deploy/test-play-transfer.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test compressed download progress
+        run: node --test deploy/test-loading-progress.mjs

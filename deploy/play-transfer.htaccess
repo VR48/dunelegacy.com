@@ -16,9 +16,6 @@
 </FilesMatch>
 <FilesMatch "\.data\.br$">
   ForceType application/octet-stream
-  # Emscripten counts decoded stream bytes. Without this compressed length it
-  # uses the original package size embedded in the loader for accurate progress.
-  Header unset Content-Length
 </FilesMatch>
 <FilesMatch "\.js\.br$">
   ForceType text/javascript

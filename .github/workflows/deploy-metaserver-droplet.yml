@@ -56,6 +56,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Test compressed download progress
+        run: node --test deploy/test-loading-progress.mjs
       - name: Restore compressed browser files
         id: play-transfer-cache
         uses: actions/cache@v4
@@ -173,12 +175,5 @@ jobs:
               "https://dunelegacy.com/play/$asset" > /tmp/play-transfer-headers
             grep -qi '^content-encoding: br' /tmp/play-transfer-headers
             grep -qi '^vary:.*Accept-Encoding' /tmp/play-transfer-headers
-            if [ "$asset" = dunecity.data ]; then
-              if grep -qi '^content-length:' /tmp/play-transfer-headers; then
-                echo '::error::Compressed data length would misreport loader progress.'
-                exit 1
-              fi
-            else
-              grep -qi '^content-length:' /tmp/play-transfer-headers
-            fi
+            grep -qi '^content-length:' /tmp/play-transfer-headers
           done
