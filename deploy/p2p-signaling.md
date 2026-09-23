@@ -168,3 +168,14 @@ automatically and retains the explicit Play Online pregame lobby.
 Rollback: restore the preceding service snapshot and matching public route file,
 leaving configuration, rooms and content state intact. Older clients can continue
 using their original routes; 740 sharing will be unavailable after rollback.
+
+## Map catalogue (client 1.0.765)
+
+The additive `catalogue=maps` content listing serves latest map revisions with mod,
+width, height and maximum-player metadata. Existing content clients are unchanged.
+The service state retains `content/maps/<revision>.ini` and `.json` metadata,
+using hard links to verified blobs so map copies do not bypass storage quotas.
+Normal deployment preserves this state. Game source commit 33e75fd4255a20d7276596526010da172cac7b71 contains
+the catalogue integration tests and seeding CLI. Names stay stable; versions are
+metadata. Rollback restores the previous service snapshot; uploaded revisions remain
+valid and accessible through the original content API.
