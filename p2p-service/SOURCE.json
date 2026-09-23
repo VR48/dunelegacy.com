@@ -1,10 +1,10 @@
 {
   "repository": "https://github.com/VR48/dunecity",
-  "commit": "d8ecc4ac40f35380d4f44c5edc52a3e188ffa09a",
+  "commit": "e6f6309dffcfe104a089d4839d6a35e61bd35810",
   "sha256": {
     "src/Analytics.php": "d6869217c2b6c517eaa6a7b7efcc89ad1d51e7ee9221966a83bd2d7cfa961ed5",
     "src/Config.php": "a224e86296d6c6af34cb72c3fd3f7d0c02f24db913624fcc908397d45cdc8cd3",
-    "src/Content.php": "2c7288f0dc43a979ca1160cb6282170f7b2490981ea7631f7f9c8e066a3559fe",
+    "src/Content.php": "ef18fe48dd6cc7fd256f7af8195d7af7586aca1be10d25d7a280d30c26c373ac",
     "src/Http.php": "1f670844ec6623e9f777c9da7771865fa94c4a44865305c1577a474798dcf78c",
     "src/LateJoin.php": "ec41b28e9d132b86c5ca7bdf98606dfa41926bdb8752c0a76073afe7e4a950ce",
     "src/Limits.php": "61a302dc61e08d52183c3984dd54904a0648ecad7727fb3078b16bac3cdaf751",
