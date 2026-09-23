@@ -179,3 +179,8 @@ Normal deployment preserves this state. Game source commit 33e75fd4255a20d727659
 the catalogue integration tests and seeding CLI. Names stay stable; versions are
 metadata. Rollback restores the previous service snapshot; uploaded revisions remain
 valid and accessible through the original content API.
+
+Map category metadata now uses schema 3: placed buildings determine Vanilla, Tornie
+or DuneCity. Old tags, names and dependency bases do not determine the category.
+Exact mod dependency snapshots remain separate and unchanged. Existing metadata
+refreshes lazily; catalogue deduplication preserves distinct pinned dependencies.
