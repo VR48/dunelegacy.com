@@ -184,3 +184,6 @@ Map category metadata now uses schema 3: placed buildings determine Vanilla, Tor
 or DuneCity. Old tags, names and dependency bases do not determine the category.
 Exact mod dependency snapshots remain separate and unchanged. Existing metadata
 refreshes lazily; catalogue deduplication preserves distinct pinned dependencies.
+
+Schema 4 also preserves city-named starter maps as DuneCity when their functional
+building count is at most max(4, twice the player count); walls/slabs are ignored.
