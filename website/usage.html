@@ -7,9 +7,9 @@
     <meta name="description" content="Explore recorded Dune Legacy and Dune City game sessions: daily and monthly activity, browser and desktop play, campaign levels, mods and AI opponents.">
     <link rel="canonical" href="https://dunelegacy.com/usage.html">
     <link rel="stylesheet" href="css/style.css?v=20260915-usage">
-    <link rel="stylesheet" href="css/usage.css?v=20260915-usage">
+    <link rel="stylesheet" href="css/usage.css?v=20260927-history">
     <link rel="icon" href="img/favicon.ico">
-    <script src="js/usage.js?v=20260915-usage" defer></script>
+    <script src="js/usage.js?v=20260927-history" defer></script>
 </head>
 <body>
 <header><div class="container">
@@ -24,7 +24,7 @@
     <div id="usage-content" hidden>
         <div class="usage-cards" id="usage-cards"></div>
         <p class="usage-note">Counts are recorded game sessions, not unique players, installs or downloads. Repeat attempts and development games are included.</p>
-        <nav class="usage-jump" aria-label="Statistics sections"><a href="#activity">Activity</a><a href="#modes">Modes &amp; mods</a><a href="#campaign">Campaign</a><a href="#bots">AI players</a><a href="#outcomes">Outcomes &amp; duration</a></nav>
+        <nav class="usage-jump" aria-label="Statistics sections"><a href="#activity">Activity</a><a href="#modes">Modes &amp; mods</a><a href="#campaign">Campaign</a><a href="#bots">AI players</a><a href="#outcomes">Outcomes &amp; duration</a><a href="#history">Multiplayer history</a></nav>
         <section class="usage-panel" id="activity"><h3>Activity over time</h3>
             <div class="usage-legend"><span class="browser-key">Browser</span><span class="native-key">Desktop</span><span class="unknown-key">Platform unknown</span></div>
             <h4>Daily sessions</h4><p id="daily-note" class="usage-note"></p><div id="daily-chart" class="usage-chart-scroll"></div>
@@ -50,6 +50,13 @@
         </section>
         <p id="coverage-note" class="usage-note"></p>
     </div>
+    <section class="usage-panel" id="history"><h3>Multiplayer game history</h3>
+        <p class="usage-note">Every recorded network game with at least two human players, newest first. This list covers all recorded history and does not follow the time period selected above.</p>
+        <p id="history-status" role="status">Loading game history…</p>
+        <div id="history-table"></div>
+        <nav class="usage-pager" aria-label="Game history pages"><button type="button" id="history-newer" disabled>← Newer games</button><p id="history-page-label" class="usage-note"></p><button type="button" id="history-older" disabled>Older games →</button></nav>
+        <p class="usage-note">Players are shown by their recorded display names, with AI players labelled. Older games without confirmed human player types are excluded.</p>
+    </section>
 </main>
 <footer><div class="container"><p><a href="/">Dune Legacy &amp; Dune City</a> · <a href="/#download-statistics">Download statistics</a></p></div></footer>
 </body>

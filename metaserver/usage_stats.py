@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Public aggregates only. Read the live SQLite database without changing it."""
+"""Public aggregates and one page of multiplayer history.
+
+Read the live SQLite database without changing it.  Without arguments the output is the
+aggregate report exactly as before; --history-page N returns that page of the multiplayer
+history and nothing else.
+"""
 import collections
 import datetime as dt
 import json
@@ -12,6 +17,16 @@ UTC = dt.timezone.utc
 RUNTIMES = ('browser', 'native', 'unknown')
 AI_NAMES = {'qbot': 'QuantBot', 'campaign': 'Campaign AI', 'classic': 'Classic AI',
             'smartbot': 'SmartBot', 'mentat': 'Mentat'}
+HISTORY_PAGE_SIZE = 20
+HISTORY_MAX_PAGE = 10 ** 7
+# A game qualifies only on recorded controllers: two or more player rows that the reporting
+# client called human.  Unknown or missing controllers never qualify a game.
+HISTORY_WHERE = '''FROM analytics_matches AS m WHERE m.game_type = 'multiplayer'
+    AND m.started_at IS NOT NULL AND m.started_at <= ?
+    AND (SELECT COUNT(*) FROM analytics_players AS p
+         WHERE p.match_id = m.match_id AND p.controller = 'human') >= 2'''
+HISTORY_MATCH_COLUMNS = {'match_id', 'started_at', 'game_type', 'map_name', 'mod_name', 'game_version'}
+HISTORY_PLAYER_COLUMNS = {'match_id', 'slot', 'player_name', 'house_name', 'controller', 'ai_type'}
 
 
 def iso(timestamp):
@@ -117,6 +132,85 @@ def clean_map(value):
     return re.split(r'[/\\]', value or '')[-1][:120] or 'Unknown map'
 
 
+def display_name(value, fallback='Unknown'):
+    # Lobby display names only; control characters never reach the page.
+    return re.sub(r'[\x00-\x1f\x7f]', '', str(value or '')).strip()[:32] or fallback
+
+
+def player_kind(controller, ai_type):
+    """What the reporting client said the player was; nothing is inferred from a name."""
+    if controller == 'human':
+        return 'human'
+    if controller in ('ai', 'qbot') or ai_type:
+        return 'ai'
+    return 'unknown'
+
+
+def roster(rows):
+    """One published participant list: display name, house and what the player was."""
+    people = []
+    for row in rows:
+        kind = player_kind(row['controller'], row['ai_type'])
+        name = (AI_NAMES.get(row['ai_type']) if kind == 'ai' else None) or display_name(
+            row['player_name'], 'AI' if kind == 'ai' else 'Unknown player')
+        people.append({'name': name, 'house': display_name(row['house_name'], ''), 'kind': kind})
+    return people
+
+
+def history_columns(connection):
+    """An unmigrated database can lack the player columns; report instead of failing."""
+    available = {table: {row[1] for row in connection.execute('PRAGMA table_info(' + table + ')')}
+                 for table in ('analytics_matches', 'analytics_players')}
+    return (HISTORY_MATCH_COLUMNS <= available['analytics_matches']
+            and HISTORY_PLAYER_COLUMNS <= available['analytics_players'])
+
+
+def build_history_page(connection, page, now=None):
+    """One page of multiplayer games with at least two human players, newest first.
+
+    The page is read with SQL LIMIT/OFFSET against the whole recorded history, so every
+    qualifying game stays reachable regardless of the aggregate periods.  Each stored
+    match is one game: only the host reports a multiplayer match and match_id is the
+    primary key, so rows are never merged here.  No match ids or player ids are published.
+    """
+    now = int(time.time()) if now is None else now
+    page = max(1, min(int(page), HISTORY_MAX_PAGE))
+    connection.row_factory = sqlite3.Row
+    connection.execute('PRAGMA query_only=ON')
+    connection.execute('BEGIN')
+    try:
+        usable = history_columns(connection)
+        total, games = 0, []
+        if usable:
+            total = connection.execute('SELECT COUNT(*) ' + HISTORY_WHERE, (now,)).fetchone()[0]
+            rows = connection.execute(
+                '''SELECT m.match_id, m.started_at, m.map_name, m.mod_name, m.game_version '''
+                + HISTORY_WHERE + ''' ORDER BY m.started_at DESC, m.match_id DESC LIMIT ? OFFSET ?''',
+                (now, HISTORY_PAGE_SIZE, (page - 1) * HISTORY_PAGE_SIZE)).fetchall()
+            rosters = collections.defaultdict(list)
+            if rows:
+                placeholders = ','.join('?' * len(rows))
+                for player in connection.execute(
+                        '''SELECT match_id, player_name, house_name, controller, ai_type
+                        FROM analytics_players WHERE match_id IN (''' + placeholders + ')'
+                        ' ORDER BY match_id, slot', [row['match_id'] for row in rows]):
+                    rosters[player['match_id']].append(player)
+            for row in rows:
+                people = roster(rosters.get(row['match_id'], []))
+                games.append({'started': iso(row['started_at']), 'map': clean_map(row['map_name']),
+                              'mod': (row['mod_name'] or 'unknown')[:80],
+                              'version': display_name(row['game_version'], '') or None,
+                              'humans': sum(p['kind'] == 'human' for p in people),
+                              'ai': sum(p['kind'] == 'ai' for p in people),
+                              'unknown': sum(p['kind'] == 'unknown' for p in people),
+                              'players': people})
+    finally:
+        connection.rollback()
+    return {'schema': 1, 'generated': iso(now), 'page': page, 'page_size': HISTORY_PAGE_SIZE,
+            'pages': max(1, -(-total // HISTORY_PAGE_SIZE)), 'total': total,
+            'available': usable, 'games': games}
+
+
 def build_report(connection, now=None):
     now = int(time.time()) if now is None else now
     connection.row_factory = sqlite3.Row
@@ -170,7 +264,19 @@ def build_report(connection, now=None):
     return report
 
 
+def arguments(argv):
+    """[database] [--history-page N]. The page number is the only caller-chosen value."""
+    rest = list(argv)
+    db = rest.pop(0) if rest and not rest[0].startswith('--') else '/var/www/data/games.sqlite'
+    if not rest:
+        return db, None
+    if len(rest) != 2 or rest[0] != '--history-page' or not re.fullmatch(r'[1-9][0-9]{0,6}', rest[1]):
+        raise SystemExit('usage: usage_stats.py [database] [--history-page N]')
+    return db, int(rest[1])
+
+
 if __name__ == '__main__':
-    db = sys.argv[1] if len(sys.argv) > 1 else '/var/www/data/games.sqlite'
+    db, page = arguments(sys.argv[1:])
     with sqlite3.connect('file:'+db+'?mode=ro', uri=True, timeout=5) as connection:
-        json.dump(build_report(connection), sys.stdout, separators=(',', ':'))
+        report = build_report(connection) if page is None else build_history_page(connection, page)
+        json.dump(report, sys.stdout, separators=(',', ':'))

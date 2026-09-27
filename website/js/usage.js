@@ -92,7 +92,7 @@ function renderUsage() {
     table('outcomes-table',['Platform','Starts','Finished','Human win','Human loss','Early exit','No end report'],p.outcomes.map(r=>[label(r.runtime),count(r.sessions),count(r.finished),count(r.human_wins),count(r.human_losses),count(r.exited),count(r.missing_end)]));
     table('lengths-table',['Platform / mode','Starts','Measured','Average','Median','Longest','Longest result'],p.lengths.filter(r=>r.sessions).map(r=>[label(r.runtime)+' · '+r.label,count(r.sessions),count(r.measured),duration(r.average_seconds),duration(r.median_seconds),duration(r.longest_seconds),r.longest_outcome||'—']));
     table('quick-table',['Platform','Level-1 starts','Measured','Exits ≤60s','Share of starts','No end report'],p.lengths.filter(r=>r.label==='Campaign level 1').map(r=>[label(r.runtime),count(r.sessions),count(r.measured),count(r.quick_exits),pct(r.quick_exits,r.sessions),count(r.missing_end)]));
-    document.getElementById('coverage-note').textContent=usageReport.tracking_since?'Tracking began '+date(usageReport.tracking_since)+'. These are games received by the metaserver, not a census of every game played. No player names or individual session records are published.':'';
+    document.getElementById('coverage-note').textContent=usageReport.tracking_since?'Tracking began '+date(usageReport.tracking_since)+'. Statistics cover games reported to the metaserver. Multiplayer history below lists games with at least two recorded human players.':'';
     document.getElementById('usage-content').hidden=false;
 }
 async function refreshUsage() {
@@ -110,4 +110,42 @@ async function refreshUsage() {
     }
 }
 document.querySelectorAll('[data-period]').forEach(button=>button.addEventListener('click',()=>{usagePeriod=button.dataset.period;renderUsage();}));
+let historyPage=1,historyBusy=false;
+const utc=value=>new Date(value).toLocaleString('en-GB',{timeZone:'UTC',dateStyle:'medium',timeStyle:'short'})+' UTC';
+function playerText(player) {
+    const notes=[player.kind==='ai'?'AI':player.kind==='unknown'?'controller unknown':null,player.house||null].filter(Boolean);
+    return player.name+(notes.length?' ('+notes.join(', ')+')':'');
+}
+function renderHistory(data) {
+    const rows=data.games.map(game=>[utc(game.started),game.map,game.players.map(playerText).join(', ')||'—',label(game.mod),game.version||'—']);
+    const host=document.getElementById('history-table');host.replaceChildren();
+    if(!rows.length) host.append(element('p',data.total?'No games on this page.':'No multiplayer games with two or more human players have been recorded yet.','usage-note'));
+    else table(host,['Started (UTC)','Map','Players','Mod','Game version'],rows,'Recorded multiplayer games');
+    document.getElementById('history-page-label').textContent='Page '+count(data.page)+' of '+count(data.pages)+' · '+count(data.total)+(data.total===1?' game':' games');
+    document.getElementById('history-newer').disabled=data.page<=1;
+    document.getElementById('history-older').disabled=data.page>=data.pages;
+    const status=document.getElementById('history-status');
+    status.classList.remove('stale');
+    status.textContent=data.available===false?'Game history is not available on this server yet.':'Newest first · last updated '+new Date(data.generated).toLocaleTimeString();
+}
+async function loadHistory(page,corrected) {
+    if(historyBusy)return;
+    historyBusy=true;
+    const status=document.getElementById('history-status');
+    try {
+        const response=await fetch('metaserver/usage.php?history_page='+encodeURIComponent(page),{cache:'no-store'});
+        if(!response.ok)throw new Error('unavailable');
+        const data=await response.json();
+        if(data.schema!==1||!Array.isArray(data.games))throw new Error('invalid');
+        historyPage=data.page;renderHistory(data);
+        // A page can fall out of range while the list grows or shrinks; retry the last page once.
+        if(!data.games.length&&data.total&&data.page>data.pages&&!corrected){historyBusy=false;await loadHistory(data.pages,true);return;}
+    } catch(error) {
+        status.classList.add('stale');
+        status.textContent='Game history is temporarily unavailable. Please try again shortly.';
+    } finally { historyBusy=false; }
+}
+document.getElementById('history-newer').addEventListener('click',()=>loadHistory(Math.max(1,historyPage-1)));
+document.getElementById('history-older').addEventListener('click',()=>loadHistory(historyPage+1));
 refreshUsage();setInterval(refreshUsage,5*60*1000);
+loadHistory(1);setInterval(()=>loadHistory(historyPage),5*60*1000);

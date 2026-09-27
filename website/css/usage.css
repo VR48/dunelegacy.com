@@ -50,6 +50,14 @@
 @media(max-width: 950px) { .usage-pair { grid-template-columns: 1fr; gap: 0; } .usage-cards { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media(max-width: 520px) { .usage-panel { padding: 16px 12px; } .usage-card { padding: 12px; } .usage-card strong { font-size: 1.7rem; } .usage-table { font-size: .875rem; } .usage-toolbar button { padding: 8px 12px; } }
 
+.usage-pager { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.usage-pager button { font: inherit; padding: 9px 16px; border-radius: 6px; border: 1px solid #6b5b27; background: #242218; color: #eee; cursor: pointer; }
+.usage-pager button:disabled { opacity: .45; cursor: default; }
+.usage-pager p { margin: 0; }
+#history-status { font-size: .875rem; color: #bbb; }
+#history-status.stale { color: #ffd18a; }
+#history-table .usage-table td, #history-table .usage-table th { text-align: left; }
+#history-table .usage-table td:nth-child(3) { overflow-wrap: anywhere; min-width: 220px; }
 .usage-table th button { font: inherit; color: inherit; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .usage-table th button:hover { color: #fff; text-decoration: underline; }
 nav a[aria-current="page"] { color: var(--primary); }

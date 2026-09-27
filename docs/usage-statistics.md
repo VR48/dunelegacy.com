@@ -2,7 +2,9 @@
 
 `website/usage.html` fetches `metaserver/usage.php`, which invokes the fixed
 `usage_stats.py` helper against `/var/www/data/games.sqlite` in read-only mode.
-Only aggregate JSON is published: no player names, match IDs or raw events.
+The default response publishes aggregate JSON. The multiplayer history response
+also publishes recorded display names and game metadata, without match IDs,
+player IDs or raw events.
 The cache and lock are outside DocumentRoot under `/var/www/data/usage-public*`.
 Apache denies direct access to the Python helper. The existing website deployment
 publishes all these files together; no database migration is needed.
@@ -29,6 +31,29 @@ publishes all these files together; no database migration is needed.
   exits after at most 60 seconds.
 - AI counts deduplicate the same bot type per match and relationship to a human:
   same house, allied house or opponent. Different types/difficulties may overlap.
+
+## Multiplayer history
+
+`usage.php?history_page=1` returns the newest 20 qualifying games. Positive integer
+page numbers select older pages with SQL LIMIT/OFFSET; the full recorded history
+is accessible independently of the aggregate date selector. The response includes
+page, page_size, pages, total and games. Pages beyond the end contain no games.
+Each game lists its UTC start time, map, player display names and controller types,
+mod and game version. Missing metadata is shown as unknown or a dash.
+
+A game must have `game_type = multiplayer` and at least two stored player rows
+whose controller is `human`. AI, spectator and unknown controllers never count.
+Human players sharing a house still count separately. Older legacy announcements
+without controller data cannot qualify. Current clients report from the host only;
+the match primary key handles repeat reports, and distinct games are never merged
+by similar names or start times. Ordering uses start time then match ID for ties.
+
+The helper's `--history-page N` mode queries one page in a read-only transaction.
+The default helper output and aggregate endpoint remain unchanged. History requests
+use one process lock and return 503 when busy or unavailable. No per-page cache files
+are created. `DATA_DIR` can select a fixture directory for local endpoint tests;
+production defaults to `/var/www/data`. The history section loads independently of
+aggregate statistics and refreshes every five minutes.
 
 ## Operations
 
