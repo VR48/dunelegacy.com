@@ -20,7 +20,7 @@ function feedbackGithub(string $method, string $path, ?array $payload, string $t
     $context = stream_context_create(['http' => ['method' => $method, 'header' => $headers,
         'content' => $body, 'timeout' => 12, 'ignore_errors' => true, 'follow_location' => 0],
         'ssl' => ['verify_peer' => true, 'verify_peer_name' => true]]);
-    $stream = @fopen('https://api.github.com/repos/ggtothemax/dunecity/' . $path, 'rb', false, $context);
+    $stream = @fopen('https://api.github.com/repos/dunecity-project/dunecity/' . $path, 'rb', false, $context);
     if(!$stream) return [0, []];
     $meta = stream_get_meta_data($stream);
     $response = stream_get_contents($stream, 1048577);
@@ -32,9 +32,13 @@ function feedbackGithub(string $method, string $path, ?array $payload, string $t
     if(strlen($response) > 1048576) return [0, []];
     return [$status, json_decode($response, true) ?: []];
 }
+// Accept only the transferred repository or its legacy redirect target, then answer with the
+// legacy prefix: installed clients reject any other success URL.
 function feedbackIssueUrl($issue): string {
     $url = is_array($issue) ? ($issue['html_url'] ?? '') : '';
-    return is_string($url) && preg_match('~^https://github\.com/ggtothemax/dunecity/issues/[1-9][0-9]*$~D', $url) ? $url : '';
+    if(!is_string($url) || !preg_match('~^https://github\.com/(?:dunecity-project|ggtothemax)/dunecity/issues/([1-9][0-9]*)$~D', $url, $matches))
+        return '';
+    return 'https://github.com/ggtothemax/dunecity/issues/' . $matches[1];
 }
 function feedbackHandle(string $method, array $input, string $ip, string $token, $db, callable $github): string {
     if($method !== 'POST') return 'ERROR Use Send feedback in the game.';

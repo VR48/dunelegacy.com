@@ -1,6 +1,7 @@
 # In-game feedback service
 
 `POST https://dunelegacy.com/metaserver/feedback.php` creates public issues in
+`dunecity-project/dunecity`, the game repository's new home after the transfer from
 `ggtothemax/dunecity`. Players need no GitHub account. The game sends only the summary,
 feedback text, and the game details shown in its dialog (version, platform, mod,
 house, mission, and AI types/difficulties). The server attaches an opaque request
@@ -15,8 +16,12 @@ atomic. Its script is blocked by Apache and never receives credentials or drafts
 Deployment checks the Apache storage path using an invalid submission that creates
 no issue. Tests run the same behavior suite against both storage backends.
 
-Create a fine-grained GitHub personal access token restricted to **ggtothemax/dunecity**,
-with **Issues: read and write** and GitHub's required Metadata read permission.
+Create a fine-grained GitHub personal access token whose resource owner is the
+**dunecity-project** organization, restricted to **dunecity-project/dunecity**, with
+**Issues: read and write** and GitHub's required Metadata read permission.
+Fine-grained tokens are bound to one resource owner, so the pre-transfer token issued
+under the **ggtothemax** account cannot be reused: an organization owner must issue a
+replacement (and organizations may require approving the request) after the transfer.
 Do not grant Contents access or distribute this token with desktop/browser builds.
 GitHub documents the permission for [Create an issue](https://docs.github.com/en/rest/issues/issues#create-an-issue).
 
@@ -41,6 +46,13 @@ not capture POST bodies or authorization headers.
 Form fields: `request_id` (32 lowercase hexadecimal characters), `title` (100 Unicode
 characters), `details` (2,000 Unicode characters), `context` (8,000 bytes).
 Success is exactly `OK https://github.com/ggtothemax/dunecity/issues/<number>`.
+This legacy prefix is intentional: already-installed clients validate the success URL
+against it, so the service accepts an issue link from either `dunecity-project/dunecity`
+or the legacy `ggtothemax/dunecity` and rewrites the confirmed link to the legacy form,
+which GitHub redirects to the transferred repository. Any other host, owner, repository
+or suffix is rejected, and the issue number must still be a plain positive integer.
+Keep the legacy response until clients that accept the new prefix are the only ones in
+use; changing it earlier breaks **View request** for installed games.
 Application errors start with `ERROR `; clients retain drafts and offer retry.
 No browser opens until the player chooses **View request** after confirmed success.
 
@@ -61,6 +73,9 @@ silently delete pending reservations and repost them.
 
 `php scripts/tests/test_feedback.php` tests creation, context, Unicode boundaries,
 validation, idempotency, lost-response reconciliation, rejection retry and rate
-limits with an injected fake GitHub transport. It creates no public test issues.
+limits with an injected fake GitHub transport. It also covers creation and
+reconciliation against the transferred repository, the rewrite to the legacy success
+URL, and rejection of lookalike owners, repositories and URL suffixes.
+It creates no public test issues.
 `php -l metaserver/feedback.php` and `php -l metaserver/feedback_service.php` lint the
 entry point and service. The deployment workflow runs these checks before deploy.

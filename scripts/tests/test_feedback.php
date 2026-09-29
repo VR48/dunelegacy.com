@@ -29,6 +29,36 @@ $unicode = $input; $unicode['request_id'] = str_repeat('b', 32); $unicode['detai
 check(str_starts_with($send($unicode), 'OK'), 'valid 2000-character UTF-8 body rejected');
 $unicode['details'] .= 'x'; check(str_starts_with($send($unicode), 'ERROR'), 'character cap ignored');
 check(feedbackIssueUrl(['html_url' => 'https://evil.test/123']) === '', 'foreign issue link accepted');
+// The transferred repository answers with its own prefix; installed clients only accept the legacy one.
+$transferred = $input; $transferred['request_id'] = str_repeat('f', 32);
+$newOwner = fn() => [201, ['html_url' => 'https://github.com/dunecity-project/dunecity/issues/321']];
+check(feedbackHandle('POST', $transferred, 'new-owner-ip', 'test-repo-scoped-token', $db, $newOwner)
+    === 'OK https://github.com/ggtothemax/dunecity/issues/321', 'transferred repository creation not normalized');
+check(feedbackHandle('POST', $transferred, 'new-owner-ip', 'test-repo-scoped-token', $db, fn() => [500, []])
+    === 'OK https://github.com/ggtothemax/dunecity/issues/321', 'normalized URL not cached');
+check(feedbackIssueUrl(['html_url' => 'https://github.com/dunecity-project/dunecity/issues/7'])
+    === 'https://github.com/ggtothemax/dunecity/issues/7', 'transferred issue link rejected');
+check(feedbackIssueUrl(['html_url' => 'https://github.com/ggtothemax/dunecity/issues/7'])
+    === 'https://github.com/ggtothemax/dunecity/issues/7', 'legacy issue link rejected');
+foreach(['https://github.com/dunecity-project/dunecity-fork/issues/7',
+    'https://github.com/dunecity-projects/dunecity/issues/7',
+    'https://github.com/dunecity-project/dunecity/issues/7x',
+    'https://github.com/dunecity-project/dunecity/issues/7/comments',
+    'https://github.com/dunecity-project/dunecity/issues/07',
+    'https://github.com/dunecity-project/dunecity/issues/0',
+    'https://github.com/dunecity-project/dunecity/issues/',
+    'https://github.com/dunecity-project/dunecity/pull/7',
+    'https://github.com/ggtothemax-evil/dunecity/issues/7',
+    'https://github.com/other/dunecity/issues/7',
+    'https://github.com.evil.test/dunecity-project/dunecity/issues/7',
+    'http://github.com/dunecity-project/dunecity/issues/7',
+    "https://github.com/dunecity-project/dunecity/issues/7\n",
+    'https://github.com/dunecity-project/dunecity/issues/7 ',
+    'https://evil.test/github.com/dunecity-project/dunecity/issues/7'] as $foreign) {
+    check(feedbackIssueUrl(['html_url' => $foreign]) === '', 'accepted lookalike issue link: ' . $foreign);
+}
+check(feedbackIssueUrl(['html_url' => 123]) === '' && feedbackIssueUrl([]) === '' && feedbackIssueUrl(null) === '',
+    'non-string issue link accepted');
 // A lost POST response must be reconciled, never posted twice.
 $pending = $input; $pending['request_id'] = str_repeat('c', 32);
 $lostCalls = 0;
@@ -40,6 +70,17 @@ $recover = function($method) use ($pending) {
     return [200, [['body' => '<!-- dunecity-feedback:' . $pending['request_id'] . ' -->', 'html_url' => 'https://github.com/ggtothemax/dunecity/issues/456']]];
 };
 check(feedbackHandle('POST', $pending, '::1', 'test-repo-scoped-token', $db, $recover) === 'OK https://github.com/ggtothemax/dunecity/issues/456', 'reconciliation failed');
+// Reconciliation after the transfer sees the new prefix and must still answer with the legacy one.
+$moved = $input; $moved['request_id'] = sprintf('%032x', 200);
+check(str_starts_with(feedbackHandle('POST', $moved, '::1', 'test-repo-scoped-token', $db, $lost), 'ERROR'), 'lost response reported success');
+$db->exec('UPDATE feedback_requests SET created=created-30 WHERE id="' . $moved['request_id'] . '"');
+$recoverMoved = function($method) use ($moved) {
+    check($method === 'GET', 'uncertain request was posted again');
+    return [200, [['body' => 'unrelated issue', 'html_url' => 'https://github.com/dunecity-project/dunecity/issues/1'],
+        ['body' => '<!-- dunecity-feedback:' . $moved['request_id'] . ' -->', 'html_url' => 'https://github.com/dunecity-project/dunecity/issues/654']]];
+};
+check(feedbackHandle('POST', $moved, '::1', 'test-repo-scoped-token', $db, $recoverMoved)
+    === 'OK https://github.com/ggtothemax/dunecity/issues/654', 'transferred reconciliation not normalized');
 // Explicit rejection is retryable; reservation still prevents concurrent duplicate POSTs.
 $rejected = $input; $rejected['request_id'] = str_repeat('d', 32);
 feedbackHandle('POST', $rejected, 'reject-ip', 'test-repo-scoped-token', $db, fn() => [403, []]);
