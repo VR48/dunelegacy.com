@@ -1,0 +1,116 @@
+/* What's new: release history (changelog.html) and the feature cards on the home and DuneCity pages. */
+.changelog {
+    max-width: 860px;
+}
+
+.section .changelog-note {
+    font-size: 0.9em;
+    color: rgba(245, 245, 245, 0.65);
+    margin-bottom: 40px;
+}
+
+.release {
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+    padding: 28px 0 8px;
+    /* Clear the sticky site header when a release is opened by its #vX.Y.Z link. */
+    scroll-margin-top: 110px;
+}
+
+.release h3 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 16px;
+    margin-bottom: 14px;
+    font-size: 1.35em;
+}
+
+.release h3 a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.release h3 time {
+    font-size: 0.7em;
+    font-weight: 400;
+    color: rgba(245, 245, 245, 0.6);
+}
+
+.release h4 {
+    color: var(--primary);
+    margin: 16px 0 8px;
+    font-size: 1.05em;
+}
+
+.section .release p,
+.release li {
+    text-align: left;
+    max-width: none;
+    margin: 0 0 12px;
+    font-size: 0.98em;
+    line-height: 1.6;
+    color: rgba(245, 245, 245, 0.88);
+}
+
+.release ul {
+    padding-left: 22px;
+    margin: 0 0 12px;
+}
+
+.release li {
+    margin-bottom: 8px;
+}
+
+.release code {
+    font-size: 0.9em;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
+.section .release .release-more {
+    color: rgba(245, 245, 245, 0.6);
+    font-style: italic;
+}
+
+.section .release .release-links {
+    font-size: 0.88em;
+    color: rgba(245, 245, 245, 0.6);
+}
+
+@media (max-width: 768px) {
+    .release {
+        scroll-margin-top: 390px;
+    }
+}
+
+/* New-feature cards: left-aligned text with an optional key hint. */
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-top: 40px;
+}
+
+.feature-grid .highlight-card {
+    text-align: left;
+}
+
+.section .feature-grid .highlight-card p {
+    text-align: left;
+    margin: 0 0 10px;
+    max-width: none;
+}
+
+.feature-grid kbd {
+    font-family: inherit;
+    font-size: 0.85em;
+    padding: 1px 6px;
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.section .features-more {
+    margin-top: 30px;
+}

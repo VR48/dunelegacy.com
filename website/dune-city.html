@@ -34,6 +34,7 @@
     <title>DuneCity - Build a Colony on Arrakis | Dune Legacy</title>
     <link rel="stylesheet" href="css/style.css?v=20260914-monthly-downloads">
     <link rel="icon" type="image/x-icon" href="img/favicon.ico">
+    <link rel="stylesheet" href="css/changelog.css">
     <link rel="stylesheet" href="css/play-guide-menu.css">
     <script src="js/play-guide-menu.js" defer></script>
 </head>
@@ -61,6 +62,7 @@
                 </details>
                 <a href="/#download">Download</a>
                 <a href="dune-city.html">DuneCity</a>
+                <a href="changelog.html">What's new</a>
                 <a href="usage.html">Usage stats</a>
                 <a href="https://discord.com/invite/6sAcZr6y3B" target="_blank" rel="noopener">Discord</a>
                 <a href="https://github.com/ggtothemax/dunecity" target="_blank" rel="noopener">GitHub</a>
@@ -113,6 +115,51 @@
                     <p>Budgets, services, growth, and spice-backed survival turn every expansion into a tradeoff.</p>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <section id="new-features" class="section alt">
+        <div class="container">
+            <h2>New: Random Skirmish, Formations and RTS Orders</h2>
+            <p class="lead">The city still needs defending. Recent releases give you new maps every game and an army that moves the way a modern RTS army should.</p>
+            <div class="feature-grid">
+                <div class="highlight-card">
+                    <div class="icon">🎲</div>
+                    <h3>Random Skirmish</h3>
+                    <p>Main menu → <strong>Random Skirmish</strong>. Set the map size, rock (up to 100%) and spice, then pick each side's base, army and city: bases range from an outpost to a fortress with rocket turrets, and cities arrive already zoned and powered.</p>
+                    <p>Choose your start, an AI partner in your house, up to 6 allied and 7 enemy houses, the mod and the game rules. A seed lets you replay a map you liked.</p>
+                </div>
+                <div class="highlight-card">
+                    <div class="icon">🌐</div>
+                    <h3>Random maps online</h3>
+                    <p>When hosting, press <strong>Random map…</strong> in the map chooser. Choose 2–8 start positions and what every house starts with; the next screen is the normal lobby, where friends join, AI fills empty starts and you set teams.</p>
+                    <p>Mirrored starts and identical bases, armies and cities keep it fair.</p>
+                </div>
+                <div class="highlight-card">
+                    <div class="icon">🛡️</div>
+                    <h3>Formations</h3>
+                    <p>Select two or more ground units and choose <strong>Box, Pincer, Column, Staggered</strong> or <strong>Echelon</strong> in the unit panel. They form up where they stand, facing the way you last sent them.</p>
+                    <p>Moves, attack-moves and patrols then keep the shape at the slowest unit's speed. Siege tanks take the front, an MCV the centre, harvesters stay out, and nothing stands in a sonic tank's line of fire. <kbd>Ctrl+F</kbd> on/off, <kbd>Ctrl+Shift+F</kbd> next shape.</p>
+                </div>
+                <div class="highlight-card">
+                    <div class="icon">🎯</div>
+                    <h3>Modern RTS orders</h3>
+                    <p><kbd>A</kbd> + click ground attack-moves, fighting anything on the way. <kbd>Q</kbd> patrols, <kbd>H</kbd> holds position, and <kbd>Shift</kbd> queues orders, drawn as waypoint lines.</p>
+                    <p><kbd>Alt</kbd>+click a factory item to build it on repeat. <kbd>Ctrl+A</kbd> selects your army, <kbd>Alt+1–9</kbd> adds to a control group, double-click selects all units of a type.</p>
+                </div>
+                <div class="highlight-card">
+                    <div class="icon">📐</div>
+                    <h3>Plan building sites</h3>
+                    <p>Click a building in the Construction Yard list, then click the map to reserve its plot; keep clicking to plan more. Numbered ghosts show the order. Each building is placed on its plot as soon as it is finished, and the work is shared across all your Construction Yards.</p>
+                    <p>Right-click a ghost to cancel it. Turn this off under Game Rules for the classic build-then-place flow.</p>
+                </div>
+                <div class="highlight-card">
+                    <div class="icon">🤖</div>
+                    <h3>A sharper QuantBot</h3>
+                    <p>QuantBot sends its nearest troops to defend an attacked building, escorts its MCVs to new base sites, and plays every Random Skirmish setup, as an enemy or as your partner.</p>
+                </div>
+            </div>
+            <p class="features-more"><a href="changelog.html">See what changed in every release →</a></p>
         </div>
     </section>
 
@@ -181,7 +228,7 @@
     <section id="download" class="section">
         <div class="container">
             <h2>Download Dune City</h2>
-            <p>New in 1.0.833: a robustness release. QuantBot's choice between Devastators, Sonic Tanks and Deviators stays reliable in long games, graphics and mentat texts are read safely from the original files, AdLib music sounds the same on Apple Silicon as on Intel, and malformed multiplayer lobby data is rejected cleanly. Includes 1.0.832: QuantBot armies fight when their bases are attacked, with the troops nearest an attacked building answering it in Hunt mode. Existing saves remain loadable; multiplayer peers must all update to protocol 70. The Mac installer is Developer ID signed and Apple notarized. <a href="coop.html">Play campaign co-op with your friends online!</a></p>
+            <p>New in 1.0.842: Random Skirmish maps for single player and online hosts, five formations your units form up in on command, attack-move, patrol, hold and queued orders, and building sites you plan in advance. Saves from 1.0.833 still load; multiplayer players must all update to 1.0.842. The Mac installer is Developer ID signed and Apple notarized. <a href="changelog.html">What's new in every release</a> · <a href="coop.html">Play campaign co-op with your friends online!</a></p>
             <p>Windows, macOS and Linux 1.0.842 are available from <a href="https://github.com/ggtothemax/dunecity/releases/tag/v1.0.842">GitHub Releases</a>. Android is 0.2.25.</p>
 
             <div class="download-grid">
@@ -299,6 +346,7 @@
             <p>
                 <a href="/">Home</a> |
                 <a href="dune-city.html">DuneCity</a> |
+                <a href="changelog.html">What's new</a> |
                 <a href="https://github.com/ggtothemax/dunecity">GitHub</a> |
                 <a href="/metaserver/">Metaserver Status</a> |
                 <a href="https://github.com/ggtothemax/dunecity/wiki">Wiki</a>
