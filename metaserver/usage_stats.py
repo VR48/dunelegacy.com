@@ -14,7 +14,7 @@ import sys
 import time
 
 UTC = dt.timezone.utc
-RUNTIMES = ('browser', 'native', 'unknown')
+RUNTIMES = ('browser', 'native', 'android', 'ios', 'unknown')   # native is desktop
 AI_NAMES = {'qbot': 'QuantBot', 'campaign': 'Campaign AI', 'classic': 'Classic AI',
             'smartbot': 'SmartBot', 'mentat': 'Mentat'}
 HISTORY_PAGE_SIZE = 20
@@ -247,8 +247,8 @@ def build_report(connection, now=None):
         day = begin
         while day <= end:
             day_key, month_key = day.isoformat(), day.strftime('%Y-%m')
-            daily.setdefault(day_key, dict(label=day_key, browser=0, native=0, unknown=0, total=0))
-            months.setdefault(month_key, dict(label=month_key, browser=0, native=0, unknown=0, total=0))
+            daily.setdefault(day_key, dict(label=day_key, **dict.fromkeys(RUNTIMES, 0), total=0))
+            months.setdefault(month_key, dict(label=month_key, **dict.fromkeys(RUNTIMES, 0), total=0))
             day += dt.timedelta(days=1)
         period['daily'], period['monthly'] = list(daily.values()), list(months.values())
         period['daily'].sort(key=lambda r:r['label'])

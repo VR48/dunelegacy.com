@@ -3,8 +3,12 @@ let usageReport;
 let usagePeriod = 'day';
 const count = n => Number(n || 0).toLocaleString();
 const pct = (n, d) => d ? (100 * n / d).toFixed(1) + '%' : '—';
-const names = {browser:'Browser', native:'Desktop', unknown:'Unknown', campaign:'Campaign', single_custom:'Custom single-player', skirmish:'Skirmish', multiplayer:'Network multiplayer', vanilla:'Vanilla', dunecity:'Dune City', same_house:'AI sharing the human’s house', ally:'AI ally in another house', opponent:'AI opponent'};
+const names = {browser:'Browser', native:'Desktop', android:'Android', ios:'iPhone & iPad', unknown:'Unknown', campaign:'Campaign', single_custom:'Custom single-player', skirmish:'Skirmish', multiplayer:'Network multiplayer', vanilla:'Vanilla', dunecity:'Dune City', same_house:'AI sharing the human’s house', ally:'AI ally in another house', opponent:'AI opponent'};
 const label = value => names[value] || value;
+// Reported client runtimes, in column order; native is the desktop game (usage_stats.RUNTIMES).
+const PLATFORMS = ['browser','native','android','ios','unknown'];
+const platformHeaders = PLATFORMS.map(label);
+const platformCounts = r => PLATFORMS.map(rt => count(r[rt]));
 function element(tag, text, className) {
     const el = document.createElement(tag);
     if (text !== undefined) el.textContent = text;
@@ -30,11 +34,11 @@ function table(target, headers, rows, caption) {
     t.append(body);wrap.append(t);host.append(wrap);
 }
 function comparison(target, rows, title, transform=label, sort='total') {
-    const total = r => r.total === undefined ? r.browser+r.native+r.unknown : r.total;
-    const sorted = [...rows].sort((a,b)=>(sort==='total'?total(b)-total(a):b[sort]-a[sort]) || a.label.localeCompare(b.label,undefined,{numeric:true}));
-    table(target,[title,'Browser','Desktop','Unknown','Total'],sorted.map(r=>[transform(r.label),count(r.browser),count(r.native),count(r.unknown),count(total(r))]),title+' by platform');
+    const total = r => r.total === undefined ? PLATFORMS.reduce((n,rt)=>n+(r[rt]||0),0) : r.total;
+    const sorted = [...rows].sort((a,b)=>(sort==='total'?total(b)-total(a):(b[sort]||0)-(a[sort]||0)) || a.label.localeCompare(b.label,undefined,{numeric:true}));
+    table(target,[title,...platformHeaders,'Total'],sorted.map(r=>[transform(r.label),...platformCounts(r),count(total(r))]),title+' by platform');
     const headers=document.getElementById(target).querySelectorAll('thead th');
-    ['browser','native','unknown','total'].forEach((key,i)=>{
+    [...PLATFORMS,'total'].forEach((key,i)=>{
         if(!headers[i+1])return;
         const text=headers[i+1].textContent;
         const button=element('button',text+(sort===key?' ↓':''));button.type='button';
@@ -53,17 +57,17 @@ function chart(target, rows, month) {
         const column=element('div',undefined,'usage-column'); column.append(element('span',count(r.total),'count'));
         const track=element('div',undefined,'usage-bar-track'); const stack=element('div',undefined,'usage-bar-stack');
         stack.style.height=(r.total/max*100)+'%';
-        ['browser','native','unknown'].forEach(rt=>{const segment=element('span',undefined,'bar-'+rt);segment.style.height=(r.total?r[rt]/r.total*100:0)+'%';stack.append(segment);});
+        PLATFORMS.forEach(rt=>{const segment=element('span',undefined,'bar-'+rt);segment.style.height=(r.total?(r[rt]||0)/r.total*100:0)+'%';stack.append(segment);});
         track.append(stack);column.append(track);
         const date=new Date(r.label+(month?'-01':'')+'T00:00:00Z');
         column.append(element('span',date.toLocaleDateString('en',{month:'short',...(month?{year:'2-digit'}:{day:'numeric'}),timeZone:'UTC'}),'usage-bar-label'));
-        column.title=r.label+': '+count(r.total)+' sessions; browser '+count(r.browser)+', desktop '+count(r.native)+', unknown '+count(r.unknown);
+        column.title=r.label+': '+count(r.total)+' sessions; '+PLATFORMS.map(rt=>label(rt).toLowerCase()+' '+count(r[rt])).join(', ');
         bars.append(column);
     }); host.append(bars);
     const details=element('details');details.append(element('summary','View exact '+(month?'monthly':'daily')+' counts'));
     const tab=element('div');comparisonNode(tab,rows,month?'Month (UTC)':'Day (UTC)');details.append(tab);host.append(details);
 }
-function comparisonNode(host,rows,title){table(host,[title,'Browser','Desktop','Unknown','Total'],rows.map(r=>[r.label,count(r.browser),count(r.native),count(r.unknown),count(r.total)]));}
+function comparisonNode(host,rows,title){table(host,[title,...platformHeaders,'Total'],rows.map(r=>[r.label,...platformCounts(r),count(r.total)]));}
 function renderUsage() {
     if(!usageReport)return;
     const p=usageReport.periods[usagePeriod];
@@ -72,8 +76,10 @@ function renderUsage() {
     document.querySelectorAll('[data-period]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.period===usagePeriod)));
     const runtimes=Object.fromEntries(p.runtime.map(r=>[r.label,r.total]));
     const cards=document.getElementById('usage-cards');cards.replaceChildren();
-    const known=(runtimes.browser||0)+(runtimes.native||0);
-    [['Recorded sessions',p.total,'All platforms'],['Browser',runtimes.browser,pct(runtimes.browser||0,known)+' of identified sessions'],['Desktop',runtimes.native,pct(runtimes.native||0,known)+' of identified sessions'],['Platform unknown',runtimes.unknown,'Excluded from browser/desktop shares']].forEach(([title,n,note])=>{
+    const known=PLATFORMS.filter(rt=>rt!=='unknown').reduce((n,rt)=>n+(runtimes[rt]||0),0);
+    [['Recorded sessions',p.total,'All platforms'],
+     ...PLATFORMS.filter(rt=>rt!=='unknown').map(rt=>[label(rt),runtimes[rt],pct(runtimes[rt]||0,known)+' of identified sessions']),
+     ['Platform unknown',runtimes.unknown,'Excluded from platform shares']].forEach(([title,n,note])=>{
         const card=element('article',undefined,'usage-card');card.append(element('h3',title),element('strong',count(n)),element('p',note));cards.append(card);
     });
     chart('daily-chart',p.daily.slice(-30),false); chart('monthly-chart',p.monthly.slice(-12),true);
@@ -83,7 +89,7 @@ function renderUsage() {
     const online=p.modes.find(r=>r.label==='multiplayer')?.total||0;
     const offline=p.modes.filter(r=>['campaign','single_custom','skirmish'].includes(r.label)).reduce((n,r)=>n+r.total,0);
     document.getElementById('online-summary').textContent=count(offline)+' single-player sessions · '+count(online)+' network multiplayer sessions.';
-    document.getElementById('platform-note').textContent=usageReport.platform_since?'Browser/desktop identification available from '+date(usageReport.platform_since)+'. Older or unmarked clients remain unknown.':'';
+    document.getElementById('platform-note').textContent=usageReport.platform_since?'Browser/desktop identification available from '+date(usageReport.platform_since)+'; Android and iPhone/iPad from version 1.0.857. Older or unmarked clients remain unknown.':'';
     comparison('levels-table',p.levels,'Level',x=>'Level '+x);comparison('maps-table',p.maps.slice(0,15),'Map');
     comparison('opponents-table',p.bots.ai.filter(r=>r.relation==='opponent'),'Opponent');
     comparison('assist-table',p.bots.assistance.filter(r=>r.relation!=='opponent'),'Assistance');

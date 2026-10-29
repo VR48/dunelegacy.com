@@ -6,11 +6,12 @@ require __DIR__ . '/../../metaserver/analytics.php';
 foreach ([null, 'unknown', 'bad', 1, ['browser']] as $invalid) {
     if (analyticsClientRuntime($invalid) !== null) throw new RuntimeException('Invalid runtime accepted');
 }
-foreach (['browser', 'native'] as $runtime) {
+foreach (['browser', 'native', 'android', 'ios'] as $runtime) {
     if (analyticsClientRuntime($runtime) !== $runtime) throw new RuntimeException('Valid runtime lost');
 }
 foreach ([['start', 'php-browser-test', 'browser'], ['end', 'php-browser-test', null],
-          ['end', 'php-native-test', 'native'], ['start', 'php-legacy-test', null]] as [$phase, $match, $runtime]) {
+          ['end', 'php-native-test', 'native'], ['start', 'php-ios-test', 'ios'],
+          ['start', 'php-legacy-test', null]] as [$phase, $match, $runtime]) {
     $payload = ['schema_version' => 3, 'game_type' => 'skirmish', 'players' => []];
     if ($runtime !== null) $payload['client_runtime'] = $runtime;
     if (!analyticsRecordMatch($phase, $match, $payload)) throw new RuntimeException('Match write failed');

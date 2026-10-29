@@ -23,6 +23,8 @@ MAX_PLAYERS = 12
 MAX_UNIT_ROWS = 48
 MAX_ITEM_ROWS = 96
 MAX_PAYLOAD_BYTES = 64 * 1024
+# native is desktop; android and ios come from the phone builds (1.0.857+).
+CLIENT_RUNTIMES = ("browser", "native", "android", "ios")
 
 
 SCHEMA = """
@@ -167,7 +169,7 @@ def fields(payload: dict[str, Any]) -> dict[str, Any]:
         "mod_name": text(mod.get("name", payload.get("mod_name", "vanilla"))),
         "mod_version": text(mod.get("version")),
         "game_version": text(payload.get("game_version")),
-        "client_runtime": payload.get("client_runtime") if payload.get("client_runtime") in ("browser", "native") else None,
+        "client_runtime": payload.get("client_runtime") if payload.get("client_runtime") in CLIENT_RUNTIMES else None,
         "player_count": integer(summary.get("player_count", len(players)), 0, MAX_PLAYERS),
         "human_count": integer(summary.get("human_count", human_count), 0, MAX_PLAYERS),
         "qbot_count": integer(summary.get("qbot_count", qbot_count), 0, MAX_PLAYERS),

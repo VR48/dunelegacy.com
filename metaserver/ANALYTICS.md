@@ -121,7 +121,9 @@ transactions.
 
 ## Browser versus native runtime (1.0.655+)
 
-Schema 3 accepts the optional `client_runtime` field: `browser` or `native`.
+Schema 3 accepts the optional `client_runtime` field: `browser` or `native`
+(desktop), and from 1.0.857 `android` or `ios` (iPhone and iPad builds; Android
+builds before 1.0.857 report `native`).
 Both PHP/PDO and the Python fallback add `analytics_matches.client_runtime`
 using an additive migration with default `unknown`. Old clients, missing/invalid
 values and existing rows remain compatible. Historical rows cannot reliably be

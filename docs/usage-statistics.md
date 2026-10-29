@@ -15,8 +15,10 @@ publishes all these files together; no database migration is needed.
 - Daily/monthly buckets use UTC. Partial periods show only observed data, and
   zero days are filled only after tracking began. Refresh interval: five minutes.
 - Counts are sessions, not unique people. Retries and development games count.
-- Unknown runtime stays separate from browser/native; never infer desktop from
-  missing fields. Browser/desktop percentages use identified sessions only.
+- Platforms are the client-reported runtime: browser, desktop (`native`),
+  Android and iPhone/iPad (`android`/`ios`, from 1.0.857; older Android builds
+  report `native`). Unknown runtime stays separate; never infer a platform from
+  missing fields. Platform percentages use identified sessions only.
 - Network multiplayer is the recorded game mode; single-player does not imply
   the computer was disconnected from the internet.
 - Campaign scenarios map to levels: 1 => 1; 2–4 => 2; 5–7 => 3; 8–10 => 4;

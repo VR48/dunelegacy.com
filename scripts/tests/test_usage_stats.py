@@ -40,6 +40,17 @@ class UsageTests(unittest.TestCase):
         self.assertNotIn('match_id',json.dumps(r))
         self.assertEqual(r['periods']['day']['lengths'][0]['quick_exits'],1)
         with self.assertRaises(sqlite3.OperationalError):self.db.execute("DELETE FROM analytics_matches")
+    def test_phone_runtimes_are_counted_apart_from_desktop(self):
+        self.match('desktop',rt='native');self.match('android',rt='android')
+        self.match('iphone',rt='ios');self.match('ipad',rt='ios')
+        p=self.report()['periods']['day']
+        runtime={r['label']:r['total'] for r in p['runtime']}
+        self.assertEqual(runtime,{'native':1,'android':1,'ios':2})
+        today=next(d for d in p['daily'] if d['total'])   # NOW is midnight: the games are on the day before
+        self.assertEqual((today['native'],today['android'],today['ios'],today['unknown'],today['total']),(1,1,2,0,4))
+        self.assertEqual({r['runtime']:r['sessions'] for r in p['outcomes']}['ios'],2)
+        # Days without games still carry every platform column for the page's chart.
+        self.assertTrue(all(set(usage.RUNTIMES)<=set(d) for d in self.report()['periods']['all']['daily']))
     def test_bot_deduplication_and_relationships(self):
         self.match('game');self.player('game')
         self.player('game',controller='qbot',ai='qbot',support=1)

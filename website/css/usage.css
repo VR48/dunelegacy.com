@@ -12,7 +12,7 @@
 #usage-status { font-size: .875rem; color: #bbb; }
 #usage-status.stale { color: #ffd18a; }
 .usage-note { font-size: .875rem; color: #bebebe; margin: 10px 0; line-height: 1.6; }
-.usage-cards { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; margin: 18px 0 8px; }
+.usage-cards { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin: 18px 0 8px; }
 .usage-card { padding: 18px 20px; background: #252219; border: 1px solid #55481c; border-radius: 8px; }
 .usage-card h3 { font-size: 1rem; color: #ddd; }
 .usage-card strong { font-size: 2rem; color: var(--primary); display: block; font-variant-numeric: tabular-nums; }
@@ -37,6 +37,8 @@
 .usage-legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 2px; }
 .browser-key::before, .bar-browser { background: #d4af37; }
 .native-key::before, .bar-native { background: #79b5cc; }
+.android-key::before, .bar-android { background: #8cc152; }
+.ios-key::before, .bar-ios { background: #c98bd8; }
 .unknown-key::before, .bar-unknown { background: #8b8794; }
 .usage-chart-scroll { overflow-x: auto; padding: 4px 0; }
 .usage-bars { display: flex; gap: 12px; min-width: max-content; align-items: end; border-bottom: 1px solid #665b32; padding-bottom: 8px; }

@@ -250,7 +250,8 @@ function analyticsMatchId($value) {
 }
 
 function analyticsClientRuntime($value) {
-    return in_array($value, ['browser', 'native'], true) ? $value : null;
+    // native is desktop; android and ios come from the phone builds (1.0.857+).
+    return in_array($value, ['browser', 'native', 'android', 'ios'], true) ? $value : null;
 }
 
 function analyticsMatchFields(array $payload) {

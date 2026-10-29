@@ -29,6 +29,8 @@ class RuntimeAnalyticsTests(unittest.TestCase):
     def test_browser_native_and_old_clients(self):
         self.assertEqual(self.record(runtime='browser'), 'browser')
         self.assertEqual(self.record(runtime='native', match='test-native-0001'), 'native')
+        self.assertEqual(self.record(runtime='android', match='test-android-0001'), 'android')
+        self.assertEqual(self.record(runtime='ios', match='test-ios-0001'), 'ios')
         self.assertEqual(self.record(match='test-legacy-0001'), 'unknown')
         self.assertEqual(self.record(runtime='forged', match='test-invalid-0001'), 'unknown')
         self.assertEqual(self.record(runtime={'name': 'browser'}, match='test-invalid-0002'), 'unknown')
