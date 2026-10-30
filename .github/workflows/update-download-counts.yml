@@ -21,7 +21,12 @@ jobs:
       - name: Test and collect download statistics
         env:
           GH_TOKEN: ${{ github.token }}
+          # iPhone & iPad TestFlight installs; without these secrets the last count is kept.
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
         run: |
+          python3 -m pip install --quiet 'pyjwt[crypto]==2.15.1'
           python3 -m unittest discover -s scripts/tests
           python3 scripts/update-download-stats.py
       - name: Commit snapshot and publish website

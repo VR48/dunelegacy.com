@@ -44,6 +44,39 @@ def github_releases():
     return releases
 
 
+APP_STORE_API = 'https://api.appstoreconnect.apple.com'
+
+
+def app_store_token():
+    """ES256 App Store Connect API token, or None without the ASC_* secrets."""
+    key_id, issuer, key = (os.environ.get(n) for n in ('ASC_KEY_ID', 'ASC_ISSUER_ID', 'ASC_PRIVATE_KEY'))
+    if not (key_id and issuer and key):
+        return None
+    import jwt  # PyJWT[crypto], installed by the workflow
+    now = int(time.time())
+    return jwt.encode({'iss': issuer, 'iat': now, 'exp': now + 600, 'aud': 'appstoreconnect-v1'},
+                      key, algorithm='ES256', headers={'kid': key_id})
+
+
+def testflight_build_installs(token, app_id):
+    """TestFlight installs per build of the iPhone & iPad app (updates count again, like APK downloads)."""
+    builds, _ = request_json(f'{APP_STORE_API}/v1/builds?filter[app]={app_id}&limit=200&fields[builds]=version', token)
+    installs = {}
+    for build in builds['data']:
+        usage, _ = request_json(f"{APP_STORE_API}/v1/builds/{build['id']}/metrics/betaBuildUsages", token)
+        points = [p for series in usage.get('data', []) for p in series.get('dataPoints', [])]
+        installs[build['id']] = sum(int(p['values'].get('installCount', 0)) for p in points)
+    return installs
+
+
+def merge_testflight(state, installs):
+    """Expired builds leave the API: keep each build's highest count so the total never drops."""
+    known = state.setdefault('testflight_installs', {})
+    for build, count in (installs or {}).items():
+        known[build] = max(count, known.get(build, 0))
+    return sum(known.values()) if known else None
+
+
 def platform(name):
     name = name.lower()
     if 'windows' in name: return 'windows'
@@ -100,7 +133,7 @@ def monthly_stats(assets, history, sf, now):
     return months
 
 
-def compile_stats(state, releases, sf, now):
+def compile_stats(state, releases, sf, now, testflight=None):
     if not isinstance(sf.get('total'), int) or not isinstance(sf.get('downloads'), list):
         raise ValueError('Invalid SourceForge response; retain last good publication')
     assets = state.setdefault('assets', {})
@@ -152,6 +185,8 @@ def compile_stats(state, releases, sf, now):
     state['snapshots'] = list(older.values()) + recent
     gtotal = sum(counts.values())
     platforms = {p:sum(a['count'] for a in assets.values() if a['platform']==p) for p in ['windows','macos','linux','android']}
+    ios = merge_testflight(state, testflight)
+    if ios is not None: platforms['ios'] = ios
     return {'generated':now.isoformat(), 'total':{'github':gtotal,'sourceforge':sf['total'],'total':gtotal+sf['total'],'lower_bound':True}, 'year':period(year_start), 'month':period(month_start), 'day':day, 'years':years, 'months':months, 'platforms':platforms}
 
 
@@ -175,7 +210,14 @@ def main():
         totals=dict(pool.map(fetch_range,ranges.items()))
     sf={'total':totals['total'], 'downloads':[], 'periods':{month:totals['month'],f'{now.year}-01-01':totals[str(now.year)]}, 'years':{str(y):totals[str(y)] for y in range(now.year,now.year-5,-1)}}
     sf['months'] = {start.strftime('%Y-%m'):totals[start.strftime('%Y-%m')] for start,end in calendar_months(now)}
-    stats = compile_stats(state, releases, sf, now)
+    testflight = None
+    token = app_store_token()
+    if token:
+        try:
+            testflight = testflight_build_installs(token, os.environ.get('ASC_APP_ID', '6828374570'))
+        except Exception as error:  # App Store Connect outages keep the last known installs
+            print('TestFlight installs unavailable:', error)
+    stats = compile_stats(state, releases, sf, now, testflight)
     STATE.parent.mkdir(exist_ok=True)
     DATA.mkdir(exist_ok=True)
     for path, value in [(STATE,state),(DATA/'download-stats.json',stats)]:

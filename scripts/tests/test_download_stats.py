@@ -21,6 +21,16 @@ class StatsTests(unittest.TestCase):
         second=m.compile_stats(state,[],next_sf,m.stamp('2026-09-12T12:00:00Z'))
         self.assertEqual(second['day']['total'],9)
         self.assertIsNone(second['years'][1]['github'])
+    def test_testflight_installs_never_drop_when_builds_expire(self):
+        state={}
+        sf={'total':0,'downloads':[]}
+        self.assertNotIn('ios',m.compile_stats(state,[],sf,m.stamp('2026-10-30T12:00:00Z'))['platforms'])
+        first=m.compile_stats(state,[],sf,m.stamp('2026-10-30T13:00:00Z'),{'b857':2})
+        self.assertEqual(first['platforms']['ios'],2)
+        # b857 expired and left the API; a failed fetch (None) keeps the last total.
+        later=m.compile_stats(state,[],sf,m.stamp('2026-10-30T14:00:00Z'),{'b858':5})
+        self.assertEqual(later['platforms']['ios'],7)
+        self.assertEqual(m.compile_stats(state,[],sf,m.stamp('2026-10-30T15:00:00Z'))['platforms']['ios'],7)
     def test_pagination_follows_all_pages(self):
         with patch.object(m, 'request_json', side_effect=[([{'id':1}], '<https://api.github.com/page2>; rel="next"'), ([{'id':2}], '')]) as request:
             self.assertEqual(m.github_releases(), [{'id':1},{'id':2}])

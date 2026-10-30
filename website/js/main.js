@@ -62,7 +62,8 @@ async function refreshDownloadStatistics() {
         document.querySelectorAll('.download-card[data-platform]').forEach(card => {
             const target = card.querySelector('.download-count');
             const count = stats.platforms[card.dataset.platform];
-            if (target && Number.isFinite(count)) target.textContent = formatCount(count) + ' recorded GitHub downloads';
+            if (target && Number.isFinite(count)) target.textContent = formatCount(count)
+                + (card.dataset.platform === 'ios' ? ' TestFlight installs' : ' recorded GitHub downloads');
         });
     } catch (error) {
         if (status) status.textContent = 'Download statistics are temporarily unavailable. Please try again later.';

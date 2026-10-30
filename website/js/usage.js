@@ -7,6 +7,8 @@ const names = {browser:'Browser', native:'Desktop', android:'Android', ios:'iPho
 const label = value => names[value] || value;
 // Reported client runtimes, in column order; native is the desktop game (usage_stats.RUNTIMES).
 const PLATFORMS = ['browser','native','android','ios','unknown'];
+// Android app 0.2.32 (engine 1.0.855) predates the android runtime and reports as desktop.
+const ANDROID_PENDING = 'Counted from the next Android release; 0.2.32 reports as Desktop';
 const platformHeaders = PLATFORMS.map(label);
 const platformCounts = r => PLATFORMS.map(rt => count(r[rt]));
 function element(tag, text, className) {
@@ -78,7 +80,7 @@ function renderUsage() {
     const cards=document.getElementById('usage-cards');cards.replaceChildren();
     const known=PLATFORMS.filter(rt=>rt!=='unknown').reduce((n,rt)=>n+(runtimes[rt]||0),0);
     [['Recorded sessions',p.total,'All platforms'],
-     ...PLATFORMS.filter(rt=>rt!=='unknown').map(rt=>[label(rt),runtimes[rt],pct(runtimes[rt]||0,known)+' of identified sessions']),
+     ...PLATFORMS.filter(rt=>rt!=='unknown').map(rt=>[label(rt),runtimes[rt],rt==='android'&&!runtimes[rt]?ANDROID_PENDING:pct(runtimes[rt]||0,known)+' of identified sessions']),
      ['Platform unknown',runtimes.unknown,'Excluded from platform shares']].forEach(([title,n,note])=>{
         const card=element('article',undefined,'usage-card');card.append(element('h3',title),element('strong',count(n)),element('p',note));cards.append(card);
     });
@@ -89,7 +91,7 @@ function renderUsage() {
     const online=p.modes.find(r=>r.label==='multiplayer')?.total||0;
     const offline=p.modes.filter(r=>['campaign','single_custom','skirmish'].includes(r.label)).reduce((n,r)=>n+r.total,0);
     document.getElementById('online-summary').textContent=count(offline)+' single-player sessions · '+count(online)+' network multiplayer sessions.';
-    document.getElementById('platform-note').textContent=usageReport.platform_since?'Browser/desktop identification available from '+date(usageReport.platform_since)+'; Android and iPhone/iPad from version 1.0.857. Older or unmarked clients remain unknown.':'';
+    document.getElementById('platform-note').textContent=usageReport.platform_since?'Browser/desktop identification available from '+date(usageReport.platform_since)+'; Android and iPhone/iPad from engine 1.0.857. Android app 0.2.32 and earlier (engine 1.0.855) report as Desktop. Older or unmarked clients remain unknown.':'';
     comparison('levels-table',p.levels,'Level',x=>'Level '+x);comparison('maps-table',p.maps.slice(0,15),'Map');
     comparison('opponents-table',p.bots.ai.filter(r=>r.relation==='opponent'),'Opponent');
     comparison('assist-table',p.bots.assistance.filter(r=>r.relation!=='opponent'),'Assistance');
