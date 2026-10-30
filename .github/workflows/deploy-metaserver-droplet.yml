@@ -60,7 +60,7 @@ jobs:
         run: node --test deploy/test-loading-progress.mjs
       - name: Restore compressed browser files
         id: play-transfer-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/play-transfer
           key: play-brotli-${{ runner.os }}-${{ hashFiles('website/play/dunecity.data', 'website/play/dunecity.wasm', 'website/play/dunecity.js', 'website/play/p2p-direct.js', 'website/play/shell.js', 'website/play/shell.css', 'deploy/prepare-play-transfer.mjs') }}
