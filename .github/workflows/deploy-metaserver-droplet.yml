@@ -33,6 +33,7 @@ jobs:
           python3 deploy/check-web-security.py
           python3 deploy/test-web-sync.py
           python3 deploy/test-play-transfer.py
+          python3 deploy/test-play-parts.py
 
       - name: Validate metaserver PHP
         run: |
@@ -58,6 +59,9 @@ jobs:
           node-version: '22'
       - name: Test compressed download progress
         run: node --test deploy/test-loading-progress.mjs
+      - name: Join split browser files
+        # Files over GitHub's 100 MB limit are committed as parts; compression needs the bytes.
+        run: python3 deploy/play_parts.py website/play --keep-parts
       - name: Restore compressed browser files
         id: play-transfer-cache
         uses: actions/cache@v4

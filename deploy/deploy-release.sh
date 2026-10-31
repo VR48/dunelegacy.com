@@ -20,6 +20,8 @@ git -C "$REPOSITORY_ROOT" archive origin/main metaserver \
     | tar -x -C "$STAGING_ROOT"
 git -C "$REPOSITORY_ROOT" archive origin/main p2p-service deploy \
     | tar -x -C "$PRIVATE_STAGING"
+# Browser files over GitHub's 100 MB limit are committed as parts: serve the joined file only.
+python3 "$PRIVATE_STAGING/deploy/play_parts.py" "$STAGING_ROOT/play"
 
 python3 "$REPOSITORY_ROOT/deploy/check-web-security.py"
 python3 "$PRIVATE_STAGING/deploy/install-p2p-service.py" \

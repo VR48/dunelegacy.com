@@ -3,12 +3,14 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlparse
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from play_parts import artifact_sha256, split_parts  # noqa: E402
 
 
 class PlayPageParser(HTMLParser):
@@ -54,14 +56,6 @@ class PlayPageParser(HTMLParser):
 def require_tokens(path: Path, tokens: tuple[str, ...]) -> list[str]:
     text = path.read_text(encoding="utf-8")
     return [f"{path}: missing {token}" for token in tokens if token not in text]
-
-
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as source:
-        for block in iter(lambda: source.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 def main() -> int:
@@ -119,12 +113,17 @@ def main() -> int:
         errors.append("website/play/build.json: missing artifact SHA-256 map")
     else:
         for name in artifact_names:
-            artifact = play / name
-            if not artifact.is_file():
-                errors.append(f"missing browser artifact: {name}")
+            try:
+                parts = split_parts(play, build, name)
+            except ValueError as error:
+                errors.append(f"website/play/build.json: {error}")
+                continue
+            missing_files = [path.name for path in parts or [play / name] if not path.is_file()]
+            if missing_files:
+                errors.append(f"missing browser artifact: {', '.join(missing_files)}")
                 continue
             expected = expected_hashes.get(name)
-            actual = sha256(artifact)
+            actual = artifact_sha256(play, build, name)
             if expected != actual:
                 errors.append(f"SHA-256 mismatch for {name}: expected {expected}, got {actual}")
 
