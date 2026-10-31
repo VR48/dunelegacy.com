@@ -33,7 +33,8 @@ HISTORY_PLAYER_COLUMNS = {'match_id', 'slot', 'player_name', 'house_name', 'cont
 # anything else, or missing from the store, count as vanilla. Mod names come from clients, so
 # only a well-formed digest is ever used as a file name.
 CONTENT_DIR = '/var/www/data/dunecity-p2p/run/state/content'
-SHIPPED_MODS = ('vanilla', 'dunecity', 'Tornie', 'Dune2R')
+SHIPPED_MODS = ('vanilla', 'dunecity', 'Tornie', 'Dune2R', 'TornieLite', 'Jericho', 'JerichoLite',
+                'ArcaKev', 'ArcaKevLite')
 SNAPSHOT = re.compile(r'ws-([0-9a-f]{64})')
 
 

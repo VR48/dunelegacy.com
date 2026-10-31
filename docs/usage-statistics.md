@@ -21,7 +21,8 @@ publishes all these files together; no database migration is needed.
   `/var/www/data/backups/games-pre-probe-cleanup-20261031T113922Z.sqlite`).
 - Mods: a pinned copy `ws-<sha256>` (an older version kept for a save, campaign
   or online game) counts as the shipped mod its manifest in the community content
-  store names as base: Vanilla, Dune City, Tornie or Dune2R, without a version.
+  store names as base: Vanilla, Dune City, Dune2R or one of the Tornie-family
+  mods (Tornie, Tornie Lite, Jericho, Jericho Lite, ArcaKev, ArcaKev Lite), without a version.
   Copies of any other mod, or missing from the store, count as Vanilla.
 - Platforms are the client-reported runtime: browser, desktop (`native`),
   Android and iPhone/iPad (`android`/`ios`, from 1.0.857; older Android builds
