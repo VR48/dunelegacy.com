@@ -14,7 +14,15 @@ publishes all these files together; no database migration is needed.
 - Last 24 hours, last 30 days and all recorded time use session start times.
 - Daily/monthly buckets use UTC. Partial periods show only observed data, and
   zero days are filled only after tracking began. Refresh interval: five minutes.
-- Counts are sessions, not unique people. Retries and development games count.
+- Counts are sessions, not unique people. Retries and manual development games
+  count. Probe and local multiplayer test games (isolated `DUNECITY_USERDIR`
+  profiles) stop reporting from game commit 2dc819da; the 886 probe games
+  recorded before were deleted on 2026-10-31 (backup
+  `/var/www/data/backups/games-pre-probe-cleanup-20261031T113922Z.sqlite`).
+- Mods: a pinned copy `ws-<sha256>` (an older version kept for a save, campaign
+  or online game) counts as the shipped mod its manifest in the community content
+  store names as base: Vanilla, Dune City, Tornie or Dune2R, without a version.
+  Copies of any other mod, or missing from the store, count as Vanilla.
 - Platforms are the client-reported runtime: browser, desktop (`native`),
   Android and iPhone/iPad (`android`/`ios`, from 1.0.857; older Android builds
   report `native`). Unknown runtime stays separate; never infer a platform from

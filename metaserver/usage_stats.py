@@ -8,6 +8,7 @@ history and nothing else.
 import collections
 import datetime as dt
 import json
+import os
 import re
 import sqlite3
 import sys
@@ -27,6 +28,40 @@ HISTORY_WHERE = '''FROM analytics_matches AS m WHERE m.game_type = 'multiplayer'
          WHERE p.match_id = m.match_id AND p.controller = 'human') >= 2'''
 HISTORY_MATCH_COLUMNS = {'match_id', 'started_at', 'game_type', 'map_name', 'mod_name', 'game_version'}
 HISTORY_PLAYER_COLUMNS = {'match_id', 'slot', 'player_name', 'house_name', 'controller', 'ai_type'}
+# The game names an exact pinned mod copy `ws-<sha256>`. Its manifest in the community content
+# store records the mod it was based on. Copies of a shipped mod count as that mod; copies of
+# anything else, or missing from the store, count as vanilla. Mod names come from clients, so
+# only a well-formed digest is ever used as a file name.
+CONTENT_DIR = '/var/www/data/dunecity-p2p/run/state/content'
+SHIPPED_MODS = ('vanilla', 'dunecity', 'Tornie', 'Dune2R')
+SNAPSHOT = re.compile(r'ws-([0-9a-f]{64})')
+
+
+def snapshot_base(digest, content_dir):
+    try:
+        with open(os.path.join(content_dir, 'manifests', digest), 'rb') as manifest:
+            lines = manifest.read(1 << 20).split(b'\n')
+    except OSError:
+        return 'vanilla'
+    base = next((line[5:] for line in lines if line.startswith(b'base=')), b'')
+    try:
+        base = bytes.fromhex(base.decode('ascii')).decode('utf-8')
+    except (UnicodeDecodeError, ValueError):
+        return 'vanilla'
+    return base if base in SHIPPED_MODS else 'vanilla'
+
+
+def mod_labeller(content_dir):
+    """Public mod label for a recorded mod name; looks each snapshot up once."""
+    bases = {}
+    def label(name):
+        match = SNAPSHOT.fullmatch(name or '')
+        if not match:
+            return (name or 'unknown')[:80]
+        if match[1] not in bases:
+            bases[match[1]] = snapshot_base(match[1], content_dir)
+        return bases[match[1]]
+    return label
 
 
 def iso(timestamp):
@@ -165,7 +200,7 @@ def history_columns(connection):
             and HISTORY_PLAYER_COLUMNS <= available['analytics_players'])
 
 
-def build_history_page(connection, page, now=None):
+def build_history_page(connection, page, now=None, content_dir=CONTENT_DIR):
     """One page of multiplayer games with at least two human players, newest first.
 
     The page is read with SQL LIMIT/OFFSET against the whole recorded history, so every
@@ -175,6 +210,7 @@ def build_history_page(connection, page, now=None):
     """
     now = int(time.time()) if now is None else now
     page = max(1, min(int(page), HISTORY_MAX_PAGE))
+    mod_label = mod_labeller(content_dir)
     connection.row_factory = sqlite3.Row
     connection.execute('PRAGMA query_only=ON')
     connection.execute('BEGIN')
@@ -198,7 +234,7 @@ def build_history_page(connection, page, now=None):
             for row in rows:
                 people = roster(rosters.get(row['match_id'], []))
                 games.append({'started': iso(row['started_at']), 'map': clean_map(row['map_name']),
-                              'mod': (row['mod_name'] or 'unknown')[:80],
+                              'mod': mod_label(row['mod_name']),
                               'version': display_name(row['game_version'], '') or None,
                               'humans': sum(p['kind'] == 'human' for p in people),
                               'ai': sum(p['kind'] == 'ai' for p in people),
@@ -211,8 +247,9 @@ def build_history_page(connection, page, now=None):
             'available': usable, 'games': games}
 
 
-def build_report(connection, now=None):
+def build_report(connection, now=None, content_dir=CONTENT_DIR):
     now = int(time.time()) if now is None else now
+    mod_label = mod_labeller(content_dir)
     connection.row_factory = sqlite3.Row
     connection.execute('PRAGMA query_only=ON')
     connection.execute('BEGIN')
@@ -233,7 +270,7 @@ def build_report(connection, now=None):
         period = {'since': iso(max(cutoff, first or now)), 'total': len(selected),
                   'runtime': matrix(selected, lambda r: runtime(r['client_runtime'])),
                   'modes': matrix(selected, lambda r: r['game_type'] or 'unknown'),
-                  'mods': matrix(selected, lambda r: (r['mod_name'] or 'unknown')[:80]),
+                  'mods': matrix(selected, lambda r: mod_label(r['mod_name'])),
                   'levels': matrix([r for r in selected if r['game_type'] == 'campaign'], lambda r: level(r['map_name'])),
                   'maps': matrix([r for r in selected if r['game_type'] in ('single_custom','multiplayer')], lambda r: clean_map(r['map_name'])),
                   'daily': matrix(selected, lambda r: iso(r['started_at'])[:10]),

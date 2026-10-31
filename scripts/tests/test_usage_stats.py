@@ -157,4 +157,23 @@ class UsageTests(unittest.TestCase):
         for page in ['0','-1','1.5','abc','1;SELECT','10000000']:
             with self.assertRaises(SystemExit):usage.arguments(['--history-page',page])
 
+    def test_pinned_mod_copies_count_as_their_base_mod(self):
+        import tempfile
+        def manifest(root,base):
+            digest=('%064x'%len(list((Path(root)/'manifests').glob('*'))))
+            (Path(root)/'manifests'/digest).write_bytes(b'DUNEWORKSHOP1\nkind=mod\nname=00\nbase='+base.encode().hex().encode()+b'\nmod=\n')
+            return 'ws-'+digest
+        with tempfile.TemporaryDirectory() as root:
+            (Path(root)/'manifests').mkdir()
+            copies={'Dune City copy':manifest(root,'dunecity'),'Vanilla copy':manifest(root,'vanilla'),
+                    'Tornie copy':manifest(root,'Tornie'),'player mod copy':manifest(root,'new')}
+            names=['vanilla',*copies.values(),'ws-'+'f'*64,'ws-../../etc/passwd','Alternative Balance']
+            for i,name in enumerate(names):self.match('m%d'%i,mod=name,mode='multiplayer');self.player('m%d'%i);self.player('m%d'%i)
+            self.db.commit()
+            mods={r['label']:r['total'] for r in usage.build_report(self.db,NOW,root)['periods']['all']['mods']}
+            history=[g['mod'] for g in usage.build_history_page(self.db,1,NOW,root)['games']]
+        # Unknown bases and copies missing from the store count as vanilla; malformed names are not looked up.
+        self.assertEqual(mods,{'vanilla':4,'dunecity':1,'Tornie':1,'ws-../../etc/passwd':1,'Alternative Balance':1})
+        self.assertEqual(sorted(history),sorted(['vanilla','dunecity','vanilla','Tornie','vanilla','vanilla','ws-../../etc/passwd','Alternative Balance']))
+
 if __name__=='__main__':unittest.main()
