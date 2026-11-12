@@ -21,13 +21,21 @@ def read_rows(database: Path, room: str, since: int, until: int) -> list:
         return [dict(row) for row in rows]
 
 
+def own_room(database: Path, app_version: str, since: int, until: int) -> str:
+    with sqlite3.connect(database.resolve(strict=True).as_uri() + '?mode=ro', uri=True) as db:
+        rooms = db.execute("SELECT DISTINCT room_id FROM analytics_relay_events WHERE kind='joined' "
+                           'AND game_version=? AND occurred_at BETWEEN ? AND ?',
+                           (app_version, since, until)).fetchall()
+    if len(rooms) != 1:
+        raise ValueError('Own-run app version and UTC window must identify exactly one preview room')
+    return rooms[0][0]
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--name', required=True)
     parser.add_argument('--source', required=True)
-    parser.add_argument('--room', default='')
+    parser.add_argument('--app-version', default='')
     parser.add_argument('--since', type=int, required=True)
     parser.add_argument('--until', type=int, required=True)
     parser.add_argument('--outage-seconds', type=int, choices=(0, 60), default=0)
@@ -40,8 +48,8 @@ def main() -> None:
     now = int(time.time())
     if not now - 86400 <= args.since <= args.until <= now + 300 or args.until - args.since > 3600:
         raise ValueError('Evidence requires a bounded own-run UTC window within the past day')
-    if args.room and not re.fullmatch(r'[a-zA-Z0-9_-]{22,64}', args.room):
-        raise ValueError('Invalid own room log identifier')
+    if args.app_version and not re.fullmatch(r'[A-Za-z0-9._-]{1,32}', args.app_version):
+        raise ValueError('Invalid observed own-run app version')
     result = {'since': args.since, 'until': args.until}
     target = Path('/var/www/data/dunecity-p2p-previews') / args.name
     current = target / 'current'
@@ -55,12 +63,12 @@ def main() -> None:
     result.update({'preview': args.name, 'sourceCommit': args.source,
                    'serviceSnapshot': hashlib.sha256(raw_manifest).hexdigest(),
                    'actualSourceHashes': actual})
-    if args.room:
-        result['directLifecycle'] = read_rows(target / 'run/games.sqlite', args.room, args.since, args.until)
-        if not result['directLifecycle']:
-            raise ValueError('No own-room lifecycle rows in the requested preview/window')
+    if args.app_version:
+        database = target / 'run/games.sqlite'
+        room = own_room(database, args.app_version, args.since, args.until)
+        result['directLifecycle'] = read_rows(database, room, args.since, args.until)
     if args.outage_seconds:
-        if not args.room:
+        if not args.app_version:
             raise ValueError('An outage requires an existing own preview room')
         flag = target / 'outage-until'
         if flag.is_symlink():

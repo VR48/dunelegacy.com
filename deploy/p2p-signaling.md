@@ -76,8 +76,9 @@ Require successful deployment, live preview `build.json` source/hash checks and
 
 **Inspect release preview** is an operator-only workflow using the existing pinned
 deployment SSH secret, without root/bootstrap fallback. It verifies installed
-preview source hashes and reads only one supplied own room log ID in a bounded UTC
-window (Unix seconds, at most one hour within the past day). Its JSON artifact omits
+preview source hashes and reads one own room selected by the exact observed
+wire `appVersion` and a narrow UTC window. Zero/multiple matching rooms are refused.
+The window uses Unix seconds, at most one hour within the past day. JSON artifacts omit
 tokens, invitation codes, SDP, ICE and addresses. It does not inspect or operate the
 legacy relay, read production analytics, invoke a launcher or stop a process.
 

@@ -96,6 +96,22 @@ class PreviewTests(unittest.TestCase):
         self.assertEqual(rows[0]['room_id'], 'own')
         self.assertEqual(rows[0]['occurred_at'], 100)
 
+    def test_app_version_window_correlation_refuses_ambiguous_or_missing_rooms(self):
+        database = self.root / 'correlation.sqlite'
+        with sqlite3.connect(database) as db:
+            db.execute('CREATE TABLE analytics_relay_events (' + ','.join(inspector.COLUMNS.split(',')) + ')')
+            for room, version, occurred in [('own', 'DuneCity1.0.865', 100),
+                                             ('own', 'DuneCity1.0.865', 101),
+                                             ('other', 'different', 100),
+                                             ('later', 'DuneCity1.0.865', 200)]:
+                db.execute('INSERT INTO analytics_relay_events VALUES (?,?,?,?,?,?,?,?,?,?)',
+                           (room, str(occurred) + room, 'joined', occurred, 1, 'browser', version,
+                            '', 'direct-p2p', 'signaling_service_v1'))
+        self.assertEqual(inspector.own_room(database, 'DuneCity1.0.865', 90, 110), 'own')
+        for since, until in [(90, 210), (300, 310)]:
+            with self.assertRaisesRegex(ValueError, 'exactly one'):
+                inspector.own_room(database, 'DuneCity1.0.865', since, until)
+
 
 if __name__ == '__main__':
     unittest.main()
