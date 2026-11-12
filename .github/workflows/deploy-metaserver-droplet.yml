@@ -222,14 +222,21 @@ jobs:
           SSH_ARGS=(-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
           scp "${SSH_ARGS[@]}" deploy/deploy-release.sh \
             dunelegacy-deploy@"$DROPLET_IP":/home/dunelegacy-deploy/deploy-release.sh
-          ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" \
-            "mkdir -p \"\$HOME/play-transfer-${DEPLOY_SHA}\""
+          printf -v REMOTE_COMMAND 'bash -s -- %q %q %q %q' \
+            "$DEPLOY_SHA" "$DEPLOY_CHANNEL" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
+          ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" "$REMOTE_COMMAND" <<'PREPARE_TRANSFER'
+          set -euo pipefail
+          mkdir -p "$HOME/play-transfer-$1-$3-$4"
+          PREPARE_TRANSFER
           scp -r "${SSH_ARGS[@]}" "$RUNNER_TEMP/play-transfer/." \
-            dunelegacy-deploy@"$DROPLET_IP":play-transfer-${DEPLOY_SHA}/
-          ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" \
-            "PLAY_TRANSFER_ROOT=\"\$HOME/play-transfer-${DEPLOY_SHA}\" DEPLOY_REVISION='$DEPLOY_SHA' DEPLOY_CHANNEL='$DEPLOY_CHANNEL' DEPLOY_RUN_ID='$GITHUB_RUN_ID' bash /home/dunelegacy-deploy/deploy-release.sh"
-          ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" \
-            "rm -rf -- \"\$HOME/play-transfer-${DEPLOY_SHA}\""
+            "dunelegacy-deploy@$DROPLET_IP:play-transfer-$DEPLOY_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/"
+          ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" "$REMOTE_COMMAND" <<'DEPLOY_FROZEN'
+          set -euo pipefail
+          transfer_root="$HOME/play-transfer-$1-$3-$4"
+          trap 'rm -rf -- "$transfer_root"' EXIT
+          PLAY_TRANSFER_ROOT="$transfer_root" DEPLOY_REVISION="$1" DEPLOY_CHANNEL="$2" DEPLOY_RUN_ID="$3" \
+            bash /home/dunelegacy-deploy/deploy-release.sh
+          DEPLOY_FROZEN
 
           if [ "$DEPLOY_CHANNEL" != staging ] && [ -n "$FEEDBACK_GITHUB_TOKEN" ]; then
             printf '%s' "$FEEDBACK_GITHUB_TOKEN" \
