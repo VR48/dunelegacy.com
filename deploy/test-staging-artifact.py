@@ -202,9 +202,12 @@ class StagingArtifactTests(unittest.TestCase):
     def test_staging_service_uses_separate_code_state_origin_and_protocol_config(self):
         staging.prepare(self.inputs, ROOT, self.website, CODE)
         private = self.root / 'private-staging'
-        staging.install_service(self.website.parent / 'p2p-staging', ROOT, private)
+        private.mkdir()
+        alias = self.root / 'staging-alias'
+        alias.symlink_to(private, target_is_directory=True)
+        staging.install_service(self.website.parent / 'p2p-staging', ROOT, alias)
         config = json.loads(subprocess.check_output(['php', '-r', 'echo json_encode(require $argv[1]);', str(private / 'config.php')], text=True))
-        self.assertEqual(config['state_dir'], str(private / 'run/state'))
+        self.assertEqual(config['state_dir'], str(private.resolve() / 'run/state'))
         self.assertEqual(config['base_path'], '/play-staging/p2p')
         self.assertEqual(config['public_base_url'], 'https://dunelegacy.com/play-staging/p2p')
         self.assertEqual(json.loads((private / 'current/SOURCE.json').read_text())['commit'], SHA)

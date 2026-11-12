@@ -249,6 +249,7 @@ def install_service(service, repository, private_root, group=None):
     spec.loader.exec_module(installer)
     os.umask(0o027)
     snapshot = installer.install(service, private_root, group, base_path='/play-staging/p2p')
+    private_root = private_root.resolve(strict=True)
     config = json.loads(subprocess.check_output(['php', '-r', 'echo json_encode(require $argv[1]);',
                                                str(private_root / 'config.php')], text=True))
     expected = dict(state_dir=str(private_root / 'run/state'), base_path='/play-staging/p2p',
