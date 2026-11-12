@@ -203,9 +203,9 @@ class StagingArtifactTests(unittest.TestCase):
         staging.prepare(self.inputs, ROOT, self.website, CODE)
         private = self.root / 'private-staging'
         private.mkdir()
-        alias = self.root / 'staging-alias'
-        alias.symlink_to(private, target_is_directory=True)
-        staging.install_service(self.website.parent / 'p2p-staging', ROOT, alias)
+        alias = self.root / 'staging-parent-alias'
+        alias.symlink_to(self.root, target_is_directory=True)
+        staging.install_service(self.website.parent / 'p2p-staging', ROOT, alias / private.name)
         config = json.loads(subprocess.check_output(['php', '-r', 'echo json_encode(require $argv[1]);', str(private / 'config.php')], text=True))
         self.assertEqual(config['state_dir'], str(private.resolve() / 'run/state'))
         self.assertEqual(config['base_path'], '/play-staging/p2p')
