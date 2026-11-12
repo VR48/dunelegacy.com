@@ -7,6 +7,7 @@ on:
       - 'website/**'
       - 'metaserver/**'
       - 'p2p-service/**'
+      - 'p2p-preview/**'
       - 'matchmaking-service/**'
       - 'deploy/**'
       - '.github/workflows/deploy-metaserver-droplet.yml'
@@ -100,7 +101,7 @@ jobs:
       - name: Validate browser security policy
         run: |
           python3 deploy/check-web-security.py
-          if [ -f website/play-staging/build.json ]; then python3 deploy/check-web-security.py --play website/play-staging; fi
+          if [ -f website/play-staging/build.json ]; then python3 deploy/check-web-security.py --play-root website/play-staging; fi
           python3 deploy/test-web-sync.py
           python3 deploy/test-play-transfer.py
           python3 deploy/test-play-parts.py
@@ -123,6 +124,13 @@ jobs:
           php -l metaserver/p2p_notifications.php
           php scripts/tests/test_p2p_notifications.php
           python3 deploy/install-p2p-service.py --source p2p-service --target "$RUNNER_TEMP/p2p-install-check"
+          python3 deploy/test-p2p-install.py
+          python3 deploy/test-release-preview.py
+          php -l deploy/p2p-preview-entry.php
+          if [ -f deploy/release-preview.json ]; then
+            python3 deploy/install-release-preview.py --repository . --website website --validate-only
+            python3 deploy/install-p2p-service.py --source p2p-preview --target "$RUNNER_TEMP/preview-install-check"
+          fi
       
       - uses: actions/setup-node@v4
         with:

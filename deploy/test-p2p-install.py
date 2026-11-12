@@ -30,6 +30,33 @@ class InstallTests(unittest.TestCase):
                 installer.install(source, target)
             self.assertEqual((target / "current").resolve(), target / "releases" / first)
 
+    def test_preview_configuration_is_separate_and_preserved(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory).resolve()
+            source, stable, preview = base / "source", base / "stable", base / "preview"
+            shutil.copytree(root / "p2p-service", source)
+            installer.install(source, stable)
+            stable_config = (stable / "config.php").read_bytes()
+            kwargs = {"base_path": "/play-test-865-249aa55e5/p2p", "game_protocol": 122}
+            installer.install(source, preview, **kwargs)
+            preview_config = (preview / "config.php").read_text()
+            self.assertIn("'base_path' => '/play-test-865-249aa55e5/p2p'", preview_config)
+            self.assertIn("'required_game_protocol' => 122", preview_config)
+            self.assertIn("'allowed_origins' => ['https://dunelegacy.com']", preview_config)
+            self.assertNotIn(str(stable), preview_config)
+            (preview / "config.php").write_text(preview_config + "// preserve operator config\n")
+            installer.install(source, preview, **kwargs)
+            self.assertIn("preserve operator config", (preview / "config.php").read_text())
+            self.assertEqual((stable / "config.php").read_bytes(), stable_config)
+
+    def test_preview_rejects_unsafe_paths_and_protocols(self):
+        for path in ("/p2p/../other", "/play", "';bad"):
+            with self.assertRaisesRegex(ValueError, "base path"):
+                installer.install(Path("unused"), Path("unused"), base_path=path)
+        for protocol in (-1, 65536):
+            with self.assertRaisesRegex(ValueError, "protocol"):
+                installer.install(Path("unused"), Path("unused"), game_protocol=protocol)
+
 
 if __name__ == "__main__":
     unittest.main()

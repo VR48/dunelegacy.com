@@ -61,13 +61,17 @@ def require_tokens(path: Path, tokens: tuple[str, ...]) -> list[str]:
 
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
-    website = repo_root / "website"
-    args = argparse.ArgumentParser(description=__doc__)
-    args.add_argument("--play", type=Path, default=website / "play")
-    play = args.parse_args().play.resolve()
-    if play.parent != website.resolve() or play.name not in ("play", "play-staging"):
-        raise ValueError("Browser validation requires this website's play or play-staging directory")
-    label = play.relative_to(repo_root).as_posix()
+    parser_args = argparse.ArgumentParser(description=__doc__)
+    parser_args.add_argument("--website-root", type=Path, default=repo_root / "website")
+    parser_args.add_argument("--play-root", type=Path)
+    parser_args.add_argument("--service-root", type=Path, default=repo_root / "p2p-service")
+    parser_args.add_argument("--public-routes", type=Path)
+    args = parser_args.parse_args()
+    website = args.website_root.resolve()
+    play = (args.play_root or website / "play").resolve()
+    if play.parent != website:
+        raise ValueError("Browser validation requires a direct channel of the selected website")
+    label = play.as_posix()
     errors: list[str] = []
 
     errors.extend(require_tokens(website / ".htaccess", (
@@ -88,10 +92,10 @@ def main() -> int:
     )))
 
     # Public routing must keep up with the separately installed PHP service.
-    service_routes = repo_root / "p2p-service" / "public" / ".htaccess"
-    public_routes = website / "p2p" / ".htaccess"
+    service_routes = args.service_root / "public" / ".htaccess"
+    public_routes = args.public_routes or website / "p2p" / ".htaccess"
     if service_routes.read_bytes() != public_routes.read_bytes():
-        errors.append("website/p2p/.htaccess must match the packaged signaling routes")
+        errors.append(f"{public_routes} must match the packaged signaling routes")
 
     parser = PlayPageParser()
     parser.feed((play / "index.html").read_text(encoding="utf-8"))

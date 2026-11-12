@@ -8,6 +8,7 @@ WEB_ROOT="${WEB_ROOT:-/var/www/html}"
 DEPLOY_CHANNEL="${DEPLOY_CHANNEL:-site}"
 [[ "$DEPLOY_REVISION" =~ ^[0-9a-f]{40}$ ]] || { echo 'Expected a full website SHA' >&2; exit 1; }
 [[ "$DEPLOY_CHANNEL" = site || "$DEPLOY_CHANNEL" = staging ]] || { echo 'Expected site or staging channel' >&2; exit 1; }
+LAST_DEPLOYED="$HOME/dunelegacy-last-deployed-${DEPLOY_CHANNEL}"
 STAGING_ROOT="$(mktemp -d)"
 trap 'rm -rf "$STAGING_ROOT"' EXIT
 # Serialize manual recovery with the workflow's deployment, not just GitHub runs.
@@ -21,10 +22,10 @@ git -C "$REPOSITORY_ROOT" fetch --quiet --no-tags origin main "$DEPLOY_REVISION"
 git -C "$REPOSITORY_ROOT" merge-base --is-ancestor "$DEPLOY_REVISION" origin/main || {
     echo 'Refusing website source outside trusted main history' >&2; exit 1;
 }
-if [[ -f "$HOME/dunelegacy-last-deployed" ]]; then
-    PREVIOUS="$(cat "$HOME/dunelegacy-last-deployed")"
+if [[ -f "$LAST_DEPLOYED" ]]; then
+    PREVIOUS="$(cat "$LAST_DEPLOYED")"
     if [[ "$PREVIOUS" != "$DEPLOY_REVISION" ]] && git -C "$REPOSITORY_ROOT" merge-base --is-ancestor "$DEPLOY_REVISION" "$PREVIOUS"; then
-        echo "Refusing stale website revision $DEPLOY_REVISION; $PREVIOUS is already deployed" >&2
+        echo "Refusing stale $DEPLOY_CHANNEL revision $DEPLOY_REVISION; $PREVIOUS is already deployed" >&2
         exit 1
     fi
 fi
@@ -33,6 +34,11 @@ fi
 git -C "$REPOSITORY_ROOT" archive "$DEPLOY_REVISION" website metaserver p2p-service deploy \
     | tar -x -C "$STAGING_ROOT"
 PUBLIC_ROOT="$STAGING_ROOT/website"
+if [[ "$DEPLOY_CHANNEL" = site && -f "$STAGING_ROOT/deploy/release-preview.json" ]]; then
+    git -C "$REPOSITORY_ROOT" archive "$DEPLOY_REVISION" p2p-preview | tar -x -C "$STAGING_ROOT"
+    python3 "$STAGING_ROOT/deploy/install-release-preview.py" \
+        --repository "$STAGING_ROOT" --website "$PUBLIC_ROOT" --group www-data
+fi
 CHANNELS=(play)
 if [[ "$DEPLOY_CHANNEL" = staging ]]; then
     test -d "$PUBLIC_ROOT/play-staging"
@@ -54,7 +60,7 @@ if live_path.exists():
 PY
 fi
 for CHANNEL in "${CHANNELS[@]}"; do
-    python3 "$STAGING_ROOT/deploy/check-web-security.py" --play "$PUBLIC_ROOT/$CHANNEL"
+    python3 "$STAGING_ROOT/deploy/check-web-security.py" --play-root "$PUBLIC_ROOT/$CHANNEL"
     python3 "$STAGING_ROOT/deploy/play_parts.py" "$PUBLIC_ROOT/$CHANNEL"
     if [[ -n "${PLAY_TRANSFER_ROOT:-}" ]]; then
         python3 "$STAGING_ROOT/deploy/install-play-transfer.py" \
@@ -85,7 +91,7 @@ else
 fi
 find "$PERMISSION_ROOT" -type d -exec chmod 0755 {} +
 find "$PERMISSION_ROOT" -type f -exec chmod 0644 {} +
-printf '%s\n' "$DEPLOY_REVISION" > "$HOME/dunelegacy-last-deployed"
+printf '%s\n' "$DEPLOY_REVISION" > "$LAST_DEPLOYED"
 printf 'sourceCommit=%s\nchannel=%s\nrunId=%s\n' "$DEPLOY_REVISION" "$DEPLOY_CHANNEL" "${DEPLOY_RUN_ID:-manual}" \
     > "$HOME/dunelegacy-deployment-${DEPLOY_REVISION}.txt"
 echo "Deployed frozen website $DEPLOY_REVISION ($DEPLOY_CHANNEL)"
