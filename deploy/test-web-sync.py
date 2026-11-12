@@ -133,11 +133,15 @@ class WebSyncTests(unittest.TestCase):
             channel.mkdir(parents=True)
             (channel / 'build.json').write_bytes(b'qualified staging manifest')
             (channel / 'dunecity.wasm').write_bytes(b'qualified staging engine')
+            preview = web_root / 'play-test-865-immutable'
+            preview.mkdir()
+            (preview / 'build.json').write_bytes(b'immutable preview source and hashes')
             source = self.stage(base, 'site', {'index.html': (b'new website prose', NEW_MTIME)})
             self.deploy(source, web_root)
             self.assertEqual((channel / 'build.json').read_bytes(), b'qualified staging manifest')
             self.assertEqual((channel / 'dunecity.wasm').read_bytes(), b'qualified staging engine')
             self.assertEqual((web_root / 'index.html').read_bytes(), b'new website prose')
+            self.assertEqual((preview / 'build.json').read_bytes(), b'immutable preview source and hashes')
 
     def test_explicit_staging_sync_updates_only_its_channel(self):
         with tempfile.TemporaryDirectory() as directory:

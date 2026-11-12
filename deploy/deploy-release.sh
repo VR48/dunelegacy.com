@@ -13,7 +13,7 @@ STAGING_ROOT="$(mktemp -d)"
 trap 'rm -rf "$STAGING_ROOT"' EXIT
 # Serialize manual recovery with the workflow's deployment, not just GitHub runs.
 exec 9> "$HOME/dunelegacy-deployment.lock"
-flock 9
+flock -n 9 || { echo 'Another frozen website deployment owns the lane' >&2; exit 3; }
 if [[ ! -d "$REPOSITORY_ROOT/.git" ]]; then
     git clone --filter=blob:none "$REPOSITORY_URL" "$REPOSITORY_ROOT"
 fi
@@ -31,21 +31,27 @@ if [[ -f "$LAST_DEPLOYED" ]]; then
 fi
 # The same immutable revision supplies source, validation, services and manifests.
 # Never fetch origin/main again between compression, transfer and installation.
-git -C "$REPOSITORY_ROOT" archive "$DEPLOY_REVISION" website metaserver p2p-service deploy \
-    | tar -x -C "$STAGING_ROOT"
-PUBLIC_ROOT="$STAGING_ROOT/website"
-if [[ "$DEPLOY_CHANNEL" = site && -f "$STAGING_ROOT/deploy/release-preview.json" ]]; then
-    git -C "$REPOSITORY_ROOT" archive "$DEPLOY_REVISION" p2p-preview | tar -x -C "$STAGING_ROOT"
-    python3 "$STAGING_ROOT/deploy/install-release-preview.py" \
-        --repository "$STAGING_ROOT" --website "$PUBLIC_ROOT" --group www-data
-fi
-CHANNELS=(play)
 if [[ "$DEPLOY_CHANNEL" = staging ]]; then
-    test -d "$PUBLIC_ROOT/play-staging"
+    : "${STAGING_INPUT_ROOT:?Set the verified frozen staging artifact directory}"
+    git -C "$REPOSITORY_ROOT" archive "$DEPLOY_REVISION" deploy website/.htaccess | tar -x -C "$STAGING_ROOT"
+    mkdir -p "$STAGING_ROOT/website"
+    python3 "$STAGING_ROOT/deploy/install-staging-artifact.py" prepare \
+        --inputs "$STAGING_INPUT_ROOT" --repository "$STAGING_ROOT" \
+        --website "$STAGING_ROOT/website" --website-revision "$DEPLOY_REVISION"
+    python3 "$STAGING_ROOT/deploy/install-staging-artifact.py" install-service \
+        --source "$STAGING_ROOT/p2p-staging" --repository "$STAGING_ROOT" --group www-data
     CHANNELS=(play-staging)
-elif [[ -d "$PUBLIC_ROOT/play-staging" ]]; then
-    CHANNELS+=(play-staging)
+else
+    git -C "$REPOSITORY_ROOT" archive "$DEPLOY_REVISION" website metaserver p2p-service deploy \
+        | tar -x -C "$STAGING_ROOT"
+    if [[ -f "$STAGING_ROOT/deploy/release-preview.json" ]]; then
+        git -C "$REPOSITORY_ROOT" archive "$DEPLOY_REVISION" p2p-preview | tar -x -C "$STAGING_ROOT"
+        python3 "$STAGING_ROOT/deploy/install-release-preview.py" \
+            --repository "$STAGING_ROOT" --website "$STAGING_ROOT/website" --group www-data
+    fi
+    CHANNELS=(play)
 fi
+PUBLIC_ROOT="$STAGING_ROOT/website"
 if [[ "$DEPLOY_CHANNEL" = site ]]; then
     python3 - "$PUBLIC_ROOT/play/build.json" "$WEB_ROOT/play/build.json" <<'PY'
 import json, pathlib, sys
@@ -60,17 +66,21 @@ if live_path.exists():
 PY
 fi
 for CHANNEL in "${CHANNELS[@]}"; do
-    python3 "$STAGING_ROOT/deploy/check-web-security.py" --play-root "$PUBLIC_ROOT/$CHANNEL"
+    if [[ "$CHANNEL" = play ]]; then
+        python3 "$STAGING_ROOT/deploy/check-web-security.py" --play-root "$PUBLIC_ROOT/$CHANNEL"
+    fi
     python3 "$STAGING_ROOT/deploy/play_parts.py" "$PUBLIC_ROOT/$CHANNEL"
     if [[ -n "${PLAY_TRANSFER_ROOT:-}" ]]; then
+        TRANSFER_ARGS=()
+        # Staging bytes are deliberately absent from Git; no raw-Git engine URL.
+        if [[ "$CHANNEL" = play ]]; then TRANSFER_ARGS=(--revision "$DEPLOY_REVISION"); fi
         python3 "$STAGING_ROOT/deploy/install-play-transfer.py" \
-            --source "$PLAY_TRANSFER_ROOT/$CHANNEL" --play "$PUBLIC_ROOT/$CHANNEL" \
-            --revision "$DEPLOY_REVISION"
+            --source "$PLAY_TRANSFER_ROOT/$CHANNEL" --play "$PUBLIC_ROOT/$CHANNEL" "${TRANSFER_ARGS[@]}"
     fi
 done
-# Content comparison preserves cache validators for unchanged bytes. Stable
-# website snapshots predating staging must not --delete a live staging channel.
-WEB_SYNC_ARGS=(-a --checksum --no-times --delete --exclude='.well-known/' --exclude='/play-staging/')
+# Preserve independently published staging and every older immutable preview,
+# including when a frozen site recovery predates their existence.
+WEB_SYNC_ARGS=(-a --checksum --no-times --delete --exclude='.well-known/' --exclude='/play-staging/' --exclude='/play-test-*/')
 if [[ "$DEPLOY_CHANNEL" = staging ]]; then
     install -d -m 0755 "$WEB_ROOT/play-staging"
     rsync "${WEB_SYNC_ARGS[@]}" "$PUBLIC_ROOT/play-staging/" "$WEB_ROOT/play-staging/"
@@ -83,14 +93,24 @@ else
     PERMISSION_ROOT="$WEB_ROOT"
     install -d -m 0755 "$HOME/bin"
     git -C "$REPOSITORY_ROOT" show "$DEPLOY_REVISION:deploy/query-analytics.py" > "$HOME/bin/metaserver-sqlite"
-    if [[ -d "$PUBLIC_ROOT/play-staging" ]]; then
-        install -d -m 0755 "$WEB_ROOT/play-staging"
-        rsync "${WEB_SYNC_ARGS[@]}" "$PUBLIC_ROOT/play-staging/" "$WEB_ROOT/play-staging/"
+    if [[ -f "$STAGING_ROOT/deploy/release-preview.json" ]]; then
+        PREVIEW_NAME="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["path"])' "$STAGING_ROOT/deploy/release-preview.json")"
+        if [[ -e "$WEB_ROOT/$PREVIEW_NAME" ]]; then
+            cmp "$PUBLIC_ROOT/$PREVIEW_NAME/build.json" "$WEB_ROOT/$PREVIEW_NAME/build.json" || {
+                echo 'Refusing to overwrite an immutable browser preview' >&2; exit 1;
+            }
+        else
+            install -d -m 0755 "$WEB_ROOT/$PREVIEW_NAME"
+            rsync "${WEB_SYNC_ARGS[@]}" "$PUBLIC_ROOT/$PREVIEW_NAME/" "$WEB_ROOT/$PREVIEW_NAME/"
+        fi
     fi
     chmod 0755 "$HOME/bin/metaserver-sqlite"
 fi
 find "$PERMISSION_ROOT" -type d -exec chmod 0755 {} +
 find "$PERMISSION_ROOT" -type f -exec chmod 0644 {} +
+if [[ "$DEPLOY_CHANNEL" = staging ]]; then
+    cp "$STAGING_INPUT_ROOT/staging-browser.json" "$HOME/dunelegacy-staging-publication.json"
+fi
 printf '%s\n' "$DEPLOY_REVISION" > "$LAST_DEPLOYED"
 printf 'sourceCommit=%s\nchannel=%s\nrunId=%s\n' "$DEPLOY_REVISION" "$DEPLOY_CHANNEL" "${DEPLOY_RUN_ID:-manual}" \
     > "$HOME/dunelegacy-deployment-${DEPLOY_REVISION}.txt"

@@ -28,6 +28,7 @@ permissions:
 
 concurrency:
   group: dunelegacy-production
+  queue: max
   cancel-in-progress: false
 
 jobs:
@@ -42,6 +43,11 @@ jobs:
           ref: ${{ inputs.source_sha || github.sha }}
           fetch-depth: 2
           persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/
+            /deploy/
+            /website/.htaccess
       - name: Freeze source and isolate staging-only publications
         env:
           REQUESTED_SHA: ${{ inputs.source_sha }}
@@ -54,12 +60,10 @@ jobs:
             echo '::error::Recovery source_sha must be a full 40-character commit'
             exit 1
           fi
-          DEPLOY_SHA=$(git rev-parse HEAD)
-          # Validate history before executing any script from a manually selected
-          # checkout or admitting it to a job which can read deployment secrets.
-          RELATION=$(gh api "repos/$GITHUB_REPOSITORY/compare/${DEPLOY_SHA}...main" --jq .status)
+          REQUEST_SHA=$(git rev-parse HEAD)
+          RELATION=$(gh api "repos/$GITHUB_REPOSITORY/compare/${REQUEST_SHA}...main" --jq .status)
           if [ "$RELATION" != ahead ] && [ "$RELATION" != identical ]; then
-            echo '::error::Deployment source must be in trusted website main history'
+            echo '::error::Deployment request must be in trusted website main history'
             exit 1
           fi
           DEPLOY_CHANNEL="$REQUESTED_CHANNEL"
@@ -67,27 +71,45 @@ jobs:
             DEPLOY_CHANNEL=site
             if [ "$GITHUB_EVENT_NAME" = push ] && [[ "$BEFORE_SHA" =~ ^[0-9a-f]{40}$ ]] && [ "$BEFORE_SHA" != 0000000000000000000000000000000000000000 ]; then
               git fetch --no-tags --depth=1 origin "$BEFORE_SHA"
-              mapfile -t CHANGED < <(git diff --name-only "$BEFORE_SHA" "$DEPLOY_SHA")
-              STAGING_ONLY=true
-              for path in "${CHANGED[@]}"; do
-                [[ "$path" = website/play-staging/* ]] || STAGING_ONLY=false
-              done
-              if [ "${#CHANGED[@]}" -gt 0 ] && [ "$STAGING_ONLY" = true ]; then DEPLOY_CHANNEL=staging; fi
+              CHANGED=$(git diff --name-only --no-renames "$BEFORE_SHA" "$REQUEST_SHA")
+              if [ "$CHANGED" = deploy/staging-browser.json ]; then
+                DEPLOY_CHANNEL=staging
+              fi
             fi
+          fi
+          DEPLOY_SHA="$REQUEST_SHA"
+          if [ "$DEPLOY_CHANNEL" = staging ]; then
+            cp deploy/staging-browser.json "$RUNNER_TEMP/staging-browser.json"
+            DEPLOY_SHA=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["websiteCodeCommit"])' "$RUNNER_TEMP/staging-browser.json")
+            [[ "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo 'Invalid frozen website code SHA' >&2; exit 1; }
+            git fetch --no-tags --depth=1 origin "$DEPLOY_SHA"
+            # A staging request changes metadata only, not the code it authorizes.
+            CODE_CHANGES=$(git diff --name-only --no-renames "$DEPLOY_SHA" "$REQUEST_SHA")
+            while IFS= read -r path; do
+              [ -z "$path" ] && continue
+              [ "$path" = deploy/staging-browser.json ] || { echo 'Staging request/code snapshot differs' >&2; exit 1; }
+            done <<< "$CODE_CHANGES"
+            git checkout --detach "$DEPLOY_SHA"
+            echo "STAGING_PLAY_ROOT=$RUNNER_TEMP/staging-site/website/play-staging" >> "$GITHUB_ENV"
+          else
+            git sparse-checkout disable
           fi
           echo "DEPLOY_SHA=$DEPLOY_SHA" >> "$GITHUB_ENV"
           echo "DEPLOY_CHANNEL=$DEPLOY_CHANNEL" >> "$GITHUB_ENV"
-          export DEPLOY_SHA DEPLOY_CHANNEL
+          export DEPLOY_SHA DEPLOY_CHANNEL REQUEST_SHA
           python3 - <<'PY'
           import json, os
           from pathlib import Path
-          channels = ['play-staging'] if os.environ['DEPLOY_CHANNEL'] == 'staging' else ['play', 'play-staging']
-          record = dict(websiteSourceCommit=os.environ['DEPLOY_SHA'], channel=os.environ['DEPLOY_CHANNEL'],
-                        runId=os.environ['GITHUB_RUN_ID'], runAttempt=os.environ['GITHUB_RUN_ATTEMPT'], browsers={})
-          for channel in channels:
-              manifest = Path('website') / channel / 'build.json'
-              if manifest.exists():
-                  record['browsers'][channel] = json.loads(manifest.read_text())
+          record = dict(websiteSourceCommit=os.environ['DEPLOY_SHA'], websiteRequestCommit=os.environ['REQUEST_SHA'],
+                        channel=os.environ['DEPLOY_CHANNEL'], runId=os.environ['GITHUB_RUN_ID'],
+                        runAttempt=os.environ['GITHUB_RUN_ATTEMPT'], browsers={})
+          if record['channel'] == 'staging':
+              request = json.loads((Path(os.environ['RUNNER_TEMP']) / 'staging-browser.json').read_text())
+              record['stagingRequest'] = request
+              with open(os.environ['GITHUB_ENV'], 'a') as stream:
+                  stream.write('STAGING_BROWSER_SHA=' + request['browserArchiveSha256'] + '\n')
+          else:
+              record['browsers']['play'] = json.loads(Path('website/play/build.json').read_text())
           (Path(os.environ['RUNNER_TEMP']) / 'deployment-inputs.json').write_text(json.dumps(record, indent=2) + '\n')
           PY
       - name: Persist frozen deployment/recovery inputs
@@ -97,16 +119,39 @@ jobs:
           path: ${{ runner.temp }}/deployment-inputs.json
           if-no-files-found: error
           retention-days: 90
+      - name: Restore the verified frozen staging publication outside Git
+        if: env.DEPLOY_CHANNEL == 'staging'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          INPUTS="$RUNNER_TEMP/play-transfer/staging-inputs"
+          python3 deploy/install-staging-artifact.py fetch --request "$RUNNER_TEMP/staging-browser.json" \
+            --inputs "$INPUTS" --website-revision "$DEPLOY_SHA"
+          mkdir -p "$RUNNER_TEMP/staging-site/website"
+          python3 deploy/install-staging-artifact.py prepare --inputs "$INPUTS" --repository . \
+            --website "$RUNNER_TEMP/staging-site/website" --website-revision "$DEPLOY_SHA" \
+            > "$RUNNER_TEMP/staging-preparation.json"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path(os.environ['RUNNER_TEMP']) / 'deployment-inputs.json'
+          record = json.loads(path.read_text())
+          record['browsers']['play-staging'] = json.loads((Path(os.environ['STAGING_PLAY_ROOT']) / 'build.json').read_text())
+          path.write_text(json.dumps(record, indent=2) + '\n')
+          PY
 
       - name: Validate browser security policy
+        if: env.DEPLOY_CHANNEL != 'staging'
         run: |
           python3 deploy/check-web-security.py
-          if [ -f website/play-staging/build.json ]; then python3 deploy/check-web-security.py --play-root website/play-staging; fi
+          python3 deploy/test-staging-artifact.py
           python3 deploy/test-web-sync.py
           python3 deploy/test-play-transfer.py
           python3 deploy/test-play-parts.py
 
       - name: Validate metaserver PHP
+        if: env.DEPLOY_CHANNEL != 'staging'
         run: |
           php -l metaserver/metaserver.php
           php -l metaserver/analytics.php
@@ -140,7 +185,11 @@ jobs:
       - name: Join selected browser channels
         run: |
           if [ "$DEPLOY_CHANNEL" != staging ]; then python3 deploy/play_parts.py website/play --keep-parts; fi
-          if [ -f website/play-staging/build.json ]; then python3 deploy/play_parts.py website/play-staging --keep-parts; fi
+      - name: Validate the isolated staging delivery contract
+        if: env.DEPLOY_CHANNEL == 'staging'
+        run: |
+          python3 deploy/test-staging-artifact.py
+          php -l deploy/p2p-staging-entry.php
       - name: Restore stable compressed browser files
         if: env.DEPLOY_CHANNEL != 'staging'
         id: play-transfer-cache
@@ -149,19 +198,26 @@ jobs:
           path: ${{ runner.temp }}/play-transfer/play
           key: play-brotli-v2-${{ runner.os }}-${{ hashFiles('website/play/build.json', 'deploy/prepare-play-transfer.mjs') }}
       - name: Restore staging compressed browser files
-        if: hashFiles('website/play-staging/build.json') != ''
+        if: env.DEPLOY_CHANNEL == 'staging'
         id: staging-transfer-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ${{ runner.temp }}/play-transfer/play-staging
-          key: play-staging-brotli-v2-${{ runner.os }}-${{ hashFiles('website/play-staging/build.json', 'deploy/prepare-play-transfer.mjs') }}
+          key: play-staging-brotli-v3-${{ runner.os }}-${{ env.STAGING_BROWSER_SHA }}-${{ hashFiles('deploy/prepare-play-transfer.mjs') }}
       - name: Compress stable browser files only when their bytes change
         if: env.DEPLOY_CHANNEL != 'staging' && steps.play-transfer-cache.outputs.cache-hit != 'true'
         run: node deploy/prepare-play-transfer.mjs website/play "$RUNNER_TEMP/play-transfer/play"
       - name: Compress staging browser files in an independent cache
-        if: hashFiles('website/play-staging/build.json') != '' && steps.staging-transfer-cache.outputs.cache-hit != 'true'
-        run: node deploy/prepare-play-transfer.mjs website/play-staging "$RUNNER_TEMP/play-transfer/play-staging"
+        if: env.DEPLOY_CHANNEL == 'staging' && steps.staging-transfer-cache.outputs.cache-hit != 'true'
+        run: node deploy/prepare-play-transfer.mjs "$STAGING_PLAY_ROOT" "$RUNNER_TEMP/play-transfer/play-staging"
+      - name: Preserve compressed staging bytes before attempting deployment
+        if: env.DEPLOY_CHANNEL == 'staging' && steps.staging-transfer-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/play-transfer/play-staging
+          key: ${{ steps.staging-transfer-cache.outputs.cache-primary-key }}
       - name: Test matchmaking service
+        if: env.DEPLOY_CHANNEL != 'staging'
         run: |
           npm ci --prefix matchmaking-service --ignore-scripts
           npm test --prefix matchmaking-service
@@ -205,6 +261,10 @@ jobs:
           if ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" true 2>/dev/null; then
             exit 0
           fi
+          if [ "$DEPLOY_CHANNEL" = staging ]; then
+            echo '::error::Staging requires the existing restricted deploy account; no production bootstrap.'
+            exit 1
+          fi
 
           echo "Configuring the restricted deployment account and runtime dependencies..."
           scp "${SSH_ARGS[@]}" deploy/bootstrap-secure-deploy.sh /tmp/deploy_key.pub root@"$DROPLET_IP":/root/
@@ -241,8 +301,8 @@ jobs:
           set -euo pipefail
           transfer_root="$HOME/play-transfer-$DEPLOY_SHA-$DEPLOY_RUN_ID-$DEPLOY_RUN_ATTEMPT"
           trap 'rm -rf -- "$transfer_root"' EXIT
-          PLAY_TRANSFER_ROOT="$transfer_root" DEPLOY_REVISION="$DEPLOY_SHA" \
-            DEPLOY_CHANNEL="$DEPLOY_CHANNEL" DEPLOY_RUN_ID="$DEPLOY_RUN_ID" \
+          PLAY_TRANSFER_ROOT="$transfer_root" STAGING_INPUT_ROOT="$transfer_root/staging-inputs" \
+            DEPLOY_REVISION="$DEPLOY_SHA" DEPLOY_CHANNEL="$DEPLOY_CHANNEL" DEPLOY_RUN_ID="$DEPLOY_RUN_ID" \
             bash /home/dunelegacy-deploy/deploy-release.sh
           DEPLOY_FROZEN
           } | ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" bash -se
@@ -325,6 +385,10 @@ jobs:
           path: |
             ${{ runner.temp }}/deployment-inputs.json
             ${{ runner.temp }}/observed-live.json
+            ${{ runner.temp }}/staging-browser.json
+            ${{ runner.temp }}/staging-preparation.json
+            ${{ runner.temp }}/play-transfer/staging-inputs/publication-inputs.json
+            ${{ runner.temp }}/play-transfer/staging-inputs/release.json
           if-no-files-found: warn
           retention-days: 90
       - name: Remove deployment credential

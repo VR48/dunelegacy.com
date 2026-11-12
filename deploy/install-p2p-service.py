@@ -15,7 +15,7 @@ import tempfile
 
 def install(source: Path, target: Path, group: str | None = None, *,
             base_path: str = "/p2p", game_protocol: int = 0) -> str:
-    if base_path != "/p2p" and not re.fullmatch(r"/play-test-[a-z0-9-]{1,80}/p2p", base_path):
+    if base_path not in ("/p2p", "/play-staging/p2p") and not re.fullmatch(r"/play-test-[a-z0-9-]{1,80}/p2p", base_path):
         raise ValueError("Invalid signaling base path")
     if not isinstance(game_protocol, int) or not 0 <= game_protocol <= 65535:
         raise ValueError("Invalid game protocol")
