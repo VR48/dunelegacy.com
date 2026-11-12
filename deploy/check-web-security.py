@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from html.parser import HTMLParser
@@ -61,7 +62,12 @@ def require_tokens(path: Path, tokens: tuple[str, ...]) -> list[str]:
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
     website = repo_root / "website"
-    play = website / "play"
+    args = argparse.ArgumentParser(description=__doc__)
+    args.add_argument("--play", type=Path, default=website / "play")
+    play = args.parse_args().play.resolve()
+    if play.parent != website.resolve() or play.name not in ("play", "play-staging"):
+        raise ValueError("Browser validation requires this website's play or play-staging directory")
+    label = play.relative_to(repo_root).as_posix()
     errors: list[str] = []
 
     errors.extend(require_tokens(website / ".htaccess", (
@@ -92,7 +98,7 @@ def main() -> int:
     errors.extend(parser.errors)
     for token in ("default-src 'none'", "script-src 'self' 'wasm-unsafe-eval'", "style-src 'self'"):
         if token not in parser.meta_csp:
-            errors.append(f"website/play/index.html: meta CSP is missing {token}")
+            errors.append(f"{label}/index.html: meta CSP is missing {token}")
 
     build = json.loads((play / "build.json").read_text(encoding="utf-8-sig"))
     required_artifacts = {
@@ -101,22 +107,22 @@ def main() -> int:
     }
     artifact_names = build.get("artifacts")
     if not isinstance(artifact_names, list):
-        errors.append("website/play/build.json: artifacts must be a list")
+        errors.append(f"{label}/build.json: artifacts must be a list")
         artifact_names = []
     else:
         missing = required_artifacts.difference(artifact_names)
         if missing:
-            errors.append(f"website/play/build.json: missing required artifacts: {sorted(missing)}")
+            errors.append(f"{label}/build.json: missing required artifacts: {sorted(missing)}")
 
     expected_hashes = build.get("sha256")
     if not isinstance(expected_hashes, dict) or not expected_hashes:
-        errors.append("website/play/build.json: missing artifact SHA-256 map")
+        errors.append(f"{label}/build.json: missing artifact SHA-256 map")
     else:
         for name in artifact_names:
             try:
                 parts = split_parts(play, build, name)
             except ValueError as error:
-                errors.append(f"website/play/build.json: {error}")
+                errors.append(f"{label}/build.json: {error}")
                 continue
             missing_files = [path.name for path in parts or [play / name] if not path.is_file()]
             if missing_files:
@@ -133,7 +139,7 @@ def main() -> int:
             print(f"- {error}", file=sys.stderr)
         return 1
 
-    print("Browser security policy and artifact hashes are valid.")
+    print(f"{label}: browser security policy and artifact hashes are valid.")
     return 0
 
 

@@ -18,6 +18,8 @@ def digest(path):
 def install(source, play, revision=None):
     if revision is not None and not re.fullmatch(r'[0-9a-f]{40}', revision):
         raise ValueError('Expected a full Git revision for the engine delivery URL')
+    if play.name not in ('play', 'play-staging'):
+        raise ValueError('Expected a stable play or isolated play-staging directory')
     manifest = json.loads((source / 'transfer.json').read_text())
     # Validate everything before copying anything. A concurrent release must not
     # pair an old compressed response with newer JavaScript or game data.
@@ -37,7 +39,7 @@ def install(source, play, revision=None):
     index = play / 'index.html'
     attributes = ''
     if revision:
-        engine_url = f'https://raw.githubusercontent.com/VR48/dunelegacy.com/{revision}/website/play/dunecity.wasm'
+        engine_url = f'https://raw.githubusercontent.com/VR48/dunelegacy.com/{revision}/website/{play.name}/dunecity.wasm'
         engine_hash = manifest['dunecity.wasm']['sourceSha256']
         attributes = f' data-engine-url="{engine_url}" data-engine-sha256="{engine_hash}"'
     html, count = re.subn(r'(?=<script\b[^>]*\bsrc=[\"\']?dunecity\.js(?:[?\"\'\s>]))',

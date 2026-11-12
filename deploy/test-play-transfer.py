@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import shutil
 import tempfile
 import unittest
 
@@ -68,6 +69,17 @@ class TransferTests(unittest.TestCase):
         html = (self.play / 'index.html').read_text()
         self.assertIn(f'/{revision}/website/play/dunecity.wasm', html)
         self.assertIn(self.manifest['dunecity.wasm']['sourceSha256'], html)
+
+    def test_staging_transfer_uses_its_own_engine_url_and_never_changes_stable_files(self):
+        staging = self.play.with_name('play-staging')
+        shutil.copytree(self.play, staging)
+        before = {path.name: path.read_bytes() for path in self.play.iterdir()}
+        revision = 'b' * 40
+        installer.install(self.source, staging, revision)
+        html = (staging / 'index.html').read_text()
+        self.assertIn(f'/{revision}/website/play-staging/dunecity.wasm', html)
+        self.assertNotIn(f'/{revision}/website/play/dunecity.wasm', html)
+        self.assertEqual({path.name: path.read_bytes() for path in self.play.iterdir()}, before)
 
     def test_invalid_revision_rejected(self):
         with self.assertRaisesRegex(ValueError, 'full Git revision'):

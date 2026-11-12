@@ -125,6 +125,44 @@ class WebSyncTests(unittest.TestCase):
             self.assertFalse((web_root / "retired.html").exists())
             self.assertEqual((web_root / ".well-known/acme-challenge/token").read_bytes(), b"acme")
 
+    def test_site_sync_preserves_staging_even_when_the_source_snapshot_omits_it(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            web_root = base / 'web'
+            channel = web_root / 'play-staging'
+            channel.mkdir(parents=True)
+            (channel / 'build.json').write_bytes(b'qualified staging manifest')
+            (channel / 'dunecity.wasm').write_bytes(b'qualified staging engine')
+            source = self.stage(base, 'site', {'index.html': (b'new website prose', NEW_MTIME)})
+            self.deploy(source, web_root)
+            self.assertEqual((channel / 'build.json').read_bytes(), b'qualified staging manifest')
+            self.assertEqual((channel / 'dunecity.wasm').read_bytes(), b'qualified staging engine')
+            self.assertEqual((web_root / 'index.html').read_bytes(), b'new website prose')
+
+    def test_explicit_staging_sync_updates_only_its_channel(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            web_root = base / 'web'
+            stable = web_root / 'play'
+            staging = web_root / 'play-staging'
+            stable.mkdir(parents=True)
+            staging.mkdir()
+            (stable / 'build.json').write_bytes(b'published stable manifest')
+            (stable / 'dunecity.wasm').write_bytes(b'published stable engine')
+            (web_root / 'index.html').write_bytes(b'published stable website')
+            (staging / 'obsolete.js').write_bytes(b'old staging only')
+            source = self.stage(base, 'staging', {
+                'build.json': (b'new staging manifest', NEW_MTIME),
+                'dunecity.wasm': (b'new staging engine', NEW_MTIME),
+            })
+            self.deploy(source, staging)
+            self.assertEqual((staging / 'build.json').read_bytes(), b'new staging manifest')
+            self.assertEqual((staging / 'dunecity.wasm').read_bytes(), b'new staging engine')
+            self.assertFalse((staging / 'obsolete.js').exists())
+            self.assertEqual((stable / 'build.json').read_bytes(), b'published stable manifest')
+            self.assertEqual((stable / 'dunecity.wasm').read_bytes(), b'published stable engine')
+            self.assertEqual((web_root / 'index.html').read_bytes(), b'published stable website')
+
 
 if __name__ == "__main__":
     unittest.main()
