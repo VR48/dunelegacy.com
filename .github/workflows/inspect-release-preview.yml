@@ -1,0 +1,78 @@
+name: Inspect release preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_name:
+        description: 'Immutable play-test name'
+        type: string
+        required: true
+      source_commit:
+        description: 'Matching full game source SHA'
+        type: string
+        required: true
+      room_log_id:
+        description: 'Optional own direct-preview room log ID, never an invitation or session token'
+        type: string
+      since:
+        description: 'Own-run UTC start, Unix seconds (within past 24 hours)'
+        type: string
+        required: true
+      until:
+        description: 'Own-run UTC end, Unix seconds (maximum one-hour window)'
+        type: string
+        required: true
+      outage_seconds:
+        description: '0 is read-only; 60 requests self-expiring outage of the OWN preview only'
+        type: choice
+        options: ['0', '60']
+        default: '0'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dunelegacy-production
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Read scoped service evidence or request bounded preview-only outage
+        env:
+          DROPLET_IP: ${{ secrets.METASERVER_DROPLET_IP }}
+          SSH_PRIVATE_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.METASERVER_SSH_KNOWN_HOSTS }}
+          PREVIEW_NAME: ${{ inputs.preview_name }}
+          SOURCE: ${{ inputs.source_commit }}
+          ROOM: ${{ inputs.room_log_id }}
+          SINCE: ${{ inputs.since }}
+          UNTIL: ${{ inputs.until }}
+          OUTAGE: ${{ inputs.outage_seconds }}
+        run: |
+          set -euo pipefail
+          [[ "$PREVIEW_NAME" =~ ^play-test-[a-z0-9-]{1,80}$ ]]
+          [[ "$SOURCE" =~ ^[0-9a-f]{40}$ ]]
+          [[ -z "$ROOM" || "$ROOM" =~ ^[A-Za-z0-9_-]{22,64}$ ]]
+          [[ "$SINCE" =~ ^[0-9]{10}$ && "$UNTIL" =~ ^[0-9]{10}$ ]]
+          [[ "$OUTAGE" == 0 || "$OUTAGE" == 60 ]]
+          [[ -n "$DROPLET_IP" && -n "$SSH_PRIVATE_KEY" && -n "$SSH_KNOWN_HOSTS" ]]
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
+          ssh-keygen -F "$DROPLET_IP" -f ~/.ssh/known_hosts >/dev/null
+          SSH_ARGS=(-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes)
+          scp "${SSH_ARGS[@]}" deploy/inspect-release-preview.py \
+            "dunelegacy-deploy@$DROPLET_IP:inspect-release-preview.py"
+          ssh "${SSH_ARGS[@]}" "dunelegacy-deploy@$DROPLET_IP" \
+            "python3 /home/dunelegacy-deploy/inspect-release-preview.py --name '$PREVIEW_NAME' --source '$SOURCE' --room '$ROOM' --since '$SINCE' --until '$UNTIL' --outage-seconds '$OUTAGE'" \
+            | tee release-service-evidence.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-service-evidence-${{ github.run_id }}
+          path: release-service-evidence.json
+          if-no-files-found: error

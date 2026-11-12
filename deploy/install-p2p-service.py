@@ -13,7 +13,12 @@ import subprocess
 import tempfile
 
 
-def install(source: Path, target: Path, group: str | None = None) -> str:
+def install(source: Path, target: Path, group: str | None = None, *,
+            base_path: str = "/p2p", game_protocol: int = 0) -> str:
+    if base_path != "/p2p" and not re.fullmatch(r"/play-test-[a-z0-9-]{1,80}/p2p", base_path):
+        raise ValueError("Invalid signaling base path")
+    if not isinstance(game_protocol, int) or not 0 <= game_protocol <= 65535:
+        raise ValueError("Invalid game protocol")
     source = source.resolve(strict=True)
     manifest_bytes = (source / "SOURCE.json").read_bytes()
     manifest = json.loads(manifest_bytes)
@@ -55,15 +60,17 @@ def install(source: Path, target: Path, group: str | None = None) -> str:
         raise ValueError("Configuration must not be a symlink")
     if not config.exists():
         state = str(target / "run/state").replace("\\", "\\\\").replace("'", "\\'")
+        origins = ("'https://dunelegacy.com', 'https://www.dunelegacy.com'"
+                   if base_path == "/p2p" else "'https://dunelegacy.com'")
         with config.open("x") as handle:
             handle.write("<?php\nreturn [\n"
                          f"'state_dir' => '{state}',\n"
-                         "'public_base_url' => 'https://dunelegacy.com/p2p',\n"
-                         "'base_path' => '/p2p',\n"
-                         "'allowed_origins' => ['https://dunelegacy.com', 'https://www.dunelegacy.com'],\n"
+                         f"'public_base_url' => 'https://dunelegacy.com{base_path}',\n"
+                         f"'base_path' => '{base_path}',\n"
+                         f"'allowed_origins' => [{origins}],\n"
                          "'ice_servers' => ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'],\n"
                          "'allow_plaintext_loopback' => false,\n"
-                         "'app' => 'dunecity', 'required_game_protocol' => 0,\n"
+                         f"'app' => 'dunecity', 'required_game_protocol' => {game_protocol},\n"
                          "'analytics_enabled' => true, 'log_enabled' => true,\n];\n")
         mode(config, 0o640)
     subprocess.run(["php", "-l", str(config)], check=True, capture_output=True)
@@ -95,6 +102,10 @@ if __name__ == "__main__":
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--target", type=Path, default=Path("/var/www/data/dunecity-p2p"))
     parser.add_argument("--group")
+    parser.add_argument("--base-path", default="/p2p")
+    parser.add_argument("--game-protocol", type=int, default=0)
     args = parser.parse_args()
     os.umask(0o027)
-    print("Installed signaling source " + install(args.source, args.target, args.group))
+    print("Installed signaling source " + install(
+        args.source, args.target, args.group,
+        base_path=args.base_path, game_protocol=args.game_protocol))
