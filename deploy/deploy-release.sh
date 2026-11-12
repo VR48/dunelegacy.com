@@ -24,6 +24,12 @@ git -C "$REPOSITORY_ROOT" archive origin/main p2p-service deploy \
 python3 "$PRIVATE_STAGING/deploy/play_parts.py" "$STAGING_ROOT/play"
 
 python3 "$REPOSITORY_ROOT/deploy/check-web-security.py"
+if [[ -f "$PRIVATE_STAGING/deploy/release-preview.json" ]]; then
+    git -C "$REPOSITORY_ROOT" archive origin/main p2p-preview \
+        | tar -x -C "$PRIVATE_STAGING"
+    python3 "$PRIVATE_STAGING/deploy/install-release-preview.py" \
+        --repository "$PRIVATE_STAGING" --website "$STAGING_ROOT" --group www-data
+fi
 python3 "$PRIVATE_STAGING/deploy/install-p2p-service.py" \
     --source "$PRIVATE_STAGING/p2p-service" --group www-data
 if [[ -n "${PLAY_TRANSFER_ROOT:-}" ]]; then

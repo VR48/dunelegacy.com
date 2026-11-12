@@ -32,6 +32,84 @@ and `python3 deploy/check-web-security.py`. After deployment, check
 browser/native participation rows. A successful health check does not establish
 gameplay or Internet NAT reachability; verify those in actual matches.
 
+## Committed release preview
+
+The optional `deploy/release-preview.json` enables one isolated, source-pinned preview
+through the existing **Deploy to Droplet** job. It does not replace `website/play`,
+the production `p2p-service`, or the production `/p2p` entrypoint. There is no preview
+daemon and no new key. Do not upload an untracked preview into the webroot: the next
+ordinary/hourly `rsync --delete` removes it.
+
+After the integrator freezes the candidate, commit all three together:
+
+- Browser package at `website/play-test-865-249aa55e5/`, produced from the exact
+  candidate with the normal game `scripts/package-web.py` and production signaling
+  origin. Keep split data parts in Git; deployment joins them before serving.
+- Matching generated `scripts/package-p2p-service.py` output at `p2p-preview/`.
+  Run the generator under the workspace coordinator; never handcraft `SOURCE.json`.
+- `deploy/release-preview.json` with `path: "play-test-865-249aa55e5"`,
+  `sourceCommit: "249aa55e5e2d0935c25ec4279fd4e3d7621fb949"`, `version: "1.0.865"`
+  and `gameProtocol: 122`. Copy `deploy/p2p-preview-entry.php` unchanged into the
+  browser package's `p2p/index.php`; copy matching service routes into `p2p/.htaccess`.
+  Narrow the preview's Apache CSP `connect-src` to
+  `https://dunelegacy.com/play-test-865-249aa55e5/ https://api.github.com https://raw.githubusercontent.com`
+  (no `'self'` or production-root origin). The header intersects the packaged meta
+  CSP, so the unchanged shell cannot post match summaries to production `/metaserver`.
+  The installer rejects broader preview connection policy; verify the live header.
+
+These are the 1.0.865 candidate identities, not permission to publish another pin.
+Future candidates must use their own immutable source-prefixed path. The installer
+rejects browser/service/version/routing/entrypoint drift, validates the browser CSP
+and all artifact hashes, and uses the existing service manifest verifier/PHP lint.
+
+The private preview root is `/var/www/data/dunecity-p2p-previews/<preview-name>`.
+Its preserved `config.php` points only to its own `run/state`, exact public TLS base
+path, candidate protocol, the production Google STUN pair and exact
+`https://dunelegacy.com` origin. Trusted schema-3 lifecycle events go to its own
+`run/games.sqlite`; they are not HMAC relay delivery or observed gameplay packets.
+Preview lobbies do not post Discord notifications or named production activity.
+The existing `DUNECITY_USERDIR` runtime setting also opts isolated native/browser
+test profiles out of match-summary reporting. Native probes already set it;
+browser harnesses must set their own startup environment before game initialization
+if using that opt-out. Do not claim the `?relay=` query alone disables analytics:
+it selects signaling, independently of the shell's absolute match-statistics URL.
+Ordinary deployments reinstall the same immutable snapshot and preserve all of this
+state; committed browser assets survive webroot synchronization.
+
+Before merge/deploy, report the exact diff, prior source and rollback to the release
+integrator and obtain the relevant GO. Run `python3 deploy/test-p2p-install.py`,
+`python3 deploy/test-release-preview.py` and the existing web-security workflow once
+after source editing finishes. With the package committed, also run
+`python3 deploy/install-release-preview.py --repository . --website website --validate-only`.
+Require successful deployment, live preview `build.json` source/hash checks and
+`/<preview-name>/p2p/v1/health` before actual public browser/native gameplay.
+
+**Inspect release preview** is an operator-only workflow using the existing pinned
+deployment SSH secret, without root/bootstrap fallback. It verifies installed
+preview source hashes and reads one own room selected by the exact observed
+wire `appVersion` and a narrow UTC window. Zero/multiple matching rooms are refused.
+The window uses Unix seconds, at most one hour within the past day. JSON artifacts omit
+tokens, invitation codes, SDP, ICE and addresses. It does not inspect or operate the
+legacy relay, read production analytics, invoke a launcher or stop a process.
+Supply the expected SHA-256 of the generator's exact `SOURCE.json` bytes as
+`service_snapshot`; source commit alone is not sufficient. Readback rejects private
+directory/database aliases, unexpected source files, a different immutable snapshot,
+and mismatched file hashes. No private room JSON, settings or credentials are read.
+
+There are no server-side fault controls, outage flags, process operations or public
+mutation endpoints in this mechanism. The browser harness may abort only its own
+signaling requests to exercise bounded browser recovery. Native public-outage
+coverage remains untested; existing native retry/failure tests are separate evidence.
+
+Rollback/retirement: after the evidence owner confirms matches are closed and logs
+are retained, remove the preview descriptor, its committed browser directory and
+`p2p-preview` in a reviewed PR. The ordinary deploy then removes only that public
+preview. Keep its private config/state/SQLite and operator evidence; never delete
+or restore production data. If only reverting the mechanism, remove the descriptor
+first so old deployments cannot strand a public entrypoint. Production source
+rollback remains the five-file manifest/source rollback described above.
+
+
 ## Discord announcements
 
 The entrypoint connects the trusted signaling notification hook to

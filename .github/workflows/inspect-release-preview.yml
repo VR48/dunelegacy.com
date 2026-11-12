@@ -1,0 +1,77 @@
+name: Inspect release preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_name:
+        description: 'Immutable play-test name'
+        type: string
+        required: true
+      source_commit:
+        description: 'Matching full game source SHA'
+        type: string
+        required: true
+      service_snapshot:
+        description: 'Expected SHA-256 of the generated signaling SOURCE.json bytes'
+        type: string
+        required: true
+      app_version:
+        description: 'Optional exact observed own-run appVersion; narrow UTC window must select exactly one room'
+        type: string
+      since:
+        description: 'Own-run UTC start, Unix seconds (within past 24 hours)'
+        type: string
+        required: true
+      until:
+        description: 'Own-run UTC end, Unix seconds (maximum one-hour window)'
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dunelegacy-production
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Read pinned preview and scoped own-room evidence
+        env:
+          DROPLET_IP: ${{ secrets.METASERVER_DROPLET_IP }}
+          SSH_PRIVATE_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.METASERVER_SSH_KNOWN_HOSTS }}
+          PREVIEW_NAME: ${{ inputs.preview_name }}
+          SOURCE: ${{ inputs.source_commit }}
+          SNAPSHOT: ${{ inputs.service_snapshot }}
+          APP_VERSION: ${{ inputs.app_version }}
+          SINCE: ${{ inputs.since }}
+          UNTIL: ${{ inputs.until }}
+        run: |
+          set -euo pipefail
+          [[ "$PREVIEW_NAME" =~ ^play-test-[a-z0-9-]{1,80}$ ]]
+          [[ "$SOURCE" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$SNAPSHOT" =~ ^[0-9a-f]{64}$ ]]
+          [[ -z "$APP_VERSION" || "$APP_VERSION" =~ ^[A-Za-z0-9._-]{1,32}$ ]]
+          [[ "$SINCE" =~ ^[0-9]{10}$ && "$UNTIL" =~ ^[0-9]{10}$ ]]
+          [[ -n "$DROPLET_IP" && -n "$SSH_PRIVATE_KEY" && -n "$SSH_KNOWN_HOSTS" ]]
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
+          ssh-keygen -F "$DROPLET_IP" -f ~/.ssh/known_hosts >/dev/null
+          SSH_ARGS=(-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes)
+          scp "${SSH_ARGS[@]}" deploy/inspect-release-preview.py \
+            "dunelegacy-deploy@$DROPLET_IP:inspect-release-preview.py"
+          ssh "${SSH_ARGS[@]}" "dunelegacy-deploy@$DROPLET_IP" \
+            "python3 /home/dunelegacy-deploy/inspect-release-preview.py --name '$PREVIEW_NAME' --source '$SOURCE' --snapshot '$SNAPSHOT' --app-version '$APP_VERSION' --since '$SINCE' --until '$UNTIL'" \
+            | tee release-service-evidence.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-service-evidence-${{ github.run_id }}
+          path: release-service-evidence.json
+          if-no-files-found: error
