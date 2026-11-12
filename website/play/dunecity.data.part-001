@@ -1,4 +1,754 @@
-pice Silo,256,1114
+rd
+IDCOOP025=Player2,Siege Tank,256,3483,64,Guard
+IDCOOP027=Player2,Special,256,3358,64,Guard
+IDCOOP026=Player2,Siege Tank,256,3292,64,Guard
+
+[STRUCTURES]
+GEN1589=Player3,Concrete
+GEN1525=Player3,Concrete
+GEN1524=Player3,Concrete
+GEN1461=Player3,Concrete
+GEN1395=Player3,Wall
+GEN1343=Player3,Wall
+GEN1342=Player3,Wall
+GEN1341=Player3,Wall
+GEN1340=Player3,Wall
+GEN1331=Player3,Wall
+GEN1279=Player3,Wall
+GEN1276=Player3,Wall
+GEN1267=Player3,Wall
+GEN1215=Player3,Wall
+GEN1212=Player3,Wall
+GEN1203=Player3,Wall
+GEN1151=Player3,Wall
+GEN1150=Player3,Concrete
+GEN1149=Player3,Concrete
+GEN1148=Player3,Concrete
+GEN1147=Player3,Concrete
+GEN1106=Player4,Wall
+GEN1105=Player4,Wall
+GEN1087=Player3,Wall
+GEN1083=Player3,Wall
+GEN1074=Player3,Concrete
+GEN1073=Player3,Concrete
+GEN1042=Player4,Wall
+GEN1023=Player3,Wall
+GEN1019=Player3,Wall
+GEN1012=Player3,Concrete
+GEN1008=Player3,Concrete
+GEN978=Player4,Wall
+GEN959=Player3,Wall
+GEN958=Player3,Wall
+GEN957=Player3,Wall
+GEN956=Player3,Wall
+GEN955=Player3,Wall
+GEN954=Player3,Wall
+GEN953=Player3,Wall
+GEN948=Player3,Concrete
+GEN944=Player3,Concrete
+GEN914=Player4,Wall
+GEN913=Player4,Concrete
+GEN894=Player3,Concrete
+GEN880=Player3,Concrete
+GEN850=Player4,Concrete
+GEN830=Player3,Concrete
+GEN817=Player3,Concrete
+GEN786=Player4,Concrete
+GEN766=Player3,Concrete
+GEN765=Player3,Wall
+GEN764=Player3,Wall
+GEN763=Player3,Wall
+GEN762=Player3,Wall
+GEN761=Player3,Wall
+GEN722=Player4,Concrete
+GEN721=Player4,Concrete
+GEN702=Player3,Concrete
+GEN688=Player5,Wall
+GEN687=Player5,Wall
+GEN686=Player5,Wall
+GEN665=Player4,Wall
+GEN664=Player4,Wall
+GEN663=Player4,Wall
+GEN662=Player4,Wall
+GEN658=Player4,Wall
+GEN657=Player4,Wall
+GEN656=Player4,Wall
+GEN655=Player4,Wall
+GEN638=Player3,Concrete
+GEN625=Player5,Concrete
+GEN622=Player5,Wall
+GEN611=Player5,Wall
+GEN610=Player5,Wall
+GEN609=Player5,Wall
+GEN601=Player4,Wall
+GEN598=Player4,Wall
+GEN597=Player4,Wall
+GEN596=Player4,Wall
+GEN595=Player4,Wall
+GEN594=Player4,Wall
+GEN591=Player4,Concrete
+GEN574=Player3,Concrete
+GEN561=Player5,Concrete
+GEN558=Player5,Wall
+GEN552=Player5,Wall
+GEN551=Player5,Wall
+GEN550=Player5,Concrete
+GEN548=Player5,Wall
+GEN547=Player5,Wall
+GEN546=Player5,Wall
+GEN545=Player5,Wall
+GEN544=Player5,Wall
+GEN537=Player4,Wall
+GEN534=Player4,Wall
+GEN533=Player4,Concrete
+GEN532=Player4,Wall
+GEN531=Player4,Concrete
+GEN530=Player4,Wall
+GEN527=Player4,Concrete
+GEN497=Player5,Concrete
+GEN496=Player5,Concrete
+GEN495=Player5,Concrete
+GEN494=Player5,Concrete
+GEN486=Player5,Concrete
+GEN485=Player5,Wall
+GEN484=Player5,Wall
+GEN483=Player5,Wall
+GEN482=Player5,Concrete
+GEN481=Player5,Wall
+GEN480=Player5,Wall
+GEN479=Player5,Wall
+GEN473=Player4,Wall
+GEN472=Player4,Concrete
+GEN434=Player5,Concrete
+GEN433=Player5,Concrete
+GEN432=Player5,Concrete
+GEN431=Player5,Concrete
+GEN430=Player5,Concrete
+GEN429=Player5,Concrete
+GEN428=Player5,Concrete
+GEN422=Player5,Concrete
+GEN421=Player5,Wall
+GEN420=Player5,Wall
+GEN416=Player5,Wall
+GEN415=Player5,Wall
+GEN372=Player5,Concrete
+GEN371=Player5,Concrete
+GEN370=Player5,Concrete
+GEN366=Player5,Wall
+GEN365=Player5,Wall
+GEN364=Player5,Wall
+GEN363=Player5,Wall
+GEN362=Player5,Wall
+GEN358=Player5,Concrete
+GEN357=Player5,Wall
+GEN356=Player5,Concrete
+GEN352=Player5,Concrete
+GEN351=Player5,Wall
+GEN342=Player4,Concrete
+GEN341=Player4,Concrete
+GEN334=Player4,Wall
+GEN333=Player4,Wall
+GEN332=Player4,Wall
+GEN331=Player4,Wall
+GEN330=Player4,Wall
+GEN329=Player4,Wall
+GEN328=Player4,Wall
+GEN327=Player4,Wall
+GEN326=Player4,Wall
+GEN314=Player5,Wall
+GEN313=Player5,Wall
+GEN312=Player5,Wall
+GEN311=Player5,Wall
+GEN310=Player5,Wall
+GEN309=Player5,Wall
+GEN308=Player5,Wall
+GEN302=Player5,Concrete
+GEN298=Player5,Concrete
+GEN293=Player5,Wall
+GEN292=Player5,Wall
+GEN288=Player5,Wall
+GEN287=Player5,Wall
+GEN277=Player4,Concrete
+GEN276=Player4,Concrete
+GEN275=Player4,Concrete
+GEN270=Player4,Wall
+GEN262=Player4,Wall
+GEN251=Player5,Wall
+GEN250=Player5,Wall
+GEN238=Player5,Concrete
+GEN234=Player5,Concrete
+GEN228=Player5,Wall
+GEN227=Player5,Wall
+GEN226=Player5,Wall
+GEN225=Player5,Wall
+GEN224=Player5,Wall
+GEN198=Player4,Wall
+GEN197=Player4,Wall
+GEN170=Player5,Concrete
+GEN165=Player5,Concrete
+GEN164=Player5,Concrete
+GEN106=Player5,Concrete
+GEN101=Player5,Concrete
+GEN100=Player5,Concrete
+GEN42=Player5,Wall
+ID022=Player5,Const Yard,256,122
+ID028=Player4,Const Yard,256,73
+ID056=Player4,Heavy Fctry,256,405
+ID055=Player3,Palace,256,881
+ID054=Player3,Refinery,256,1075
+ID053=Player4,Windtrap,256,976
+ID052=Player4,Turret,256,1169
+ID051=Player4,Turret,256,979
+ID050=Player4,R-Turret,256,1107
+ID049=Player3,R-Turret,256,1018
+ID048=Player3,Spice Silo,256,508
+ID047=Player3,Refinery,256,635
+ID046=Player3,Const Yard,256,1204
+ID045=Player3,Light Fctry,256,1332
+ID044=Player3,R-Turret,256,1588
+ID043=Player3,R-Turret,256,816
+ID042=Player3,Hi-Tech,256,827
+ID041=Player3,WOR,256,1213
+ID040=Player3,R-Turret,256,1405
+ID039=Player3,Light Fctry,256,825
+ID038=Player3,Heavy Fctry,256,1020
+ID037=Player4,R-Turret,256,392
+ID036=Player4,R-Turret,256,720
+ID035=Player4,R-Turret,256,729
+ID034=Player4,Windtrap,256,77
+ID033=Player3,R-Turret,256,1072
+ID032=Player4,Hi-Tech,256,203
+ID031=Player5,Repair,256,425
+ID030=Player4,Windtrap,256,199
+ID029=Player4,Spice Silo,256,75
+ID027=Player4,Refinery,256,70
+ID026=Player3,R-Turret,256,1211
+ID025=Player4,WOR,256,528
+ID024=Player4,Light Fctry,256,535
+ID023=Player4,Repair,256,399
+ID021=Player4,Palace,256,338
+ID020=Player1,Const Yard,256,3422
+ID019=Player5,R-Turret,256,307
+ID018=Player5,Windtrap,256,184
+ID017=Player5,Windtrap,256,182
+ID016=Player5,Windtrap,256,180
+ID015=Player4,Const Yard,256,201
+ID014=Player5,R-Turret,256,229
+ID013=Player5,R-Turret,256,223
+ID012=Player5,Hi-Tech,256,107
+ID011=Player5,Const Yard,256,98
+ID010=Player5,Refinery,256,95
+ID009=Player5,R-Turret,256,553
+ID008=Player5,R-Turret,256,689
+ID007=Player5,WOR,256,559
+ID006=Player5,WOR,256,423
+ID005=Player5,Heavy Fctry,256,235
+ID004=Player5,R-Turret,256,549
+ID003=Player5,R-Turret,256,612
+ID002=Player5,R-Turret,256,608
+ID001=Player5,R-Turret,256,543
+ID000=Player5,Palace,256,289
+
+[REINFORCEMENTS]
+1=Player5,Troopers,Enemybase,12+
+2=Player3,Siege Tank,Enemybase,12+
+3=Player5,Troopers,Enemybase,14+
+4=Player4,Siege Tank,Enemybase,14+
+5=Player3,Troopers,Enemybase,21+
+6=Player3,Special,Enemybase,21+
+7=Player1,Special,Homebase,13
+8=Player1,Launcher,Homebase,13
+9=Player1,Troopers,Homebase,22
+10=Player1,Siege Tank,Homebase,22
+11=Player1,Special,Homebase,22
+12=Player5,Troopers,Enemybase,30+
+13=Player5,Troopers,Enemybase,30+
+14=Player5,Troopers,Enemybase,30+
+15=Player5,Troopers,Enemybase,30+
+
+[Player2]
+Quota=2500
+Credits=1000
+Brain=Team 1
+MaxUnit=25
+
+[COOP_EXTRA_PLAYER3]
+Quota=2500
+Credits=1000
+Brain=Team 1
+MaxUnit=25
+
+[COOP_EXTRA_UNITS3]
+IDCOOP3MCV=Player2,MCV,256,3424,64,Guard
+IDCOOP3022=Player2,Special,256,3359,64,Guard
+IDCOOP3023=Player2,Siege Tank,256,3360,64,Guard
+IDCOOP3024=Player2,Siege Tank,256,3361,64,Guard
+IDCOOP3025=Player2,Siege Tank,256,3295,64,Guard
+IDCOOP3027=Player2,Special,256,3550,64,Guard
+IDCOOP3026=Player2,Siege Tank,256,3551,64,Guard
+
+[COOP_EXTRA_STRUCTURES3]
+
+[COOP_EXTRA_PLAYER4]
+Quota=2500
+Credits=1000
+Brain=Team 1
+MaxUnit=25
+
+[COOP_EXTRA_UNITS4]
+IDCOOP4MCV=Player2,MCV,256,3613,64,Guard
+IDCOOP4022=Player2,Special,256,3548,64,Guard
+IDCOOP4023=Player2,Siege Tank,256,3549,64,Guard
+IDCOOP4024=Player2,Siege Tank,256,3676,64,Guard
+IDCOOP4025=Player2,Siege Tank,256,3547,64,Guard
+IDCOOP4027=Player2,Special,256,3611,64,Guard
+IDCOOP4026=Player2,Siege Tank,256,3615,64,Guard
+
+[COOP_EXTRA_STRUCTURES4]
+
+[COOP_TEMPLATE]
+Schema=1
+Stage=9
+Mod=Jericho
+ParticipantCount=5
+SourceFaction=6
+OriginalMission=22
+SourceHouse=Wildspade
+SourceFile=mods/Jericho/campaign/scenw022.ini
+SourceSha256=de2a7e8b879deb6dca36941659e0a921bbe7d706d3aa6f9409efdfcaa81e6be7
+SourceHashNormalization=LF
+SharedQuota=0
+OriginalWinFlags=3
+OriginalLoseFlags=1
+OwnerCorrectionCount=0
+OwnerCorrectionHouseCount=0
+EnemyFaction1=8
+EnemyPresent1=1
+EnemyDeclared1=1
+EnemyDeferred1=0
+SourceOpponent1=Tharpique
+EnemyFaction2=2
+EnemyPresent2=1
+EnemyDeclared2=1
+EnemyDeferred2=0
+SourceOpponent2=Ordos
+EnemyFaction3=9
+EnemyPresent3=1
+EnemyDeclared3=1
+EnemyDeferred3=0
+SourceOpponent3=Neutral
+; Original campaign terrain and forces; cooperative starts only.
+[BASIC]
+LosePicture=LOSTBILD.WSA
+WinPicture=WIN1.WSA
+BriefPicture=HARVEST.WSA
+TimeOut=0
+MapScale=0
+CursorPos=1315
+TacticalPos=1300
+LoseFlags=4
+WinFlags=6
+TechLevel=1
+
+[MAP]
+Seed=332
+
+[Player1]
+Quota=1000
+Credits=1000
+Brain=Team 1
+MaxUnit=25
+
+[Player3]
+Quota=0
+Credits=0
+Brain=Team 2
+MaxUnit=25
+
+[UNITS]
+ID038=Player3,Trooper,256,1366,64,Ambush
+ID037=Player3,Raider Trike,256,1249,64,Ambush
+ID035=Player1,Quad,256,1436,64,Guard
+ID034=Player3,Raider Trike,256,1832,64,Ambush
+ID032=Player3,Quad,256,1644,64,Ambush
+ID031=Player1,Siege Tank,256,1816,224,Guard
+ID030=Player3,Quad,256,1936,64,Ambush
+ID028=Player3,Tank,256,1830,64,Ambush
+ID027=Player3,Soldier,256,2008,64,Ambush
+ID026=Player3,Raider Trike,256,2338,64,Ambush
+ID025=Player3,Quad,256,2456,64,Ambush
+ID024=Player3,Tank,256,2516,64,Area Guard
+ID023=Player3,Siege Tank,256,2719,64,Ambush
+ID022=Player3,Launcher,256,3906,64,Area Guard
+ID100=Player1,Tank,256,1561,64,Guard
+ID101=Player1,Tank,256,1562,64,Guard
+ID102=Player1,Troopers,256,1563,64,Guard
+ID103=Player1,Troopers,256,1625,64,Guard
+ID104=Player1,Troopers,256,1689,64,Guard
+ID105=Player1,Special,256,1496,64,Guard
+ID106=Player1,Special,256,1497,64,Guard
+ID200=Player3,Tank,256,770,64,Area Guard
+ID201=Player3,Trooper,256,3330,64,Area Guard
+ID202=Player3,Trooper,256,180,64,Area Guard
+ID203=Player3,Tank,256,3133,64,Area Guard
+ID204=Player3,Trooper,256,3932,64,Area Guard
+IDCOOPMCV=Player2,MCV,256,1754,64,Guard
+IDCOOP035=Player2,Quad,256,1753,64,Guard
+IDCOOP031=Player2,Siege Tank,256,1817,224,Guard
+IDCOOP100=Player2,Tank,256,1624,64,Guard
+IDCOOP101=Player2,Tank,256,1688,64,Guard
+IDCOOP102=Player2,Troopers,256,1752,64,Guard
+IDCOOP103=Player2,Troopers,256,1756,64,Guard
+IDCOOP104=Player2,Troopers,256,1820,64,Guard
+IDCOOP105=Player2,Special,256,1880,64,Guard
+IDCOOP106=Player2,Special,256,1881,64,Guard
+
+[STRUCTURES]
+ID000=Player1,Const Yard,256,1626
+ID001=Player1,WOR,256,1628
+IDCOOPWOR=Player2,WOR,256,1500
+
+[Player2]
+Quota=1000
+Credits=1000
+Brain=Team 1
+MaxUnit=25
+
+[Player4]
+Credits=0
+Quota=0
+MaxUnit=25
+Brain=Team 2
+
+[Player5]
+Credits=0
+Quota=0
+MaxUnit=25
+Brain=Team 2
+
+[COOP_EXTRA_PLAYER3]
+Quota=1000
+Credits=1000
+Brain=Team 1
+MaxUnit=25
+
+[COOP_EXTRA_UNITS3]
+IDCOOP3MCV=Player2,MCV,256,1757,64,Guard
+IDCOOP3035=Player2,Quad,256,1883,64,Guard
+IDCOOP3031=Player2,Siege Tank,256,1884,224,Guard
+IDCOOP3100=Player2,Tank,256,1885,64,Guard
+IDCOOP3101=Player2,Tank,256,1886,64,Guard
+IDCOOP3102=Player2,Troopers,256,1759,64,Guard
+IDCOOP3103=Player2,Troopers,256,1823,64,Guard
+IDCOOP3104=Player2,Troopers,256,1887,64,Guard
+IDCOOP3105=Player2,Special,256,1566,64,Guard
+IDCOOP3106=Player2,Special,256,1882,64,Guard
+
+[COOP_EXTRA_STRUCTURES3]
+IDCOOP3WOR=Player2,WOR,256,1630
+
+[COOP_EXTRA_PLAYER4]
+Quota=1000
+Credits=1000
+Brain=Team 1
+MaxUnit=25
+
+[COOP_EXTRA_UNITS4]
+IDCOOP4MCV=Player2,MCV,256,1750,64,Guard
+IDCOOP4035=Player2,Quad,256,1687,64,Guard
+IDCOOP4031=Player2,Siege Tank,256,1686,224,Guard
+IDCOOP4100=Player2,Tank,256,1685,64,Guard
+IDCOOP4101=Player2,Tank,256,1749,64,Guard
+IDCOOP4102=Player2,Troopers,256,1813,64,Guard
+IDCOOP4103=Player2,Troopers,256,1623,64,Guard
+IDCOOP4104=Player2,Troopers,256,1622,64,Guard
+IDCOOP4105=Player2,Special,256,1878,64,Guard
+IDCOOP4106=Player2,Special,256,1879,64,Guard
+
+[COOP_EXTRA_STRUCTURES4]
+IDCOOP4WOR=Player2,WOR,256,1696
+
+[COOP_TEMPLATE]
+Schema=1
+Stage=1
+Mod=Jericho
+ParticipantCount=5
+SourceFaction=7
+OriginalMission=1
+SourceHouse=Kleshmersh
+SourceFile=mods/Jericho/campaign/scenk001.ini
+SourceSha256=523181358cf3b37240de2ee4369077b9af44a416671b25db3a33832db0827cd2
+SourceHashNormalization=LF
+SharedQuota=2000
+OriginalWinFlags=6
+OriginalLoseFlags=4
+OwnerCorrectionCount=0
+OwnerCorrectionHouseCount=0
+EnemyFaction1=0
+EnemyPresent1=1
+EnemyDeclared1=1
+EnemyDeferred1=0
+SourceOpponent1=Harkonnen
+EnemyFaction2=-1
+EnemyPresent2=0
+EnemyDeclared2=0
+EnemyDeferred2=0
+SourceOpponent2=Fremen
+EnemyFaction3=-1
+EnemyPresent3=0
+EnemyDeclared3=0
+EnemyDeferred3=0
+SourceOpponent3=Rebels
+; Original campaign terrain and forces; cooperative starts only.
+[BASIC]
+LosePicture=LOSTVEHC.WSA
+WinPicture=WIN2.WSA
+BriefPicture=HEADQRTS.WSA
+TimeOut=0
+MapScale=1
+CursorPos=1376
+TacticalPos=1113
+LoseFlags=5
+WinFlags=23
+TechLevel=2
+
+[MAP]
+Bloom=1431
+Seed=173
+
+[Player1]
+Quota=2700
+Credits=1200
+Brain=Team 1
+MaxUnit=25
+
+[Player3]
+Quota=0
+Credits=100
+Brain=Team 2
+MaxUnit=25
+
+[TEAMS]
+1=Player3,Normal,Foot,2,4
+2=Player3,Normal,Foot,3,5
+3=Player3,Normal,Foot,3,4
+4=Player3,Normal,Foot,2,4
+5=Player3,Normal,Foot,2,4
+
+[UNITS]
+ID022=Player3,Infantry,256,2917,64,Ambush
+ID023=Player3,Trike,256,2795,64,Ambush
+ID025=Player3,Quad,256,2658,64,Area Guard
+ID024=Player3,Infantry,256,2723,64,Area Guard
+ID026=Player3,Trike,256,2538,64,Area Guard
+ID027=Player3,Trike,256,2408,64,Area Guard
+ID029=Player3,Trike,256,2340,64,Area Guard
+ID028=Player3,Infantry,256,2411,64,Ambush
+ID031=Player3,Infantry,256,2342,64,Area Guard
+ID030=Player3,Infantry,256,2332,64,Ambush
+ID032=Player3,Infantry,256,2274,64,Ambush
+ID033=Player1,Quad,256,1570,64,Guard
+ID034=Player1,Quad,256,1502,64,Guard
+ID035=Player1,Trooper,256,1443,64,Guard
+ID038=Player1,Quad,256,1310,64,Guard
+ID037=Player1,Quad,256,1315,64,Guard
+ID036=Player1,Trooper,256,1381,64,Guard
+ID039=Player1,Trooper,256,1248,64,Guard
+IDCOOPMCV=Player2,MCV,256,1374,64,Guard
+IDCOOP033=Player2,Quad,256,1311,64,Guard
+IDCOOP034=Player2,Quad,256,1309,64,Guard
+IDCOOP035=Player2,Trooper,256,1373,64,Guard
+IDCOOP038=Player2,Quad,256,1437,64,Guard
+IDCOOP037=Player2,Quad,256,1312,64,Guard
+IDCOOP036=Player2,Trooper,256,1246,64,Guard
+IDCOOP039=Player2,Trooper,256,1247,64,Guard
+
+[STRUCTURES]
+GEN2727=Player3,Concrete
+GEN2726=Player3,Concrete
+GEN2600=Player3,Concrete
+GEN2595=Player3,Concrete
+GEN2535=Player3,Concrete
+ID005=Player3,Const Yard,256,2664
+ID004=Player3,Barracks,256,2598
+ID003=Player3,Windtrap,256,2596
+ID007=Player3,Refinery,256,2791
+ID002=Player3,Outpost,256,2469
+ID001=Player3,Spice Silo,256,2467
+ID000=Player1,Const Yard,256,1376
+
+[Player2]
+Quota=2700
+Credits=1200
+Brain=Team 1
+MaxUnit=25
+
+[Player4]
+Credits=0
+Quota=0
+MaxUnit=25
+Brain=Team 2
+
+[Player5]
+Credits=0
+Quota=0
+MaxUnit=25
+Brain=Team 2
+
+[COOP_EXTRA_PLAYER3]
+Quota=2700
+Credits=1200
+Brain=Team 1
+MaxUnit=25
+
+[COOP_EXTRA_UNITS3]
+IDCOOP3MCV=Player2,MCV,256,1504,64,Guard
+IDCOOP3033=Player2,Quad,256,1503,64,Guard
+IDCOOP3034=Player2,Quad,256,1567,64,Guard
+IDCOOP3035=Player2,Trooper,256,1378,64,Guard
+IDCOOP3038=Player2,Quad,256,1442,64,Guard
+IDCOOP3037=Player2,Quad,256,1506,64,Guard
+IDCOOP3036=Player2,Trooper,256,1566,64,Guard
+IDCOOP3039=Player2,Trooper,256,1630,64,Guard
+
+[COOP_EXTRA_STRUCTURES3]
+
+[COOP_EXTRA_PLAYER4]
+Quota=2700
+Credits=1200
+Brain=Team 1
+MaxUnit=25
+
+[COOP_EXTRA_UNITS4]
+IDCOOP4MCV=Player2,MCV,256,1249,64,Guard
+IDCOOP4033=Player2,Quad,256,1184,64,Guard
+IDCOOP4034=Player2,Quad,256,1185,64,Guard
+IDCOOP4035=Player2,Trooper,256,1186,64,Guard
+IDCOOP4038=Player2,Quad,256,1183,64,Guard
+IDCOOP4037=Player2,Quad,256,1187,64,Guard
+IDCOOP4036=Player2,Trooper,256,1251,64,Guard
+IDCOOP4039=Player2,Trooper,256,1379,64,Guard
+
+[COOP_EXTRA_STRUCTURES4]
+
+[COOP_TEMPLATE]
+Schema=1
+Stage=2
+Mod=Jericho
+ParticipantCount=5
+SourceFaction=7
+OriginalMission=3
+SourceHouse=Kleshmersh
+SourceFile=mods/Jericho/campaign/scenk003.ini
+SourceSha256=56bd862926013a46d003603127d92c125e8d162e2a75c5dcbd3ed8f308f166a5
+SourceHashNormalization=LF
+SharedQuota=5400
+OriginalWinFlags=23
+OriginalLoseFlags=5
+OwnerCorrectionCount=0
+OwnerCorrectionHouseCount=0
+EnemyFaction1=0
+EnemyPresent1=1
+EnemyDeclared1=1
+EnemyDeferred1=0
+SourceOpponent1=Harkonnen
+EnemyFaction2=-1
+EnemyPresent2=0
+EnemyDeclared2=0
+EnemyDeferred2=0
+SourceOpponent2=Fremen
+EnemyFaction3=-1
+EnemyPresent3=0
+EnemyDeclared3=0
+EnemyDeferred3=0
+SourceOpponent3=Rebels
+; Original campaign terrain and forces; cooperative starts only.
+[BASIC]
+LosePicture=LOSTVEHC.WSA
+WinPicture=WIN2.WSA
+BriefPicture=HEADQRTS.WSA
+TimeOut=0
+MapScale=1
+CursorPos=2339
+TacticalPos=2012
+LoseFlags=5
+WinFlags=23
+TechLevel=2
+
+[MAP]
+Field=1564,2643
+Seed=182
+
+[Player1]
+Quota=2700
+Credits=1200
+Brain=Team 1
+MaxUnit=25
+
+[Player3]
+Quota=0
+Credits=100
+Brain=Team 2
+MaxUnit=25
+
+[TEAMS]
+1=Player3,Normal,Foot,2,4
+2=Player3,Normal,Foot,3,5
+3=Player3,Normal,Foot,3,4
+4=Player3,Normal,Foot,2,4
+5=Player3,Normal,Foot,2,4
+
+[UNITS]
+ID023=Player1,Quad,256,2464,64,Guard
+ID022=Player1,Trooper,256,2533,64,Guard
+ID024=Player1,Trooper,256,2406,64,Guard
+ID026=Player1,Quad,256,2278,64,Guard
+ID025=Player1,Quad,256,2273,64,Guard
+ID027=Player1,Trooper,256,2212,64,Guard
+ID028=Player3,Trike,256,1622,64,Area Guard
+ID029=Player3,Infantry,256,1560,64,Ambush
+ID031=Player3,Trike,256,1433,64,Area Guard
+ID030=Player3,Infantry,256,1493,64,Ambush
+ID032=Player3,Trike,256,1376,64,Area Guard
+ID033=Player3,Infantry,256,1370,64,Ambush
+ID037=Player3,Trike,256,1250,64,Ambush
+ID036=Player3,Trike,256,1243,64,Area Guard
+ID035=Player3,Infantry,256,1311,64,Area Guard
+ID034=Player3,Infantry,256,1308,64,Ambush
+ID038=Player3,Infantry,256,1184,64,Ambush
+IDCOOPMCV=Player2,MCV,256,2466,64,Guard
+IDCOOP023=Player2,Quad,256,2402,64,Guard
+IDCOOP022=Player2,Trooper,256,2401,64,Guard
+IDCOOP024=Player2,Trooper,256,2465,64,Guard
+IDCOOP026=Player2,Quad,256,2529,64,Guard
+IDCOOP025=Player2,Quad,256,2338,64,Guard
+IDCOOP027=Player2,Trooper,256,2337,64,Guard
+
+[STRUCTURES]
+GEN1495=Player3,Concrete
+GEN1494=Player3,Concrete
+GEN1432=Player3,Concrete
+GEN1429=Player3,Concrete
+GEN1369=Player3,Concrete
+GEN1368=Player3,Concrete
+GEN1365=Player3,Concrete
+GEN1310=Player3,Concrete
+GEN1309=Player3,Concrete
+GEN1308=Player3,Concrete
+GEN1307=Player3,Concrete
+GEN1304=Player3,Concrete
+GEN1303=Player3,Concrete
+GEN1302=Player3,Concrete
+GEN1247=Player3,Concrete
+GEN1243=Player3,Concrete
+GEN1238=Player3,Concrete
+GEN1183=Player3,Concrete
+GEN1177=Player3,Concrete
+GEN1118=Player3,Concrete
+ID006=Player3,Const Yard,256,1052
+ID005=Player3,Windtrap,256,1175
+ID004=Player3,Barracks,256,1366
+ID003=Player3,Spice Silo,256,1114
 ID002=Player3,Refinery,256,1180
 ID001=Player3,Outpost,256,1241
 ID000=Player1,Const Yard,256,2339
@@ -1080434,74 +1081184,4 @@ CD£„@—4YèRPô(81›¢¤"
 ÅÄoïÁYnºî6ö6<o`=D‹€vf8íõ‡qï­{<¸Ÿ{—måŞcpx„Û$Y³iÖjæövRŠ&IÓœŸß|Ïëùùw’[Ç#kÖò¬óNæw>È…Ï<İk œ%Ér:ûæ3:<PğÓ{Szº:pÂSU&†:!$Ï-eâÉ”Y=LÔÚOù]»wŞqF@mjŠj¹Bjµ¶áÆ;§«»Ÿw^ül~õÇ5)YÔ_fÏp²bŞ¼^vÓ`|¸Î3’9åbñuäŠ’ÔÔT°^u8\Öâóß¾…Ù½4ãŒ<·”C¿¶.P¢0tx—Qš9r›“gşÍ÷Í–Â €K=ÑhŸ(C %Íñ2@:o[ qY±¬,ÈŒî¬±í¢	ï›E’†(ÒQıH* 5y€j5d²•â„,2”-iæpÒ›H„´äÒoAÁXºw,ÚbJtøEX®x?õE&¢eèàwİı£ãS,ìïdí†-Ìî*óèº-œwÖ	E„G8¿øókøğë^Ïş]ÛÁeÜ|çŞ6@»	sçÏÃ[P´ ÿà}óßsù˜¹g\!¢”tT"¤›ä¥çÉ÷¿òF~ı‹?‘5ÇÙ;ó—Çv342I³•ÒÑiiµR:*8¨tt°ÿà'>—±Zƒz÷Ó¸bãÃh¬vˆÌaHVE¨1Âú,ÿ¼Èh'9AT&MSší„4Ë¨5À8QEJ@ø¥ÌIa†TE&®×6)EÚrJhÁ¢y³Hs¿{ 1”âŠ•}c¯,QúÙî¬à–r¨H…!;;BoÓ(åeaåJ‰JT8‰u‰\ÈªÕDZĞH|²×´	J8‡-XGç0ä[ÚäC)¥—v’t[²–Á:ZÑU‚8ÍÈ²Œ(,aeÄ#›vrö‰‡sõM÷qÄÊ%¬Ù´—e”Dêcô
 sËW¶¬cÕ7¨î]½“‡6ía·@çLÖêTJ%z{»ŸÚ–ªHŠ *‘PZ³bñlöõÅ|`Çülç£d¶Eg- §§›şÙ%,˜šªÓÓY¡\ª"¥ààDB12ÑÄ	Éµ¯¹‹E!é	E B"o×J^Ñ…´`“-¢XËœNÅ·û0ÕÎ®ş{:Rv:=Ü/Tö«i\‘=Í	È">ÖYo7ŸšªqÍå‡óğ¦1ŒuD¡"Ñd~QTëåë}>µÛqú!ó0»K÷²ûàãSuN8t>Qà¿v»•!¬—&ùUµŞóX	‹$D‘XâÑÍÖBEÇ¬Nì¯FQô
 LËg%öñğ&GIJó’óO ¬vò£_ŞÈUŸ7úÂ/8lù|.}ısag¡¤ö=Õér—Õ×ÑyJ+KoOqHµŸp©àœ“Vòó?>ÆàH;k˜Vø·½xX	ÆïÛñIÉÁS¼ì¾€×Ä+Ø˜`w)áíÊÑ&Cãm6nßÍ‡/áæû·‘ÃÈè(Arã]Y¶b)ÕîZí”Û×îÇÎäûš¨C* iì“½””;$N+*•Àçäé c £Û'r{[¹‡Ae‘-ìl‘R GRùécÚtâ3 ³úûY4¿‡6±{x×İ4ÈÌØD#Ç…¢[sÓMé¨VĞaÄšİ“äyF•Ø<0E»`í¦jõöLiËBéËˆ·Õy‡t ˆ·6Éc‚ÉEa‹¡à
-"	íÌ‘§,=dí±ƒè Ì¿#&Ï8bñ,&›‚ÚDa0“ğ~¸êåÕ¹<ë?N£ÙJ¹ô3¿aè`XÏïbNgî~õgÂŸ")tàÊËßtü	ŸRÂ‘¤~ŒSC½>Á¶'~ÃŞ‡îbêŒÍ¶á5ú!xtÕj™¡á1*•ı+Ïâä•ë¸³·›îî.<âPjµ™˜šò‡,,açh8ĞÆ<<åg2-‘Z‘çPÛ•¶ïl“,'Í•ªOÆÈ­À$©?ÆapOş½±OBYÖÚ³‚….pÚ–e-¡\©2vo·'Æh	m¿Ì! 1‹+œvê	ô÷ô`¬£·»Š
-BJ¥ûFØ€‘ñìš ãS±× ä‰q‚,5^àãÃuŸ@>îHßÙ˜„B%#¼‰53>ÔïŒ.iMj‚¹‹¹ú?ş	¡%z‹]#-õ—«Çh)=,+g+9vGëàÿöş¹ìß¯Ãæ~á—’’@&ê¯#şFN &Ğˆ›;&ÇÆxìşŸ±îöÛHS¿«~²Ñæë—½œ7|æç”+]dyNGG•;ıMîZ3€’W­äyç­¢Z©05>‰8tD_üálßİöALÂ¯1™Şág’”Î9ƒƒèénRÒQíğÁOÅS­¼U¨Èò¿¦©ßC4ã.­Oô²4óp¬öA×Õr•yZrá%li’·%“‚ù§/ö³Å*ÍšÕÍËŸ·œüòÏH%yhí>F&š´c?ñSˆ^KZ²}ƒ®*SÍ:„+,I#!ú®?Öå¨×õâ„A¬³„AH;NhŒ2ÚÌ‰¢ˆƒƒd™çIœ³ìÙ#8ùğ9dÓæïyß[Ø³Wø
-¬±Ìéïfx¬æSÍ¤œ±È=åI”0ÚhsÛuW°ï±;ŠÕ0xé,‡Ü½n=óX~zã£Q„VŠ[W°wÿ ãÜûĞãì,<²X}æC§ç-\Â¢e‡P9VlîŸÊ‘F†Ä1gÄ™óuĞ:o¾l•¼tÊzóèÌ†ĞÂèàY2ÏL§M[Şœµ”¢ˆ$ñıƒsÑÑ1t*ï^ê,Wüìí¦ƒ(aÍëf|Ó’·ıûúxóËßÎ¯ÿğR
-®üí#¤Y.´…µ‡87üæ·W°îÏàû¿}€¥YÓÂÛ»ƒ³XQşÎzmL|¤ü>DUÄå÷u•Xµ¼L†TŞ,¢	)Qâ¸EW¥Pü:ÁÆuëé*Y¬‹°ší˜ÑÉYffâp5¥§> ï^xéåÆİ0Ö:Öo?Hï’CØ³c-ÎX´
-É3ìtUCÚIF¨%½%Éd£ÉÖm;Ø;0Hœ$H‘²uëÖiÓ©¯Í…écÚ©‹˜Ş>÷\6‚oqÌ—»éíê`Ñœ²ç¬·„%©ß!h§7‹	1“àá3ı¶®V\D¡+æ¬5(­f¶”	çhÄãS:ª9w_–PNZúEGG!õ“Y…Å¨9-$A@Ül³{ïN<æPï.²)J
-V¯^ï<Æà¤ãÁûÁxYZG¤ã©#º:¿7“ŠÚ™!ª^HÔ8^xlãN&M¿Ùø$/Œ,Ó©ÿiš2ppŠCöcŒáëïá3¼”Šk³g`”ïşì>6°$èôÄZŠõ”@	A†CG%‚vâçñÉ­,ìŸ’¤™ßj1!Ù74Eog™œq(£õ6w®Y‡‚‰É)’$ñ3K l¡ıÅ<êÓºÂ@g9¿Xw×Üci5·ƒÉ9bI—÷Ã›œjĞAhÊe/Ñ…hÂ¯_‚€¤ÈzrKX±³ÜZÚqBÇŒO¶‰‚Yİ%–ÌíäêÇgsã–ıÃ½rZ{Ò”Î’±¯µ2:Ëš±Z›5®¾şq9|Ï<ãˆâFí»ö‘¤ÖyÖnb²Rêâûq^ğ‚…¾kcšä$¯éÆÕì§oœEHÏ!¼÷UgsŞ©+YyÄ2hQ¤šdÆâ„ôÊ`N\ñ[PJòë?¯ç”¾yìx|‚-;‡Y3~qÛd©èôÉhBÛ¿³3HŞ}oÍ*,ÒİséY5¶?±†mLÖêÜûèv¦jŞ-óØÎ1ò¸AI$|èÕ§3ZO©7½ªHPZæ¾Îcõa}—HheƒSìœìá»>ÄK¾_åÌc—1Ïí`E¼‹ysçğœ•#5œoÜ?› êámÇl¥§Còé»WŸº“y}ğÏ·.eQGƒ‹cª¥ùŞ#ı\rÊ$‹º¾vß\ZªÂú»~C{2gNß–/èeº€ï¾ì¼ø[e–Ìíbéœ2ÆJúº"*QÀ5Ê‘¢£¤©·sVïXÃê5kÙ¶s'&7D‘ÏL!Ï÷©¨JÑh&8áåkÆ	²$÷q·J©Q[¯B3 ä¥k%éH„§‰TÌÕÁØÈ$¹ñ$RÒj&TK¿™´ÒCã“´“”‹çÇÙÆurÑÆ¤1'†ó1¸™¥ßâïİ _İwååo?é¤O9cŠ=³œadÛ:¶íf×ŞQ6îgõÖÔñL=âæw4xõ5,×Ë²’8óBŒyı›öŒ£¥âĞE=ì:P£»»
-&.öò	„ÈùÖ%óõ_÷ †E³+<wqÊ‡nZÉ9+Çùè‹-_¿}6½ıóùîK62¿.üŞJ*¡à¾÷o#Í,ÏøÖÑHmùÕÛv²y°ÌÿxgŞäE'ğËÕ‹èìëáÏßJo”ğk¤5p~rÉ­|â'”/¬\¾°Åfqßãûè¨†œxØ”ÖÔëMúºsº££#ŒZ?ßô5mt ˆ¤#.öô	ù¥JÑÎ½Î@(˜8
-z±ŞkÁIA=ÍØ°¯~¡Ä¿¼üyÄqFîRŸ<bYù3ç“W­É0B{ IJFÇcş5;;ÔƒjœZG›vœùÜÛÈÉú \ºà—çöa”
-À¥ZrÕšky†›G–fìœdp¬^d%8¶¥“ôIÍàx›×İpc	AWG…??º‹œsQÏ|fÍ›‹“!““?vk7ícÅ’9íÙGËjœÉùà–s×Â`7B¼ò»’®ÊçŸ0Æ—oªpãÍÛOZÏÎ½†·Ş1‡á¤ÎU/ä>zËr,S\qá k¶HŞr]yº—÷­šàªÛº¸aKƒ/¼dˆ±¡„6ò¢sWpøâ9¼á»ítö3»¯“£9œ©É)yúR6ï¥»«D«Õfá¬2“-Ë¼ç9üûUä‰İ>Ó¿0Û•JUZINÛ
-dM{ŸÈrCµÓŠË|#:~qõÉäöªdA_/>ïH_1‹°T¦ä>2ÇyNÂä¾\‚ M>}Å-Œ6¡fœuü°mïAZßCETÄîNqÔ²¹3û˜ıÀ	Ğ>WN+É,#¦Æeë×ó¾p¹R
-Áêl‚¶È˜#Cú¥åªç¯ã‹7H¶íŸdù|Á²¥sÉ£^L;E© %5½}=$íÇ»’uk·rä’9l˜¤‘ÂàhÎ)=ÛùËD…ÙıÜ~ÕÛ0…€áoíè&nÕQJsõÊ€$NÛ,ĞšÛ^059‰ÔŞòı›3¼f0MÛ¼©\âÍ* §H,8³LH†ÇjŒ×ÛĞˆxÛ)«yİ÷z1ÂaòŒ®.n¿g=Ç®èe×àµä–ôi&'bŞúÒÓ©ÅŞN62Õ&Í,¿ùËf¤pÔ›m:E Ã"æÎO‘
-¨Î±Í«$¦ep9ø–.Ğ‚eËçS®~;«VäÎ/éEXò‰b©ñc=Œ_fùLçVÒ×U¥VosÍMrÒ‘K¨5b¶íÃ:Ç!Kû™^NnÿŞŞ@+CmŸ›—¥¤6çˆÎå<(vóÂÍ·2UOÀäHe¤ôæqfè¯FÜ¹EpóÎœãâœ»¦h9ØºgdD_W…©z“W=ÿ(R%É³œ#_ÂÆM»)…š3ëâŠëvr-ç-/>”S^TD L‡H	’$Æ…sŠZ½‰“šR`¬ğFI§Ö=iîqy¥Cš´• „ò‡iB©T¡\-3¹ˆW7ÅÍ·(	ÕRD½Ù¤Réä‚§Oc|œÆ®Qú»º;:È­c^’V“(PŒÔÇ,í%Ş4ÄÏş´…’”PÒ
-±ÎP
-B¶ß±hcSÊ‚Ö¸Èã¬zi•S8œC;qkIÒ”r)Ä:ÈÒ£|2ÆçV«%Â»FUŒ‰¢c–Î&Î3¶í$
-%Í‹{Y:·×7ÎNğmó…ËŸzmœ•Es‘R¼äğgrÇÚGV‘£&·Ì.u0?+q°VgkËñµÇ—±´k+RKNşô³ùê-7hÅ‰+{x`ËÕ¾€ç½ı®ÿêkHÅˆˆYÆ_ŞÎi§ÄoÎ=›Z£IXdŠ"KÏG¼øTQ¿5Ş§>ş,Ï2Ÿì ££B’d„¡_óâ—>z®Z­zÃE ¢„q‚(©T;ùØ7÷²ir.¥²av¨ˆvj)‘‘#9õØlÚ>ÈÑ‡õ3x`ŒíƒMJÌîî@Ê³û{Ù³„7?óŞôµ{q&&–Íï‡¼pÔÊy˜/pÒªÅ ¼æÑ¦–ÕëöP-G\zÜ‘„å2w<²PË"K  Ï3ûƒ³ÜH‘–ÔÚu¶\?FAk¡¥Öló·¿˜­ûüòÖyÓOg²òéo_ÏË.(Q®„8ïV»üJóo—ÿÍ[Š]Şy“f!">±òl^!Vğ›·1æXç­ÑÎR*¥ˆÈ~ùv¦Qv]å™~öŞg¼S*©Tš%KrI°ñq€&fpŒ	t !i3Y«Iwzá°`1“`îx5q€6fŠe»²°,É–,Y¥¡Õ|çsÏ°Ïîû”Bì¾¿î¯[«î9wŸ½¿ï{Ÿç5Çøë{}&ÛtN>ÆäÑEÜ>8K˜:ÒÄ’”j¸FÓÉ4Aà’‹/¿l¼ _Fx®:k-Ñ:·,GJ{&O²”0ğ=Q€¥lŞÍcrlôJc‡>‹&P†ôb›°Í3ËÑó*}.Ü1FÙ{'×tcjå*ëÖ"LNšY˜D¹RF`Ø±u˜ı‡&I2C­âÓ‹sëÒ›f|S?g–c¾ö«lä;MøÌ?í‘ù ‰>ÿÑ×2½Ğc¹ÓÃšS__ 4›šÅú2U_i’X½n/WAf¤í1'5	x‡Kº×!ÇĞhu9>ÛãÈL›¹z›‡Ø†W¹pğè4ÿàä‹·=Áo^üß^Œ¹o¶;En>§3õ,¢˜xRe<_plaÙr…~3İ+}üì$_¾j'z{“Ÿ}éişÓÇ6£”$é¤¶0br0Õšåÿü(—ìæ¼ÇÉÓ.Ø"“ëbò´Hü`ÏÃÆàºvàSIA90ÒÊ)¤ä×g9c
-É“§l–.c´kÅ‘ÂY¯P§á¸&‹¬qÎ–*I’pøù„
-RĞi·Ø:6€«ŸûÉANÌÕmeqÀ‚®'¹&=viïq~ÃpÕëm‰9YQ	‡j÷ÑKad¨Ä-·?L«c‰eÆ:‰å$©¶êŠê¦)ˆfÊFÉĞ5Wp#^?ì·eôZµL7:cŸ÷H$¶!v`bí9€ ñÀñlÖNIcRßcÿãûØ²yRvö,7“ç¤c!3ÇˆëÏì?E¥L/$ô$t–º¨Ğ¡1¢…¡%$½ˆc'8ÿ¢Øóè$õv—Àõ¸é¶»¹ëëF/‡œ\Øyü,·Ñ)Ç‘EnA „%_&™aw\‡$M‘²ªYS8‡Öì:pœ+¯8Ïú&J-€IˆáºÄI—¸Ûâøé%æ{}é’jÉPÿ(ïùì­ÔÜˆ÷üğµÜúƒÇ¬™ÓñH;KO6¯RQ¾B§q/åoä%ç®!É4$µ˜Ö‘”
-ß³}S³Z	Â~pÏ^ßgÓæM>üÛ·m!Nú9|ø9›¶<>|íe¤ôxğÕÓ„*$Üà[±åaH4”
-ZºÖ†v·¨%¼)TjÔL'x¾K(î¼ÿ(¿×èÙ#Ln
-¡‡!ÓĞmtP…2Š¤•"Aª3¾íê÷6¡!èÌ%z˜4ã©‰e^o|æê‹,×{ì=pçlFK®KxmSIU‹’ÉXa‡–KeRX<6,bBÅÆ±ĞÒ¿âªI²ÜÖë]%ìÛè!ğ$i®˜oÒvBZQJ¹äqâÈ	rñÜôF9ä™½ùŒ¶+ºGõœT‘Äš°âõö=7ëªbPCS)[¿‘V$÷2R?ÁUÖ”')óË	år™R2²jËKúûúlI[)Ê¥J*‚0`z¾ÎKw®ç3faœİ’ô—íªé]8.SGmIşæÛ~uêæŞ9¾ë“¶Îœ22Xã§¢ÙÕ\uşˆ-8(«bé¥	n–â¯4¦Ûlíz:S	”¼íıWpûÆCøÒ°å%cL=µHîç<ô—gÀw‰RkïöRFGG˜8=Í]w?Êƒû¦éæš/}ìM¸Já:Öúcƒ+¶1©\ºQï,@Z¹––•¥éYÃ¨ëzTúˆm#fcHz)¾RøA‰$îÒWĞyÎR³Kß†*õVNd¹¶§j©ŒÑãÛş>	i’#´@ô)¨ŠC¦Yb~xŒ•<tn¬Yaï2¦Øoå0¿Ü%É=.:oåjjÉÇßVPÂç³êò>Ò4Cçš#3Ë–%èåtc*¡G/¥0¡Ã@%$MÓ³£¼Èl¼ßù«¾}áw?>²áƒ7œ1÷Ù„oR-yLÎ7xîÄºQÌØª*gÚÌ×Û4ZƒÏ;<öó#d3=o’vÚ#íuøÒ;B¼ä‚ìWÇIÊ~‰ R&l›Ù‘v`"×v¬ùĞ‘ãÜùÃ[>¼D»Óc°’å6§˜§‰DÉY– •‹1º8€O)-}£8Æz®cûÚò~³¤ãà9‚(ê I«„éE15ã¹’8‰ñ}¥Ò¹F™Bi—Ø‰©ÜŒ´«€ç’õñ¹<ëCÒY…®–âdyÁ’,M¡E·ÌÌ-°Üì¢…K9è+»8ÊĞíi@°}ã ½Xã;’c“ ëR$‰¶kp¸Êy›ú9z,dı O­2Èÿv´¶X“[
-Ù‹‚¬]ìYZJÖ°Ôlq|r–UCä¹ff¡zDç¤„^‰Ì°S1Ği	xÿ?^Ï/~ù$Ş `[…cÏuHBÃÓŸ8„Ñ½Dƒã#UjŸ¹YÎÿ9¸Dı`Ä\Tâ»w<ÎøÖQ.Ü>L¹R
-\íÄdFR:gê	çmäğ©ÛÖ×â$c©±ºßáôl‡şŠ¢\.qz¦ÎæuC¶+¦aà²´T§›Ï0·1êxà•ÑI‘Æ¶ˆ@‹×+ü\‰2b©;IÙÁóZËB\alÛÜD§rj¾CX 5…qÈ@v–?Í¸î•»É½
-çn(óøÁi>xı%¼êÏ¾ÃÎÃÜ³÷«¼÷=Ÿ'p%RÆ¤ÆaÕ`?Q«ÉÄ™ŸşÈkxÅ»ÿş²Â1!õ…ÛyöÈs„aÈ³GO£³ŒR¹ŒTÖàxŠE·M»r$inxğà‚œ>éTú99Û@kCÅ¹z|-ÿó‹ûğË.AÙ§ó£:¥jÀÎµCÌ/LÓ<İ"ŸµÆ0¿ĞB«œ<NÉµÆõ®’äY‚Îï³˜d¤±a¡•Óhu	Íb½Ãú±aPAhĞ¹@å™¦¯¿ÊÖ’8Ó\<^B¹Öó[69}5[‹/Wºx,®²ÒgÇ%é%$©¡Z	iŸYÆ)Um–QhºÈU%p ½LÛ˜˜E0¶6_r=»AMZâJ‚Y
-N;Î¿ØG5°+ˆr\$IšÏQüËC‡ùÎ§ŞÌ?Ş3M7–ìºök|è­—rİ»ŞŠ~3_úØÛù×'ñ¾·]Ì;>ú-îüîÿà¾÷Süêj¶ÿáçùÏoº˜rà09[çÊ—_Êéésx`ïaşÃËÎÇS‚[~ø kªaaAµİÓ¦…EãúH¯¾æå¼ëÚ«Ø8Zfq®Éªµ˜f›O~s¿|ä ÿı#ïÆñ|ºYºTq•áÖº#ìÔpåÁ¹ØA§9Yœ±’[jFÔ;1‡BáùŠáU²`æô2Áb£GX®e)q/AH›¹§pâQ4«2mÈóÏ÷ètm@(ÉÔt‹5#5„”ÄÚd¯^:€êìĞ¦r<²TÓX˜Áu]Ò"Z€dÅÛ+¤H(=Ë®w‰6†¤—SM2y1¦­3{–§$04¢aq®Š0­70Š.0{"FH‡‘Á*©îAÚcj!fpx?¨Y5OÔfÛ/åá½‡€ŒUƒ%~õô,Ó³‹\ÿGk8>—²ÔÉ™mçx®‹+AgY¿üÿØÃ]é%¶¬óœ'÷?K½[ÖTxG»15=ò–º)Y#¢1;Oÿi ‰b*}k÷0‚…©ˆ4285…ëºôÒ·ıèn†h¶ºŒÕhwºÈ<Àİ<”Çxöt›ùdŠmëGY2§¨/7éµøà_‰Ñ9JQ¨åm\´­\kBOÑêhşõ‘Ã\zn§§s6®&T9 CàÛ ¨ÌìN]J”ĞÜuÿÜÿĞ£ô÷Õh6[œ³};33ÓÄ&bÇKGi6#JG‚¡s:åÜ+Ö“ô:_’k‡2ÊzÄ¥­Ú-.4@k~ú«“ö•pDJè9ôbƒçBÔë§Šñ]ÛØõÄ¯9>i8úóğú÷~‡Å¨…9úMşü·ó†kvpç{Cv¯gßÓwÒ4˜{äoùı?ı":†NœÑìÆtz‰ÕùhAF†Sèq(j&/²ÈÜÎ°·Û=2í0=u’…Åyåœí&Å½ÇqY=ºšn·K)ğè«•¬Ü 3dZóÅ[~NòxJÚK ¸¾K¬aUn|©\îğ‘¢lØ¹s;—nvËOµ}F×v¯U„ršÎX;Vã—\N½Q
-CsL×±µt©¬ÑÄQ¤©&,ù¼êšxzÿsŒÙÂ’²lŸT¤¶mU„D­pö—êÖEjµíf)‡n<ÃŞ'oçêĞ×c?IFFŞÕ8C8T*&«…õv–f³mÓŸıÖı$©¡:´»)y›Ê<}ô)9´H(%oığ­œhÔ¹ãôq.Şó¡køÛoÿ’FÒ!îÆ<xè	&g{´[š·¼ÿf&¢&[İ>„Éù››ˆ%÷Şÿ®«ƒ2Ùã¤Üœæ…ö±óon‡G¸||®#™o4q¥K¢3ÒLph2FäöÌ-
-1s¥ZFJ¸¡ôöxÏàU\¤ãÓl5)>åûÀ:;vlG"(WJt»Í4¹îÓ·ˆãó]TÕöÁJÒWS<?ÇîsÖZœ]¦I{]\apÃ
-cUv^áÊÒ©`×î­¤Y†BàúAá°çj•ƒã96'gr*Õ*»·qÏ½ûùÎŸî;wÏ®†™3xà$İ3M¢(²\áBN¹4±`'ˆ”M	•¦Ë¶]dNN.‘i{rIuÁa¨ßÖúk.ï°eã Ÿºó>~6y”‰;û.k=><ñ0S¤õ2Î©TŞ³ç—tæ{tt#üÀ+Ù	ê£#$YÎää$7¬Çä†Ó““Ô½³læÉßpSş•À$×Ÿxø‰S$:'Ï6ŒV¹pËjšÍÇç:ì-qèT“GNàxÂ@§›ÔJç¤iÊM·ıŒÙÙ9*Õ>r±¸¸ÈÈšQ*Õssg¨¤)“Çñ]èŸõc£<?•ñæËú8ºÏcúÌO>µŸ09~Ü%Ë5¯>ÿZt–»YÅÜÉY¦æcÎß9
-®G­Œ.@Ñ’(Šq…ÄfâÚ&ƒ}£d½”E.Yf¥Í‰§à'Ÿ¡êşá±€3‹š…öi–‚ÉX;6f¿@”$„A`¡×J!•cÇºÓ„ÅåeºIF¦­àºÑIRQñ}DI‹„¶æPaËR…w®ÚI«Ñ#Üæ‚‚>®œÏiŒĞbâ,eãºUTBŸ…Zæä}-\îyô)^yÉ&îzìizqŠ”‚ÃífayÕ\>>Î‰Éyšİ¿yñëXê5¸÷Î[p’StÛ]şøºKi-6¸ü¾Ì·>şZvodz¾Í…ÛVÑùñ!”€Tk­å5è%öèô’.àŞäš+.àÌb‹'÷àâóvòë‡qbÇ=Ÿt8<‘sÓİ1q‚“knşU@·³ÄÛ_sëV•®…¼òåã$©FçëŒ,²ìÂÚ@?ÕR—ûöN°{Ó #yü¹e®¼`R:Ä HRŸv)r\×D10á9vìüÒ·òğ¡)Võ]Dšål”$'g‘ºùÅ%Úí.¥0 7š4Õ¸®‡£¬,K-ôrtÜa°ê³ÜìrÇC'˜^Jèô4X“’#Qš3¹¤yéå› MÈò<;œ$)ïÛ GZîÒ™¥>2S*—H²˜?`ùCşº‹ìp»÷æÛŸûS¤ĞtÛm¤<yxMÓ»n8_½ä†›ÒÏÿöàGeßçÈçÉŒ­„~Àıßÿ¯¼ù/näÖO½%'fô…{÷ıš0i´ZÌ×;EŠö=õYsßC{í8S/âÀ3GévÛ”E}y™ëo´0§z½ÄåçoæÁı¼éªsé/¹V}®Ü=ÀÜ©ãÏ¶pëKmúª”kUæOO’Åµ5L,Ñîe\ó’íäÊ³åOÜÂƒlcŞ/éõ?@ªÚ³P.I/fx°Æg?ú²$Bc»‘ó³îºû~ş`Ë	¾õø*ÎU¹ùuG™BşîñşòÒ	†ª†÷İ±Õˆw]¸È'~î£„`|Ã ¿|â0J¹,/-16²•“³mÖô¡éD	ZÃ|;áç÷=ÍcûŸ'NR{<.ª„«Ø÷ª@æX«ª%Š5›mŞôêKp”¤›V–Ù°¦Ê7~°—›?ı'ÌÎ/Ğ‰¬Ü3K"\iÁB¾  ‚ØáÆ/ÿw?üÕ’O”hşú¯¡â9Üşµ÷ñ¥[~Æy[‡Y;X!Éræ—ğ=Ÿv7ÂwÛ¬¥ú\¹co|©$¡§¨·ºh#(yk(C:½¸hßÇ¥ÕKxÕÅ›0Ê¾`õ@ÈrÓe‚£ó÷‡¬ph4Zì=<Ãë^vGMrt6âí¯ÙALÀrd¨Z´Ñ–Ò	8BĞée¹Üh]ò6Zo3ºz¸‡”ëÙ¸–ï2<Ráü¡ˆ»1Ñ®²ïGi÷¯ÿö¾üÆYÎÎù½›¶±yÄå¶ëOó‡‡‘¢E’Şrõ8CıO<;O5ØÈm÷>Ã”r„Éóœ,©TkäÚåšKwqõ»91ãËS˜ÍZ±M/g)diJ¨@H2ãğ“=1XñIŠˆç*¾úıGøîßC£Ùá³ßÜC'6ø®Gš¥„4ğ¹1şÜï¾R·QÚóèÏOµøş§^Æ}³Üöã½¼÷m—Ñm79|z™ë®ÙJšfœššaÍğ(fyi‰A¦fæ‰“”á¾2—ì¢/´vQ)2<Ç¥“	JË|3fëšÕäÂ%ê¥DQÇ´:¶Sõ²8áÈÉëCJ¾`r¾CµÔG­\âŠíwÜw˜¡²äMWoƒ 'Ïğ,7HI“Û/ĞQ
-:sÖÏ']÷ìèøÔ|Ì–õ–-û…Ü@­\Æ%ÔÚÜóÀS”¼y®ú›2õDâÈşË÷‹­*;G_×ğÎ[JL´"^~áşâ»lQ)Íkúp=—+v¯¡İJi%1K¤°yK¾òã}T¼|~šgOÎÛ’pa1Ë²ì,›aE )¼‹çùÔ——ùõQ²ç²au•¡j@9ôyŒr÷>v”7^½‹mF¸ñö‡Ø´v„õl+ı?ûşÿºÈ¹Ä«ÕxÕ¸úüû_Í§oıºş2zIÊ»ÿÛm\ûª‹xÙ®Õì?¶Ì`Õe¾a¤™¥rµ£”Í«KáĞM¬3Ï•’oíaˆ±UeÏ¥×KQ"C
-‡V'&ğİ4g¹¥Ù¸ºD/‰cƒzLÍµé/»¬_İG³İ¦ŞÎéÄ£CeÊC„‹Ò±±­Ñz«ÍÚáıÕ*íV×î¤a~©Íªş€z'ÅuK­tN†xh.µ4c#>ë21]gëX?'¦ëdF¸àHM¬ƒµ€N”¸†45ø®e*µcIÙÍi´cúª.y–³ÔÊht3”‚uÃ!3ËÛ^GgLÌÔ­”²ğ$:'K3ÏZÍ’,'Tvÿ`'†9‹6åRÈæµıŒò™¿ÿîüú{É…ÃuùŸıĞğñ[îãÄé¹|Üœ+˜§]ÙFÃ‚Ìu[õF¶÷ĞLúÑ/ÿÂat¤ÊB¤¸x÷f>ğîWÇ	ÛÎM	CŸ4Õ–ä…}6y*£—æè¬P¯*‹2WÊöêWd¼>lƒnœà9vyó=§À£Htf]Ï-Dò ÉÉsA)tHµB©¬¨+8ÄqB¦®ŒH3CX$q’!(@OÚÁ÷làÔs%Y´;sËà×8®Ëé…&çŸ·Ë/İb;xi‚çJë@ kB‘•k+É–
-% ĞØ+)!Ir<_ pauµvf”$É\An¾Iˆ¼ ÛÁÑF+b¨ê Ç¦ˆò¢FfÇ‰æıâ16lÙD´4ËÂr›¯üà	’„üZÿŸˆ}å7/şï\~óµkëÖô¢Í¾ÓÅ§8ÜóØóìØ0L/Ëée†ZXÁŠÁ,„$ËEaí0…¯oEÑn=YLÙÖhnäYyÄJşN]m
-jÁµ[¡|¬Ä½)Læ`]¼Š”¬£I4(,ƒoåxèK« [áe…©T’HSDÅJ,ŞæZ†ÕµbNÏ>ìF­hìHa
-÷ÙZ™Õ²¬O„ +ğúFçgSÊ²7]Ñ,,üEß±ÿ“T6ò-‹ÏÕ9´’G
-\ì°1ØG	¤€TÃ¡‰3\>¾Ã±SgĞ&Ì.[zÕÿ9úŞÛ×5v^ì8ôüón]¬2#aG*íˆéF¯¨Á¢$;Ë¤öU3DùY$™°¿Ş¢¶ÎÊJW´qWŞäÆMÎz…6à7ÓJ…Ş-×…aÜ~y¢ÈØ[J§]VxVÜ B¨b\¨e
-FÿJ`Ô~„ÍóÉ"j$šYãÙ½ûûÆP¯›çº€R³òS°Eå`r¤r¬œ«ÈÈâÆµxYóoŸ½ò (¼É+¿U!mHtÅ¶²âG^ù_]GÑjµXhÅ4;1K­^Vo,ºot×«ºÆÿ,÷4Vh|`”    IEND®B`‚‰PNG
-
-   IHDR   €   €   Ã>aË  ˆ…IDATxÚìıw”fUï¿v8ç<¡ruWçH“šÜdD@1‹³‚9ë¨#†1¡ãè0ÌbVDMÓ9ç®ª®\O<iïııcŸ*ô^ñÎ]÷·æŞY?V¯îÕT=]Ï9ûìıù¼Óşñúÿë—øÇ%øãµxñb^÷º×±wï^‚ àÊ+¯ü/ùwå?.ıÿ¯W¼ââŞ{ïâ8îLÓô¿ìßÕÿ¸ôÿw__úÒ—PJÉ#<Òuuu}¸Ñh|äßşíßşÓßÿÔ§>•¥K—ò“Ÿü„f³ùà¿Óë?şã?X³f¨V«·Nh­Wÿ§¿ÿ5¯yGy¤¨ÕjóÄ)§œòà¿ËëƒŞ&/»â2{C~ã38áˆ³¶ìØ¶}Ïİû^şİß~÷?õıïÿûÉ²­õÅÖÚM{öìvÎ!„øÇğßá5b&÷¿ı™OsO¿xÿ5'Íı³Ş¾á{ÇÜsÓİ1Ñ®0ß½{7­VKôöö¾¶T*í}Ç;Şñ¿}óÿ±ü_z½±óM¿ÿÆÁ×-<ûô—qÂó¿ªB­XĞ_‘Ÿüây|ê½µ?wÜÙÃ8æü¾/ùËäy”RMLL˜Å‹»åË—?míÚµ×oŞ¼ù™ÿèş›¼>¾öñO>û”—‹¡‰‡ìcÿşı™æk¿~„Ç?_U_]Õ—ß¬ß÷W÷æ¸ã#c€SÊåò¦sæÌ™|ä‘Gn˜˜x÷¼yóşÑşwx=­ÿ¢‡+í	¹mpŒƒ‡195ÍøÄëÖoäàğ/}öÙâ†ô/Ûn7ÿÕ~~Ùe—1<<¬=öØ?¯Y³fÕ²eË€§„a¸Í9÷6ğ¿Ã«•µ„µ†@Xëoš/ŞàÀ¡aÀàpñ×7tbbB,Y²äËF#œfttTwtttğÛßş–6ücøïğ:eéJšz	\û ¥À×n‚?~ëÕ\ùó»)‡R„³ßsíµ×ÒÙÙ)Êåòø²eËÄQG%Ö¬YcæÎëŒ1ÌŸ?ÿ@Ğ—W52o¾ùÇ=ñ?}”Ÿİº0P¼òâøòw¯ç÷mÇÙ*Ò>zìİ»%äSÏ<û¬Ëº»ºE­V£^¯Ïî›6múÇø¯x=¿ëùú =@š)Bé¸¿}_ş¿ûÆ:?ãq<rÏ-ÜzßN9í¤,ñÌK>C½` %Ö=º Şñwğª¯=ö7İ¿²qxrË>{Y½9ØêwÁÁÁ,€ÿ‚—<$fcâ0±ôutBûŸL”DwÍcÉünN=f7ß²…Vœa…&Ë›DQ@K.SfÁ—^t²ûŞUÏu×üôqx¤ÎiÇœÍ—öÍÊ÷ó@vFùÜÿ£õğŸ|•Xh?ùÃrïıÙºk/O<ï>ú®¯º®´;Øä6ü§w‚©– zz;Q:$ĞpäÖ!¥ÀZë‹Â¢<»èüÜ|ø9ù­Â*
-4óæìâSo8WÕêã¹^·Dßßş`<yÑùº§S“cqTéaÄµ¹uÛmùÿ/oÄ+;_÷+ıÂ±8›"„åÀjlÖÆ˜”ézëZşøo0ô~8­øóÿâY^H…¡ÑÃY#qÁƒë¶ñÊ§JÓÆÌ“ó†ÿôg|ÀŒ1j¦éÖŒƒV+EG AÛäØL«¶xœ:óS?şìÅœòâ¯ç†ı{÷/[Æ‡¾ÿ0ïáêÒ[ÿ`>+º-½.ÿ¿² .¼ä™œü›åÜ)nÏLZ¦Ú`È'igÏ~úe„Q'ÎK[8ƒPX L†ÉctS¤iLFHy!•$SÊå
-kVïäø&nèV­ZYdGHœ(Î9{%‡¾9j_ùñS„®v`HãÀJÖmÚÇE×=-Â"IsCruÂD½Å§ß¥/}ñ¹DÕ2)ş)•Êâ0ØÔZCED4[“DZ²ôÈ%ÄºáJíî-ÇêÚ’¯ÿOİ aáë~È[<%(M¥$»ìıÌ'sÎQ³­;æ0>6I­>‰à€ıöSéì`åÊ°ĞÎ…û¿·lØq“l.8Úüğ³Oåãß¼‡÷¼ûÍìÜº×~àk¼çuRn	D’RQPœtìBPŠPIşÁ3Và kü¡g­ÿÁ¤ÒH¿ûÓ&6&ëÄ¾]û¹é}D¥N¬ÍqşËY¿iß¿ü¹Ìë®Šcç/fùÂN„Š0NpÏıÛhŒ¦ôU¾åP)Øœ ˆ˜ššbÿŞ	l-'®7‘’ÌäDZ¢Å‚ÎéécãLLMÓÌ*•qæã¯ZyıÖ?•ÿä
-ˆJ!/ºõGîhrn°,…µÍQÆÓi‰ä4}‚ì¬®ºØÚ”Õ«pïÚÉÙJØ½si³Q´‘ùí8‘óYÏí ŒÜ“Û×ıÓ2³aÛ ºáÎMœvîvíD	C¥2‡kşø 7ıéJòñı`-Â$å ‹
-¬•H%qNà,`3—9–±yŒuš·»”~ñ6^øô“ùğe/Â	…ÉÚä©!-[wNÒ×Sâ£ß¸Ç?~a÷<œ³H—²òø#yñ‹ÆyÁ¯äÏ~µvF­1§«Ê§~q5;oı$ªR¥q€pk,Q¹ÊÁyÃ?p`9‡†FhÇ	ƒ{©5¬Û>ÍĞªƒOyòö§½ùÜ¼ïÕ½/·Í$ÒV¦È@‘šÌ/r]Fš¶Ã]y\Æ$–ƒºÅ7&ÖAî°dàÀ’¾ªk?c«Ü?ôàc'\û•K9ÿW°y÷_¶ßô~ğò/"u•Ìş/€õÜÎ¿ş7óøV‘M°ú©ŸOy
-aµ‡v«‰“š®®.Ú6Ì)§ÍŞ»ÿÈôä]eæôa²!¤?ŒCHA*âv†ÖŠ,K‰*h™b³6B„˜Ö™)ÉŒ¹½d&Ã˜œ(‚ ê$Ï[¬^ÕK©ÚI¹ dµÁ½()ªJÒ$nç >÷İké¬V(EõFäiƒ,FEU$’4i!u€‰†GG¸â__Î³ßúCT‘Ä1ÍéiN9y5§Ÿ½†ÍÛpŞ—~õGÏü
-ïşäwùşŞŠqàœÁº@%ló½Ÿß%Ş~Ú«¸vÇ?“E`sÀ	„pŠ™K°ÜT¿~åÉ¿¹é)[³š[o½‡›®º-&­39]çoùå0 qÒVl—û/] ozÅSİ¼|CÛ§Ø?Üä¨U+8ñ¨üùş6lØH­‘ÒhÔyà¡‡Y±ølTX&’	OÍ•Ì˜O¹Ú‡u†ÜX¬µÜ÷à:|Á9´“-Æ:&§ëœyìbN¦dY†ÃaC´Æøİ¦ÙNĞJR«·ÒŸŸ}}}H!©%'¿æÛ<²îÎ8ãt”R$I‚E°oß('¹„Á±õ4Aé€å+à¸g|šãO>œ%ËRÂ0äĞĞ(;vî`Ë-ÿÎøĞ+ú4ì¤·I³ŒÉ©Æ
-¤\õ»{D#…ÃÓ\sÍíì<0Í#ÛS)—hÅ)R
-úº*lÙuˆ·¼õ\}Æ«xãØ/øU¾	¤dqTaQÜC#Ká_>ı[Q«'¼äµ¯cá#¸á†»X¿ı0íØ°mÿyƒ„Éh°s¸ÙeşŞızÊSB?I’põÕWÿŸ/€TäåN^òŞ1İÈ8õ¤ãÙ=<ÉÎ];P
-šÍYšrhß>Şú‚7™Œ…K—’RâEO;‡?<¸ce¹É™?ÕN¢(Ã9‡”’R)äœSãú{¶b]ä$ãiLÿÜ9B0>]ç/<ñ†æÊ_üí;öpÊ)'²z`ÆÀ	ÇIµZ¡8×‰á]x&w<¼cyn ÉÜN*…~Çe²,§jÖœ|V,f|ğqšJÇ¶›?N,æĞn_M•PJ³oß~âì¦“ıc‚ç^üD^Ø®·cF¦QN_W'?½ş^de>%½•÷¬<†ûH³œµa¦ÄÁ¼¾N^şœ³Ù}ğ0Ë1« Í÷34Ö¤ŞL} $BXú{ªù¦ÚzxğÙ¿}¿ºººÈó|i¥RÙÿÌ¼¶ïUŸ’Z:“åôw–ùÉ‡_ÎäTƒŞÎ
-•r™‰©)jµiº+Á?¢*0)ÎæÍG!y–‚sg@ÀÄÄ$ÖækBb¬!ÈŒ!7ÆwŒ14[MŒ1)ééêà„c—qôŠytvvâ€0Š0ÆáœÅ“.
-­4R¬5DQD½ÑgA„€!”
-E¥&Ïéíé!i5Z£ƒ€³OYÉ·r+õvƒJ™SìÇÄS,Y²„9½Ôj5ÖnbÇ–=ÜùĞAŞ:ÆÁá)¶îæî‡:ÜD8À%„A@)ğ·@I	¤(	C#Ó¬%Mbª]½è ò©5RøbÙVŸuÄr÷X7ß9Ç¶mÛdwww ¥üß8ú€	xù.pï¾øwÒ)'bÔëuñ/_†¼‰1–­ƒ5ZÍÆÂª•Ë‘íQÎzâi\vÉiŒîİ.w`] Hœµ˜</JY_õ+¥éëë#ÔÚß8k”
-PJâh‡C ¤¤H"¥"‚r él×à«d‰”€u€@  ‡R¤ ¤R˜,G	‰•ëR) /ºŠ X¬ºÒ‡’ç,q’qïú<¼óŒM×¸ü?EJEWG…ßß|‡GF¹ÿá­`×©PRĞÕQ`Ò6Ö6ªŒÔ’8ÍqÎ‘¦)ÁÈd“ÿÎ­Ô\Âœçı€,<gS$'İeMÒl5ÌË*¼ô¥grëë>bPH›#,Ú?Äé/ûWñâÇ½êŸ_ø‚–7mÙôÉBOğŸ\ pÅG—Şsÿşıë7Š¦»Åz8~yy–F¹qüæî­8k©×jäiÂ‡ßÿNœ—2ÕÈ)—r’ÖAuÆ9”òø–”Úß€sŒ“æà°€*¶ê<3~8‡qkA*…‚<7˜<#P©´ß™i]±½g€À˜¬¥Á:œk¬_ÖùİÁ°h0csjõ:Õj'ıSéœEé€Š®5±&/şEÇÖ»˜G’’Æ?2ÆœùœuÒÑüæ÷·Q–UÊå*RX„Ëq6A©À&QÍ¦—“e9;öâ¨“IË“núÇÖ»èIä†ÃI‹Ü(JKòÌqïÆ]dß¹Ak™@’4—t—;PÕ‡?£ï9ú+O9âE÷Ëk®¹Æı§À{_õÌÔ5\pçÚ}l½óßÙ·yOyı7Ø°xÇ®Z@¹ÚA**Q€e3~û³/ÒÜñ’,¢ŞŒq"bÁÂ9LÖ$Â?¢¨@c¬E¾R)D)Í3´ôà€sR9B	„•ÀZ‡?WZ£h%ÎŸhşé—8çĞaÉ?ÕÂ!´öø‚d¹ñ[©Réw"­5V¿CÍü\•
-A œ!I3ŒqhgÉ£ÙH.gÿşƒ)¨vt222Ìñ+æsáŸ@‡åg·ïaî@?½}=|é]ç±«1À–‡²D–â8!
-%V†–Ê/&g©”+\ş–©·3RÛFæğ£¡´ê-\ŒŒÌëèâº;6±ãÀ%-ùÔûŸME*’<áWx˜ùózÕöüğ#O¼ùÒ½sãõ¿ø_î gŸ|”ûÃµŸ´íú¸TA™K_õ4ì¦•gt÷Tyâ)«8XkĞl6IR‹s–©VÌ§¾ü	6_÷u2§Èã–p(¬Hi‘Bâ
-6L
-1­”?ß­Ck‰ÉÆ¤
- [0ck,ÖY¤ä¹“#µ&M¦²Lbœ%”ï¹ékJûÅ£¤òO;øBxì]H¿­³Hüß)©pÖÿŒàü±$%HÖÒlµˆ3ÃÊ#Wqü±GğĞÃ›Ø±}„“\A…ÈBn-iîß³i$»7	\L©ªe¥@*âÌ …@)_ûüşşÌí­rå)ïç÷[ŞAX‚¦sXBI„ËXÌ%3#–ÌeQ_Ä“N_I©\a`ş<Æä†¯½‘ùK5Ri÷áo>mãGŞ<öñuó©¿]¾£û=Ÿ¼ñ;ÿÄÁÍäÈ¾alÙÆÁ=ç=Ÿº–½FÙ¸wj¥L·1N244Î†Í¿fë®"% 7 „ Bµ tˆ¥P	C¬¹Ğ¦8Ÿ!Mr’,Çƒµ9Y#…Ã9¿Åª¢€1y†VšF#¦ÕN¹ó-ÜxçV¦¦j¤™¡ÑhbÃëU²Ö"¥$ÏÈ³]@§ÖXòÜ™²86p¾5ÍM†uëK)¾=‹µáÃ#´Û	óærêñGBHº»"Æ'¦ünc-ô‹~Ë¾:í8¡eClnQÎaLN;É°¹?ÿ­Ô8ëh¶Sn¹ëaÏë‚p¿]ór\Ûø³BA‡X#ça4Z)¥0bd¢É¦ızûzØµu7GZH­9tà #Ã‡Ù¾uŸX±¸ŸÍîÁ>æĞÎãìÊ_ü‰ßŞüˆßNu@€%ÍRLò”3ä¤•nÄT+lÜ´›±=?gÃõ¿ò8µubÁ’)=<Nšä8‚ÜŸÏÎ¡¤B7Ôƒ’PkÚí¡¤ßÌ­B(¬õ­nhvnßÅ?ú$û†&éé8³é¸ä2>Ù¤¯*xí‡¾Éª•+Ñ
-k,JùîB
-E«i…@Aq–LfAQI8³ÎÃÂ*ô;„1ëãÒù½ì<0
-Ö‘$Ö‰X¬8“‘äv»wÖ')ÓuzË¨û¯Ís”ä¤ã&„$K[Ü»iò	ÒÜpı9óĞÃû˜¨%üùğ!&›“ãpŒµlİ?ÆâÅóùÄWncªíØµk7éq–/Ët=A)˜××É´pâ-¥÷ñµøÓÿó˜Cú_¼»ôvtGo¿üû¬Û9æŸpı]ÛiæŠ#wò±Ï_Íş¿Êu…Š<·„¡bÎ’E<ûåŸâk?Æğ¡QÒÕ» ßrs!}5/ª„”çHó¬(ä$ÎÖšÜàÏs“ƒ³ÖÂË_ôL^õŞ/²ïÀÎddÆ(Mš¥¼ı—Ğh6™®MãR_üYÎZ„ö;Ay=sg-‰+j
-7²,á|KjbÂ @K‰'AZ+:«eæw~a²ÔÚw=Îş˜s ÃˆãYÉš§»~òNÚ±ßå”Ä‰×N6X±ì6lÜX0”‚PK*QH;³ÄÖ!œ(
-‹vîfºŞâ¶{7óé¾»7`¯ÒŒOÕÑÂñ³Ï½
-…à¬W~‘Óìy¸ü1v€±˜ç?ù‚’"‰§9îˆùorüš38zñ ¿¹õ>vìâ´SVó¡7<‰É‘!œdY1–qSâ-¯ş,ŒT»¨–5İ=İ$Y @
-I&äÆ¢„?#µTX“#…D‡!ÒÎíÂà¬ç­1&Gh·Ûüô«`û}dqJ¨Iˆ˜jY¾şÃß‘g)“ÓôV4¹ñ-¬#ı1e­Á:ëcPN€ôO¢s%aà+¡;HrKbŠ¯·áü×ZcÊßlçŠÂZ2cHÒ”HËY¾Y9C)ô/:‚3^ô9~ôÉ³lA£[Ç)…‚ıƒz¡µ¿,K!k€PH)ÑÚ£Æ8‡¯“Í”PZ¢@ÑŒ3NÑNr”R¤™å}¯y"*,£lÂQËqêöSùRşé¿½ ‚.Ç:àsß»‹ZÛ°m§Mƒ `Çğ4¹µ|÷Kâ¸Şƒ´²¥´–ä9|ÿ·÷pÃíÉ‰<¾d‰Ì
-„“aÀÄT!%©ñ<J ïİÂ  YnÈrƒTP ü&*p„ÔäÆ Ã€g½êÃlÜ¼­|a'¤$B.yéÅ¬[¿! I3¤ômãÂ˜å9i“¦)Jû¾?Ôš¬™á‚’§g­/"ó4C)IëXãˆU²…!åj™z³í‘¹BÆ*HCç¹!%B(ŒĞT¢'ö8^şÑ8<<H C2ã˜ËK£¢®}„raUˆV‹ 3Û35Œƒr ¯Y@ğÔÇŸDgµÍ¹«+l^;L’¦üñşİÔ›s;IMÎ—øôåY¸8áÀ¡Q¾~ù‹­åÔk¬ß^ã¡}	A Ø±c'kNZÉô)õfBf¶ÕùõÍëIû¹Å&LN dÍeôôwaŒ¡•¤P¾¨q¾Ì2Æ!¤ò«Ü9ŒsäÆÕ· Ë}%^*EdiÊÏ¾ûoìÛ¹ƒŠôP«MÛŒNµùö¯ş„ÿá´.ê‰s9Æøõ¤¤@iœé”ï~gJ‘gJkœóx…g­f«"¬sh­°.÷´´1¾Ø•Po¶Y>‘$	•räk
-kèè¬òêKŸCiò$á9çKhš©¡'ÄI†Tšås#~{İ(©ºÜ€1³4¹q œC+¨·²Ü‘gkùä;ş…Ÿ\¿üË[ŸÏá‘n{`/v†m ¥âuò—Û^qùßn­åR‰7~ôgT;:˜¨µ9vÅ|Æ¦sçôSĞó¡Èl†s’îªBM*{Sº»Ñ1"ñ¤µ„Ë@h¤òX€s¦¨«=k­¯ºe´ùMà¬,úvIf­×àˆÛ	åR™÷~ø‹ÜuïC³Àsj¥ÌûŞöZ>ñ…oáœ#TÊïÎà”š}z´ó—
-Qt"Z	rE–&!=á"
-@Q*0YyéóÏ‰G/cùÒ…LŒO2ÒHˆÊ%¬µ´ÒŒî‡vFë(
-É²­$¥ äi/z;örîé'ĞJ-JJŒ1GBÿ|×İÌéï#
-4S“à2LFRI”VHbÑ›“å–|äjûÄW²qï­8¥R©ğÕ_¯ãÕ­fÕŠ~J É}7
-ı·q€×ë7è}ùÖ'sâ)84ÌT­®DÜñĞvVyR
-LQ0Åí„,ƒ¹]LM5t²b&R‚¾	C£6ÅÅw³å<qâÏ{,8“û-Ú¯”XäìVíûxĞJ‘ÛcJLğÆÇk.¾€$M¨·“Ó-‚(äĞÁƒ¾øšA¡…¤I‚c)ğ~A&(­É²gÂ9°9abŒïZœõÅ§s'ãõ6·­İËŸÚI•èîëçco½ÈCØRb-ŒO×XÚb£Çh­QBjÇĞàSÓ5\±€CƒcÄ¹!ŠÊä™gB3kŸ`É¢…œ¾æx\#„šå¬õGŒ’½<nÅ £ÜÉºİ“ìÛ·ÖcpğÀÒ$æŠ÷<™×şËU¼ì¢3<’)‚¿½ ®Ì¿•¿ı%o:ı}ï|5_øæ0ÆqÔâ>÷íß‘e2´Æåm¢rÄÜELdDI“¡ïzù3øÍõ÷R­”µåÀpƒ3»€¿¨R©¢+”?R"Ä!ãˆ¢°8ë|›&¥ÂXËÃ[vr×ƒëqÖrğÀ~ªÕ*í8aŞüùDQH’dDaÂ(©tq,(ÒÌç©|a(¥"Ö–Ê$³˜yÑ=HÀù§UKIµ«“w_òd~|ã:~üÓ_ó¡7<¢E"èëé¢·äVWüÜ¡ÖÈRÀêãV“Ù-\}ÃŸiµ[ë<"üBwÆ00o?ë8’Ì×FqBÓN=t-„ÿ¹i!*½ØÆw¸€#MSvì>€³)í4óŸAêÒÇFçôWÄ¹Ï¼„ ô«7SJ¢ÕnR.-ôÈ
-'4/{Óçùæ·?#LsŒlíC»ÊÙÏúEqc2RG ¤çõ¥ ¨¤:Ô¾H*@'œÇdÂ¿ócQJ12<ÌèáğÍy6›ÆºøÅu·x…Ì_Àüù4§Æ1&÷Œ`èwÜhS LÖ÷íJ`²ÌïR¢¤g¾ĞtÅQU›nğƒ_ŞÊş¡I²,#+.>âÜyÀH8JQH¥á¬Á:C©1§·‹(Ğ´Z1A¤Øh ¥ ««ƒ–÷ÓİÙÍ>÷}^ÿª‹Èâ©4­v“éFŒ5ş(Jš¾“É«³O~}°Xt(Å·>ñ"Öí˜¢Àı®X@[süêš›iµZ$“ãP«M30w.*ˆxàGxŞ“Öğw}†[îYO¥\Fš4O)—~úé·°ú‚wB$`E	t	%‰( ‡õ½´Tˆ¢¸²6§ÕŠÉ²œÜXï‰s~ËM2ƒVc¤o·päY›W‹=öh¦¦
+"	íÌ‘§,=dí±ƒè Ì¿#&Ï8bñ,&›‚ÚDa0“ğ~¸êåÕ¹<ë?N£ÙJ¹ô3¿aè`XÏïbNgî~õgÂŸ")tàÊËßtü	ŸRÂ‘¤~ŒSC½>Á¶'~ÃŞ‡îbêŒÍ¶á5ú!xtÕj™¡á1*•ı+Ïâä•ë¸³·›îî.<âPjµ™˜šò‡,,açh8ĞÆ<<åg2-‘Z‘çPÛ
