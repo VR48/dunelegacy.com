@@ -51,6 +51,11 @@ After the integrator freezes the candidate, commit all three together:
   `sourceCommit: "249aa55e5e2d0935c25ec4279fd4e3d7621fb949"`, `version: "1.0.865"`
   and `gameProtocol: 122`. Copy `deploy/p2p-preview-entry.php` unchanged into the
   browser package's `p2p/index.php`; copy matching service routes into `p2p/.htaccess`.
+  Narrow the preview's Apache CSP `connect-src` to
+  `https://dunelegacy.com/play-test-865-249aa55e5/ https://api.github.com https://raw.githubusercontent.com`
+  (no `'self'` or production-root origin). The header intersects the packaged meta
+  CSP, so the unchanged shell cannot post match summaries to production `/metaserver`.
+  The installer rejects broader preview connection policy; verify the live header.
 
 These are the 1.0.865 candidate identities, not permission to publish another pin.
 Future candidates must use their own immutable source-prefixed path. The installer
@@ -63,6 +68,11 @@ path, candidate protocol, the production Google STUN pair and exact
 `https://dunelegacy.com` origin. Trusted schema-3 lifecycle events go to its own
 `run/games.sqlite`; they are not HMAC relay delivery or observed gameplay packets.
 Preview lobbies do not post Discord notifications or named production activity.
+The existing `DUNECITY_USERDIR` runtime setting also opts isolated native/browser
+test profiles out of match-summary reporting. Native probes already set it;
+browser harnesses must set their own startup environment before game initialization
+if using that opt-out. Do not claim the `?relay=` query alone disables analytics:
+it selects signaling, independently of the shell's absolute match-statistics URL.
 Ordinary deployments reinstall the same immutable snapshot and preserve all of this
 state; committed browser assets survive webroot synchronization.
 
@@ -81,13 +91,15 @@ wire `appVersion` and a narrow UTC window. Zero/multiple matching rooms are refu
 The window uses Unix seconds, at most one hour within the past day. JSON artifacts omit
 tokens, invitation codes, SDP, ICE and addresses. It does not inspect or operate the
 legacy relay, read production analytics, invoke a launcher or stop a process.
+Supply the expected SHA-256 of the generator's exact `SOURCE.json` bytes as
+`service_snapshot`; source commit alone is not sufficient. Readback rejects private
+directory/database aliases, unexpected source files, a different immutable snapshot,
+and mismatched file hashes. No private room JSON, settings or credentials are read.
 
-For an approved outage check, select `outage_seconds: 60` with an existing own preview
-room. This atomically sets a private `outage-until` timestamp. Only the preview
-wrapper returns 503, and the flag expires automatically even if the runner dies.
-There is no public mutation route, no production outage flag and no daemon stop.
-Verify 503 during the window, continued direct gameplay, then health recovery;
-do not infer those results from workflow submission.
+There are no server-side fault controls, outage flags, process operations or public
+mutation endpoints in this mechanism. The browser harness may abort only its own
+signaling requests to exercise bounded browser recovery. Native public-outage
+coverage remains untested; existing native retry/failure tests are separate evidence.
 
 Rollback/retirement: after the evidence owner confirms matches are closed and logs
 are retained, remove the preview descriptor, its committed browser directory and

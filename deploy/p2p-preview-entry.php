@@ -7,18 +7,6 @@ if (!preg_match('/^play-test-[a-z0-9-]{1,80}$/D', $name)) {
     return;
 }
 $previewRoot = '/var/www/data/dunecity-p2p-previews/' . $name;
-// The authenticated operator may request at most 90 seconds of preview-only outage.
-// A timestamp expires by itself even if the runner disappears. Production /p2p never reads it.
-$until = @file_get_contents($previewRoot . '/outage-until', false, null, 0, 32);
-$now = time();
-if (is_string($until) && preg_match('/^[0-9]{10}\n?$/D', $until)
-    && (int)$until > $now && (int)$until <= $now + 90) {
-    http_response_code(503);
-    header('Cache-Control: no-store');
-    header('Content-Type: text/plain; charset=utf-8');
-    echo "status=error\ncode=unavailable\nmessage=Isolated release preview outage.\n";
-    return;
-}
 define('DATA_DIR', $previewRoot . '/run');
 require_once dirname(__DIR__, 2) . '/metaserver/relay_analytics.php';
 

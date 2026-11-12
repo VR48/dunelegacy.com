@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Exercise preview identity/routing boundaries and own-room-only readback without a server."""
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -42,6 +43,9 @@ class PreviewTests(unittest.TestCase):
         shutil.copyfile(ROOT / 'deploy/p2p-preview-entry.php', self.root / 'deploy/p2p-preview-entry.php')
         shutil.copyfile(ROOT / 'deploy/p2p-preview-entry.php', self.play / 'p2p/index.php')
         shutil.copyfile(self.root / 'p2p-preview/public/.htaccess', self.play / 'p2p/.htaccess')
+        (self.play / '.htaccess').write_text(
+            'connect-src https://dunelegacy.com/' + self.name + '/ '
+            'https://api.github.com https://raw.githubusercontent.com;')
 
     def write_descriptor(self):
         (self.root / 'deploy/release-preview.json').write_text(json.dumps(self.descriptor))
@@ -68,6 +72,11 @@ class PreviewTests(unittest.TestCase):
         shutil.copyfile(self.root / 'p2p-preview/public/.htaccess', self.play / 'p2p/.htaccess')
         (self.play / 'p2p/index.php').write_text('<?php // drift')
         with self.assertRaisesRegex(ValueError, 'entrypoint'):
+            preview.preview_spec(self.root, self.website)
+
+    def test_production_analytics_connections_refused(self):
+        (self.play / '.htaccess').write_text("connect-src 'self' https://dunelegacy.com;")
+        with self.assertRaisesRegex(ValueError, 'production services and analytics'):
             preview.preview_spec(self.root, self.website)
 
     def test_unsafe_or_unpinned_names_and_protocols_refused(self):
@@ -111,6 +120,46 @@ class PreviewTests(unittest.TestCase):
         for since, until in [(90, 210), (300, 310)]:
             with self.assertRaisesRegex(ValueError, 'exactly one'):
                 inspector.own_room(database, 'DuneCity1.0.865', since, until)
+
+    def installed_preview(self):
+        target = self.root / 'private-preview'
+        snapshot = hashlib.sha256((self.root / 'p2p-preview/SOURCE.json').read_bytes()).hexdigest()
+        release = target / 'releases' / snapshot
+        shutil.copytree(self.root / 'p2p-preview', release)
+        (target / 'run').mkdir()
+        (target / 'current').symlink_to(release)
+        return target, release, snapshot
+
+    def test_readback_verifies_exact_immutable_snapshot(self):
+        target, release, snapshot = self.installed_preview()
+        result = inspector.verify_preview(target, self.source, snapshot)
+        self.assertEqual(result['serviceSnapshot'], snapshot)
+        self.assertEqual(result['actualSourceHashes'],
+                         json.loads((release / 'SOURCE.json').read_text())['sha256'])
+        (release / 'src/Rooms.php').write_text('<?php // unexpected source change')
+        with self.assertRaisesRegex(ValueError, 'hash mismatch'):
+            inspector.verify_preview(target, self.source, snapshot)
+
+    def test_readback_refuses_private_or_current_aliases(self):
+        target, release, snapshot = self.installed_preview()
+        alias = self.root / 'alias'
+        alias.symlink_to(target)
+        with self.assertRaisesRegex(ValueError, 'symlinks'):
+            inspector.verify_preview(alias, self.source, snapshot)
+        (target / 'current').unlink()
+        (target / 'current').symlink_to(self.root / 'p2p-preview')
+        with self.assertRaisesRegex(ValueError, 'private immutable snapshot'):
+            inspector.verify_preview(target, self.source, snapshot)
+
+    def test_readback_refuses_database_aliases(self):
+        database = self.root / 'actual.sqlite'
+        database.touch()
+        alias = self.root / 'database-alias.sqlite'
+        alias.symlink_to(database)
+        for operation in (lambda: inspector.own_room(alias, 'DuneCity1.0.865', 90, 110),
+                          lambda: inspector.read_rows(alias, 'own', 90, 110)):
+            with self.assertRaisesRegex(ValueError, 'symlink'):
+                operation()
 
 
 if __name__ == '__main__':

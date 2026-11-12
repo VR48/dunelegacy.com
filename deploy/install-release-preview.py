@@ -43,6 +43,11 @@ def preview_spec(repository: Path, website: Path) -> dict:
         raise ValueError('Preview signaling routes do not match the pinned source')
     if (play / 'p2p/index.php').read_bytes() != (repository / 'deploy/p2p-preview-entry.php').read_bytes():
         raise ValueError('Preview entrypoint differs from the reviewed deployment wrapper')
+    connections = re.findall(r'\bconnect-src\s+([^;"]+)', (play / '.htaccess').read_text())
+    allowed = {'https://dunelegacy.com/' + name + '/',
+               'https://api.github.com', 'https://raw.githubusercontent.com'}
+    if len(connections) != 1 or set(connections[0].split()) != allowed:
+        raise ValueError('Preview connect-src must exclude production services and analytics')
     return descriptor
 
 
