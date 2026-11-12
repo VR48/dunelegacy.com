@@ -5,6 +5,8 @@ on:
     paths:
       - 'website/.htaccess'
       - 'website/play/**'
+      - 'website/play-test-*/**'
+      - 'p2p-preview/**'
       - 'deploy/**'
       - '.github/workflows/deploy-metaserver-droplet.yml'
       - '.github/workflows/web-security.yml'
@@ -13,6 +15,8 @@ on:
     paths:
       - 'website/.htaccess'
       - 'website/play/**'
+      - 'website/play-test-*/**'
+      - 'p2p-preview/**'
       - 'deploy/**'
       - '.github/workflows/deploy-metaserver-droplet.yml'
       - '.github/workflows/web-security.yml'
@@ -32,6 +36,13 @@ jobs:
           python3 deploy/check-web-security.py
           python3 deploy/test-web-sync.py
           python3 deploy/test-play-transfer.py
+          python3 deploy/test-p2p-install.py
+          python3 deploy/test-release-preview.py
+          php -l deploy/p2p-preview-entry.php
+          if [ -f deploy/release-preview.json ]; then
+            python3 deploy/install-release-preview.py --repository . --website website --validate-only
+            python3 deploy/install-p2p-service.py --source p2p-preview --target "$RUNNER_TEMP/preview-install-check"
+          fi
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

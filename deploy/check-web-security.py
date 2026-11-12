@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from html.parser import HTMLParser
@@ -60,8 +61,14 @@ def require_tokens(path: Path, tokens: tuple[str, ...]) -> list[str]:
 
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
-    website = repo_root / "website"
-    play = website / "play"
+    parser_args = argparse.ArgumentParser(description=__doc__)
+    parser_args.add_argument("--website-root", type=Path, default=repo_root / "website")
+    parser_args.add_argument("--play-root", type=Path)
+    parser_args.add_argument("--service-root", type=Path, default=repo_root / "p2p-service")
+    parser_args.add_argument("--public-routes", type=Path)
+    args = parser_args.parse_args()
+    website = args.website_root
+    play = args.play_root or website / "play"
     errors: list[str] = []
 
     errors.extend(require_tokens(website / ".htaccess", (
@@ -82,17 +89,17 @@ def main() -> int:
     )))
 
     # Public routing must keep up with the separately installed PHP service.
-    service_routes = repo_root / "p2p-service" / "public" / ".htaccess"
-    public_routes = website / "p2p" / ".htaccess"
+    service_routes = args.service_root / "public" / ".htaccess"
+    public_routes = args.public_routes or website / "p2p" / ".htaccess"
     if service_routes.read_bytes() != public_routes.read_bytes():
-        errors.append("website/p2p/.htaccess must match the packaged signaling routes")
+        errors.append(f"{public_routes} must match the packaged signaling routes")
 
     parser = PlayPageParser()
     parser.feed((play / "index.html").read_text(encoding="utf-8"))
     errors.extend(parser.errors)
     for token in ("default-src 'none'", "script-src 'self' 'wasm-unsafe-eval'", "style-src 'self'"):
         if token not in parser.meta_csp:
-            errors.append(f"website/play/index.html: meta CSP is missing {token}")
+            errors.append(f"{play}/index.html: meta CSP is missing {token}")
 
     build = json.loads((play / "build.json").read_text(encoding="utf-8-sig"))
     required_artifacts = {
