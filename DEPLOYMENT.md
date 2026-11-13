@@ -239,6 +239,44 @@ git push origin main
 
 ---
 
+## Donations and sponsored features
+
+`website/support.html` (script `website/js/support.js`) talks to
+`metaserver/donations.php`. Payments are verified automatically; nothing waits
+for manual approval.
+
+- **Tiers:** supporter Bronze/Silver/Gold $20/$50/$100 per year (alias listed for
+  365 days), sponsored feature Small/Medium/Large $20/$50/$100. Amounts live in
+  `DONATION_TIERS` in `metaserver/donations_service.php`.
+- **Crypto:** the donor pastes a transaction hash. The server reads it from a public
+  RPC (Ethereum: ETH/USDC/USDT, 6 confirmations; Base: ETH/USDC, 10 confirmations),
+  sums transfers to `ggtothemax.eth` (`0x03b4…3114`), values ETH at that day's
+  Coinbase price and accepts 97% of the tier. Transactions before 2026-11-13 and
+  reused hashes are refused.
+- **PayPal:** Orders v2, captured server-side. Requires repository secrets
+  `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` (live REST app from
+  developer.paypal.com, PayPal Business account); the deploy writes them to
+  `/var/www/data/paypal.json`. Without them the page shows crypto only. Captures that
+  were still clearing, or approved orders whose browser closed, are completed in the
+  background when the supporters list is next loaded.
+- **Features:** each paid feature opens one issue in `dunecity-project/dunecity` with
+  labels `enhancement`, `sponsored-feature`, `size: <tier>`, using the feedback token
+  (`/var/www/data/feedback_github_token.txt`). If GitHub is down the payment is kept
+  and the issue is created on a later page load.
+- **Data:** `/var/www/data/donations.sqlite`. No payer email, name or wallet address
+  is stored. To remove an alias from the public page without losing the record:
+
+```bash
+ssh dunelegacy-deploy@<droplet> python3 - <<'PY'
+import sqlite3
+db = sqlite3.connect('/var/www/data/donations.sqlite')
+db.execute("UPDATE donations SET hidden=1 WHERE alias=?", ('Alias to hide',))
+db.commit()
+PY
+```
+
+---
+
 ## Troubleshooting
 
 ### Website or Metaserver not responding

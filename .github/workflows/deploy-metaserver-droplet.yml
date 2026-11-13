@@ -162,6 +162,9 @@ jobs:
           php -l metaserver/feedback_storage.php
           python3 -m py_compile metaserver/feedback_store.py
           php scripts/tests/test_feedback.php
+          php -l metaserver/donations.php
+          php -l metaserver/donations_service.php
+          php scripts/tests/test_donations.php
           python3 -m py_compile metaserver/analytics_store.py
           php -l website/p2p/index.php
           php -l metaserver/public_activity.php
@@ -277,6 +280,8 @@ jobs:
           DROPLET_IP: ${{ secrets.METASERVER_DROPLET_IP }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           FEEDBACK_GITHUB_TOKEN: ${{ secrets.FEEDBACK_GITHUB_TOKEN }}
+          PAYPAL_CLIENT_ID: ${{ secrets.PAYPAL_CLIENT_ID }}
+          PAYPAL_CLIENT_SECRET: ${{ secrets.PAYPAL_CLIENT_SECRET }}
         run: |
           set -euo pipefail
           SSH_ARGS=(-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
@@ -313,6 +318,12 @@ jobs:
                   'umask 027; token_file=$(mktemp /var/www/data/.feedback-token.XXXXXX); cat > "$token_file"; chmod 0640 "$token_file"; mv -f "$token_file" /var/www/data/feedback_github_token.txt'
           fi
 
+          if [ "$DEPLOY_CHANNEL" != staging ] && [ -n "$PAYPAL_CLIENT_ID" ] && [ -n "$PAYPAL_CLIENT_SECRET" ]; then
+            python3 -c 'import json, os; print(json.dumps({"client_id": os.environ["PAYPAL_CLIENT_ID"], "secret": os.environ["PAYPAL_CLIENT_SECRET"]}))' \
+              | ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" \
+                  'umask 027; config=$(mktemp /var/www/data/.paypal.XXXXXX); cat > "$config"; chmod 0640 "$config"; mv -f "$config" /var/www/data/paypal.json'
+          fi
+
           if [ "$DEPLOY_CHANNEL" != staging ] && [ -n "$DISCORD_WEBHOOK_URL" ]; then
             printf '%s' "$DISCORD_WEBHOOK_URL" \
               | ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" \
@@ -325,6 +336,8 @@ jobs:
           # Exercises the Apache storage backend without creating an issue.
           test "$(curl --fail --silent --show-error --data '' https://dunelegacy.com/metaserver/feedback.php)" = \
             'ERROR Invalid feedback. Please check the text and try again.'
+          curl --fail --silent --show-error 'https://dunelegacy.com/metaserver/donations.php?action=supporters' \
+            | python3 -c 'import json, sys; data = json.load(sys.stdin); assert set(data["members"]) == {"gold", "silver", "bronze"}, data'
           curl --fail --silent --show-error --retry 5 --retry-delay 2 \
             --data 'command=gamestats&phase=health' \
             https://dunelegacy.com/metaserver/metaserver.php \
