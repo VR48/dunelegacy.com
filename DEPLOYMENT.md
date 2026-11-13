@@ -83,6 +83,15 @@ missing/duplicate frozen inputs, or changed producer identity are rejected.
 Manifest/archive hashes, source identity and frozen website-code checks still
 apply. Never rewrite a published manifest to name the retry attempt.
 
+Preparation supports both the CI's separate output tree and the remote
+`deploy-release.sh` layout: `--repository "$STAGING_ROOT" --website
+"$STAGING_ROOT/website"`. In the latter, the frozen archive already supplies the
+root `.htaccess`; preparation retains it without copying it onto itself.
+Canonical website bases determine this in-place case, and direct policy-file
+symlinks remain rejected.
+The prepare CLI writes only its structured result to stdout (the CI saves this as
+`staging-preparation.json`); security-validator diagnostics go to stderr.
+
 Deploy a corrected website validator before requesting recovery, so the browser
 request freezes the corrected website code. Then use the existing game workflow:
 
@@ -97,6 +106,15 @@ publication success alone does not prove deployment. The live
 The game `latest-dev` known-good retention marker advances only after actual
 qualification; a missing marker holds pruning, not browser delivery. Do not
 replace its legacy assets or move stable tags as a recovery step.
+
+Code-only recovery still needs a new metadata request after the corrected website
+code is published: each request freezes `websiteCodeCommit`. For example, request
+`e569f2bc956435185965a1a68e6dd6eec54c8c87` pins the failing
+`5354f825d2bc61bf3a44f694385946edf940c6bc` helper; an unchanged deployment rerun
+will execute that same code. Select the current qualified immutable staging tag
+(never regress a newer delivered source), and let `web.yml` freeze a new request
+using the same published archive bytes with corrected website code. Do not edit
+the old request or replace its manifest/assets.
 
 
 ## Prerequisites

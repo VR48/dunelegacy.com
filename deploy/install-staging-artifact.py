@@ -262,10 +262,18 @@ def prepare(inputs, repository, website, website_revision):
     for name in build['artifacts']:
         build['sha256'][name] = digest(play / name)
     write_json(build_path, build)
-    shutil.copyfile(repository / 'website/.htaccess', website / '.htaccess')
+    source_policy = repository / 'website/.htaccess'
+    target_policy = website / '.htaccess'
+    if source_policy.is_symlink() or target_policy.is_symlink():
+        raise ValueError('Staging website policy must not be a symlink')
+    # The remote archive already contains the policy in its output website.
+    # Only independent output trees need a copy from the frozen repository.
+    if (repository / 'website').resolve(strict=True) != website.resolve(strict=True):
+        shutil.copyfile(source_policy, target_policy)
     subprocess.run([sys.executable, str(repository / 'deploy/check-web-security.py'),
                     '--website-root', str(website), '--play-root', str(play),
-                    '--service-root', str(service), '--public-routes', str(routes / '.htaccess')], check=True)
+                    '--service-root', str(service), '--public-routes', str(routes / '.htaccess')],
+                   stdout=sys.stderr, check=True)
     return build
 
 

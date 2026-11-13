@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -94,6 +95,42 @@ class StagingArtifactTests(unittest.TestCase):
         self.assertIn('connect-src ' + staging.CONNECTIONS + ';', (play / '.htaccess').read_text())
         self.assertNotIn("connect-src 'self'", (play / '.htaccess').read_text())
         self.assertIn('Staging ' + result['displayVersion'], (play / 'index.html').read_text())
+
+    def test_prepare_cli_supports_the_remote_in_place_frozen_archive_layout(self):
+        repository = self.root / 'frozen-website'
+        shutil.copytree(ROOT / 'deploy', repository / 'deploy')
+        website = repository / 'website'
+        website.mkdir()
+        policy = website / '.htaccess'
+        shutil.copyfile(ROOT / 'website/.htaccess', policy)
+        policy_before = policy.read_bytes(), policy.stat().st_mtime_ns
+        preserved = ('play/build.json', 'p2p/index.php', 'play-test-865-preserved/index.html')
+        for name in preserved:
+            path = website / name
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b'unchanged production or immutable preview')
+        frozen = {name: (self.inputs / name).read_bytes()
+                  for name in (staging.PUBLICATION, staging.BROWSER, staging.SERVICE)}
+        output = subprocess.check_output([
+            sys.executable, str(repository / 'deploy/install-staging-artifact.py'), 'prepare',
+            '--inputs', str(self.inputs), '--repository', str(repository),
+            '--website', str(website), '--website-revision', CODE], text=True)
+        result = json.loads(output)
+        play = website / 'play-staging'
+        self.assertEqual((policy.read_bytes(), policy.stat().st_mtime_ns), policy_before)
+        self.assertEqual(json.loads((play / 'build.json').read_text()), result)
+        self.assertEqual(json.loads((play / 'source-build.json').read_text()), self.build)
+        self.assertEqual((play / staging.PUBLICATION).read_bytes(), frozen[staging.PUBLICATION])
+        for name, content in frozen.items():
+            self.assertEqual((self.inputs / name).read_bytes(), content)
+        for name in preserved:
+            self.assertEqual((website / name).read_bytes(), b'unchanged production or immutable preview')
+        self.assertEqual(result['delivery'], self.request)
+        self.assertEqual(result['signalingSourceCommit'], SHA)
+        self.assertEqual(result['signalingBaseUrl'], 'https://dunelegacy.com/play-staging/p2p')
+        self.assertEqual(json.loads((repository / 'p2p-staging/SOURCE.json').read_text())['commit'], SHA)
+        for name, checksum in result['sha256'].items():
+            self.assertEqual(staging.digest(play / name), checksum)
 
     def test_wrong_code_stable_channel_unsafe_namespace_or_missing_hash_cannot_install(self):
         with self.assertRaisesRegex(ValueError, 'frozen website code SHA'):
