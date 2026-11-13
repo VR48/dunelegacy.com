@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "websiteCodeCommit": "c9a667b231965db31ce67a1c31a7acc9ff22752c",
+  "websiteCodeCommit": "d2d0f4c4827f7e1767c44b42777614d2da9cbae4",
   "repository": "dunecity-project/dunecity",
-  "releaseTag": "staging-5e339ce6319b290175c9705311f69632044d5d7c-d9253fa413f2",
-  "sourceCommit": "5e339ce6319b290175c9705311f69632044d5d7c",
-  "publicationManifestSha256": "4602079f87ce8969464052df0db41545bea8821cad60b598e8c51e8443bddc20",
-  "browserArchiveSha256": "62f5a298b36454d0d5f0711bc3266c3bd18c3277b96aefed3586b874ca55f77f",
-  "serviceArchiveSha256": "bdfbe0c70a90e8be24e4e82cf10a298e6ae93eb528824f4de22217a455d32dbf"
+  "releaseTag": "staging-b15f947a5dfc9dff3e7dea9a2d493df6b88027f4-0391a78e200a",
+  "sourceCommit": "b15f947a5dfc9dff3e7dea9a2d493df6b88027f4",
+  "publicationManifestSha256": "7c88474b5c7d6f55cf7b7601685443f0a7036ebdddf555c373a2aa32a825abc2",
+  "browserArchiveSha256": "1da091f093095d0732057a5b89f9d88a201dde86ad5b95f86b1fb2cc962f86e3",
+  "serviceArchiveSha256": "f818e827566e28de8bd9f5432a1265806cd7c1175e6d298d27de2e3058be94df"
 }
