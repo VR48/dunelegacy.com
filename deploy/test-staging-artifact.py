@@ -166,7 +166,7 @@ class StagingArtifactTests(unittest.TestCase):
         if path.endswith('/jobs?per_page=100'):
             names = staging.CI_JOBS if qualification else staging.CI_JOBS | {'dev-release'}
             return {'jobs': [dict(name=name, conclusion='success') for name in names]}
-        return dict(status='completed', conclusion='success', path='.github/workflows/build.yml',
+        return dict(id=11 if qualification else 41, status='completed', conclusion='success', path='.github/workflows/build.yml',
                     run_attempt=2 if qualification else 1, repository={'full_name': staging.REPOSITORY},
                     event='push' if qualification else 'schedule', head_sha=SHA if qualification else CONTROL,
                     head_branch='integrate/feature-batch' if qualification else 'main')
@@ -187,6 +187,111 @@ class StagingArtifactTests(unittest.TestCase):
             return value
         with patch.object(staging, 'api', side_effect=response), self.assertRaisesRegex(ValueError, 'missing or failed'):
             staging.fetch(self.request_path, self.inputs, CODE)
+
+    def publication_retry_receipts(self):
+        producer = self.api_fixture('actions/runs/41/attempts/1')
+        producer['conclusion'] = 'failure'
+        return {
+            'actions/runs/41/attempts/1': producer,
+            'actions/runs/41/attempts/1/jobs?per_page=100': {
+                'jobs': [dict(name=name, conclusion='success') for name in sorted(staging.CI_JOBS)] +
+                        [dict(name='dev-release', conclusion='failure')]},
+            'actions/runs/41': dict(producer, run_attempt=2, conclusion='success'),
+            'actions/runs/41/attempts/2/jobs?per_page=100': {
+                'jobs': [dict(name='dev-release', conclusion='success')]},
+        }
+
+    def test_publication_only_retry_preserves_frozen_build_attempt_manifest_and_archives(self):
+        receipts = self.publication_retry_receipts()
+        frozen = {path.name: path.read_bytes() for path in self.inputs.iterdir()}
+        requested = []
+
+        def response(path):
+            requested.append(path)
+            return receipts[path] if path in receipts else self.api_fixture(path)
+
+        with patch.object(staging, 'api', side_effect=response), \
+             patch.object(staging.urllib.request, 'urlopen') as download:
+            staging.fetch(self.request_path, self.inputs, CODE)
+        download.assert_not_called()
+        self.assertEqual(staging.verify_inputs(self.inputs, CODE)['runAttempt'], 1)
+        self.assertTrue(all((self.inputs / name).read_bytes() == content for name, content in frozen.items()))
+        self.assertIn('actions/runs/41/attempts/1/jobs?per_page=100', requested)
+        self.assertIn('actions/runs/41/attempts/2/jobs?per_page=100', requested)
+
+    def test_retry_cannot_resurrect_failed_skipped_missing_or_duplicate_frozen_inputs(self):
+        receipts = self.publication_retry_receipts()
+        jobs = receipts['actions/runs/41/attempts/1/jobs?per_page=100']['jobs']
+        with patch.object(staging, 'api', side_effect=lambda path: receipts[path] if path in receipts else self.api_fixture(path)):
+            for job in jobs[:-1]:
+                for conclusion in ('failure', 'skipped'):
+                    with self.subTest(name=job['name'], conclusion=conclusion), \
+                         patch.dict(job, conclusion=conclusion), \
+                         self.assertRaisesRegex(ValueError, 'frozen attempt'):
+                        staging.validate_receipts(self.manifest)
+            missing = jobs.pop(0)
+            with self.assertRaisesRegex(ValueError, 'frozen attempt'):
+                staging.validate_receipts(self.manifest)
+            jobs.append(missing)
+            jobs.append(dict(missing, conclusion='skipped'))
+            with self.assertRaisesRegex(ValueError, 'frozen attempt'):
+                staging.validate_receipts(self.manifest)
+
+    def test_retry_inherits_absent_successes_but_rejects_explicit_failed_or_skipped_inputs(self):
+        receipts = self.publication_retry_receipts()
+        jobs = receipts['actions/runs/41/attempts/2/jobs?per_page=100']['jobs']
+        with patch.object(staging, 'api', side_effect=lambda path: receipts[path] if path in receipts else self.api_fixture(path)):
+            staging.validate_receipts(self.manifest)
+            for name in sorted(staging.CI_JOBS):
+                for conclusion in ('failure', 'skipped'):
+                    jobs[:] = [dict(name='dev-release', conclusion='success'),
+                               dict(name=name, conclusion=conclusion)]
+                    with self.subTest(name=name, conclusion=conclusion), \
+                         self.assertRaisesRegex(ValueError, 'failed/skipped'):
+                        staging.validate_receipts(self.manifest)
+
+    def test_retry_cannot_relabel_the_frozen_build_attempt(self):
+        receipts = self.publication_retry_receipts()
+        receipts['actions/runs/41/attempts/2'] = receipts['actions/runs/41']
+        with patch.dict(self.manifest, runAttempt=2), \
+             patch.object(staging, 'api', side_effect=lambda path: receipts[path] if path in receipts else self.api_fixture(path)), \
+             self.assertRaisesRegex(ValueError, 'frozen attempt'):
+            staging.validate_receipts(self.manifest)
+
+    def test_publication_retry_requires_the_same_trusted_producer_and_successful_publication(self):
+        receipts = self.publication_retry_receipts()
+        retry = receipts['actions/runs/41']
+        jobs = receipts['actions/runs/41/attempts/2/jobs?per_page=100']['jobs']
+        with patch.object(staging, 'api', side_effect=lambda path: receipts[path] if path in receipts else self.api_fixture(path)):
+            for field, value in (('id', 42), ('run_attempt', 1), ('head_sha', 'd' * 40),
+                                 ('head_branch', 'untrusted'), ('event', 'push'),
+                                 ('path', '.github/workflows/other.yml'),
+                                 ('repository', {'full_name': 'wrong/repository'}),
+                                 ('status', 'in_progress'), ('conclusion', 'failure')):
+                with self.subTest(field=field), patch.dict(retry, {field: value}), \
+                     self.assertRaisesRegex(ValueError, 'publication retry'):
+                    staging.validate_receipts(self.manifest)
+            for conclusion in ('failure', 'skipped'):
+                jobs[:] = [dict(name='dev-release', conclusion=conclusion)]
+                with self.subTest(conclusion=conclusion), self.assertRaisesRegex(ValueError, 'publication retry'):
+                    staging.validate_receipts(self.manifest)
+            jobs.clear()
+            with self.assertRaisesRegex(ValueError, 'publication retry'):
+                staging.validate_receipts(self.manifest)
+
+    def test_retry_does_not_waive_source_qualification_or_frozen_producer_identity(self):
+        receipts = self.publication_retry_receipts()
+        producer = receipts['actions/runs/41/attempts/1']
+        with patch.object(staging, 'api', side_effect=lambda path: receipts[path] if path in receipts else self.api_fixture(path)):
+            for field, value in (('id', 42), ('run_attempt', 2), ('head_sha', SHA),
+                                 ('head_branch', 'untrusted'), ('event', 'push'),
+                                 ('path', '.github/workflows/other.yml'),
+                                 ('repository', {'full_name': 'wrong/repository'}),
+                                 ('status', 'in_progress'), ('conclusion', 'cancelled')):
+                with self.subTest(field=field), patch.dict(producer, {field: value}), self.assertRaises(ValueError):
+                    staging.validate_receipts(self.manifest)
+            with patch.dict(self.manifest, qualificationSourceCommit=CONTROL), self.assertRaises(ValueError):
+                staging.validate_receipts(self.manifest)
 
     @unittest.skipUnless(shutil.which('node'), 'Node is required to execute the browser bootstrap')
     def test_bootstrap_overrides_production_and_loopback_query_endpoints(self):

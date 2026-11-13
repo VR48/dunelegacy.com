@@ -64,6 +64,41 @@ Auto-deploys via GitHub Actions (~20 sec)
 
 In-game anonymous GitHub issue submission is documented in [game feedback](docs/game-feedback.md), including the repo-scoped token and deployment secret.
 
+## Immutable staging browser recovery
+
+The game browser publisher writes only `deploy/staging-browser.json` to this
+repository. Its push selects the isolated `staging` channel, freezes
+`websiteCodeCommit`, and downloads the exact published browser and signaling
+archives into temporary storage. It never replaces stable `/play` or commits
+runtime archives into Git.
+
+`publication-inputs.json` keeps the original package `runAttempt`, even when
+publication alone is retried. `deploy/install-staging-artifact.py` requires all
+seven package input jobs to succeed at that frozen attempt, independently of
+the successful integration qualification. A failed `dev-release` may be recovered
+only by a later completed successful attempt of the same producer run, source,
+workflow, event and branch, with a successful `dev-release`. Absent input jobs on
+that retry inherit the frozen successes; explicit failed/skipped retry inputs,
+missing/duplicate frozen inputs, or changed producer identity are rejected.
+Manifest/archive hashes, source identity and frozen website-code checks still
+apply. Never rewrite a published manifest to name the retry attempt.
+
+Deploy a corrected website validator before requesting recovery, so the browser
+request freezes the corrected website code. Then use the existing game workflow:
+
+```sh
+gh workflow run web.yml --repo dunecity-project/dunecity --ref main -f tag="$STAGING_TAG"
+```
+
+`STAGING_TAG` must name the already-published immutable snapshot. Follow both
+the browser publisher and this repository's **Deploy to Droplet** staging run;
+publication success alone does not prove deployment. The live
+`/play-staging/build.json`, advertised hashes and actual browser menu must agree.
+The game `latest-dev` known-good retention marker advances only after actual
+qualification; a missing marker holds pruning, not browser delivery. Do not
+replace its legacy assets or move stable tags as a recovery step.
+
+
 ## Prerequisites
 
 ```bash

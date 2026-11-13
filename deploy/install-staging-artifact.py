@@ -86,14 +86,15 @@ def validate_receipts(manifest):
             raise ValueError('Invalid staging producer/qualification receipt')
         prefix = f'actions/runs/{run_id}/attempts/{attempt}'
         run = api(prefix)
-        if (run['status'] != 'completed' or run['conclusion'] != 'success' or run['path'] != workflow
+        if (run['status'] != 'completed' or run['path'] != workflow
                 or run['run_attempt'] != attempt or run['repository']['full_name'] != REPOSITORY):
-            raise ValueError('Staging producer/qualification is not independently green')
+            raise ValueError('Staging producer/qualification is not independently trusted')
         if qualification:
-            valid = (run['event'] == 'push' and run['head_branch'] == 'integrate/feature-batch'
+            valid = (run['conclusion'] == 'success' and run['event'] == 'push'
+                     and run['head_branch'] == 'integrate/feature-batch'
                      and run['head_sha'] == source == manifest['qualificationSourceCommit'])
         else:
-            valid = (run['event'] in ('schedule', 'workflow_dispatch')
+            valid = (run['id'] == run_id and run['event'] in ('schedule', 'workflow_dispatch')
                      and run['head_branch'] in ('main', 'integrate/feature-batch')
                      and (run['event'] != 'schedule' or run['head_branch'] == 'main')
                      and run['head_sha'] == manifest['producerSourceCommit']
@@ -101,9 +102,34 @@ def validate_receipts(manifest):
                      and run['head_branch'] == manifest['producerHeadBranch']
                      and run['path'] == manifest['producerWorkflowPath'])
         jobs = api(prefix + '/jobs?per_page=100')['jobs']
-        expected = CI_JOBS if qualification else CI_JOBS | {'dev-release'}
-        if not valid or not expected.issubset({job['name'] for job in jobs if job['conclusion'] == 'success'}):
-            raise ValueError('Staging producer/qualification has missing or failed required jobs')
+        if not valid:
+            raise ValueError('Staging producer/qualification source is not independently trusted')
+        if qualification:
+            if not CI_JOBS.issubset({job['name'] for job in jobs if job['conclusion'] == 'success'}):
+                raise ValueError('Staging qualification has missing or failed required jobs')
+            continue
+        outcomes = {name: [job['conclusion'] for job in jobs if job['name'] == name]
+                    for name in CI_JOBS | {'dev-release'}}
+        if any(outcomes[name] != ['success'] for name in CI_JOBS):
+            raise ValueError('Staging producer has missing or failed required jobs at the frozen attempt')
+        if run['conclusion'] == 'success' and outcomes['dev-release'] == ['success']:
+            return
+        if run['conclusion'] != 'failure' or outcomes['dev-release'] != ['failure']:
+            raise ValueError('Staging producer has no successful publication receipt')
+        # Keep the immutable package attempt; a later publication-only retry may
+        # inherit its successful inputs but cannot override an explicit red job.
+        publication = api(f'actions/runs/{run_id}')
+        if (publication['id'] != run_id or publication['run_attempt'] <= attempt
+                or publication['status'] != 'completed' or publication['conclusion'] != 'success'
+                or publication['repository']['full_name'] != REPOSITORY
+                or any(publication[key] != run[key] for key in
+                       ('path', 'head_sha', 'head_branch', 'event'))):
+            raise ValueError('Staging producer publication retry is not independently successful/trusted')
+        retry = publication['run_attempt']
+        retry_jobs = api(f'actions/runs/{run_id}/attempts/{retry}/jobs?per_page=100')['jobs']
+        if ([job['conclusion'] for job in retry_jobs if job['name'] == 'dev-release'] != ['success']
+                or any(job['name'] in CI_JOBS and job['conclusion'] != 'success' for job in retry_jobs)):
+            raise ValueError('Staging producer publication retry contains failed/skipped required jobs')
 
 
 def fetch(request_path, destination, website_revision):
