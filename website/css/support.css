@@ -33,7 +33,7 @@ nav a.nav-support { color: var(--primary); font-weight: 600; }
 .section .coop-content .wallet { background: var(--dark); padding: 12px; border-radius: 6px; overflow-wrap: anywhere; }
 .wallet code { font-size: .9rem; color: #ddd; }
 .copy-button { display: inline-block; margin-top: 8px; padding: 6px 14px; font-size: .9rem; cursor: pointer; }
-#verify-crypto { cursor: pointer; border: none; font: inherit; }
+#verify-crypto, #paypal-pay { cursor: pointer; border: none; font: inherit; }
 .section .coop-content .pay-status { margin-top: 12px; min-height: 1.5em; }
 .pay-status.error { color: #ff8a65; }
 .pay-status.waiting { color: var(--primary); }
