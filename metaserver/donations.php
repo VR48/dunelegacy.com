@@ -15,6 +15,8 @@ if(!($method === 'GET' && $action === 'supporters') && !($method === 'POST' && i
     && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) <= 16384)) {
     http_response_code(400); exit('{"error":"Invalid request."}');
 }
+// Donations are paused pending legal review (2026-11-14). No payment is accepted or verified.
+if($method === 'POST') { http_response_code(503); exit('{"error":"Donations are paused."}'); }
 try {
     $dataDir = getenv('DATA_DIR') ?: '/var/www/data';
     // Credentials are provisioned outside the published web root.

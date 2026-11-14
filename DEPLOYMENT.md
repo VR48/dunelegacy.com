@@ -241,9 +241,12 @@ git push origin main
 
 ## Donations and sponsored features
 
-`website/support.html` (script `website/js/support.js`) talks to
-`metaserver/donations.php`. Payments are verified automatically; nothing waits
-for manual approval.
+**Paused since 2026-11-14 pending legal review.** `metaserver/donations.php`
+rejects every payment request and `website/support.html` only says donations are
+paused. The donation page front end (`website/js/support.js`, `website/css/support.css`)
+was removed in that change; restore it from git history (commit `c46d9c4`) and
+remove the POST guard in `donations.php` to resume. While open, payments were
+verified automatically; nothing waited for manual approval.
 
 - **Tiers:** supporter Bronze/Silver/Gold $20/$50/$100 per year (alias listed for
   365 days), sponsored feature Small/Medium/Large $20/$50/$100. Amounts live in
