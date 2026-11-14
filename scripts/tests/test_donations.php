@@ -51,7 +51,7 @@ foreach([false, true] as $forcePython) {
         return [201, end($issues)];
     };
     $io = ['now' => NOW, 'key' => 'k', 'rpc' => chain($chain), 'price' => fn($time) => 3000.0,
-        'github' => $github, 'paypal' => null, 'paypal_client_id' => ''];
+        'github' => $github, 'ipn' => fn($raw) => true];
     $member = ['kind' => 'member', 'tier' => 'silver', 'alias' => 'Muad\'Dib', 'github' => '', 'network' => 'base', 'tx' => tx('1')];
 
     // Paid USDC membership is listed immediately, without approval, and only once per transaction.
@@ -109,55 +109,67 @@ foreach([false, true] as $forcePython) {
     check(donationSupporters($db, $io)['members']['bronze'] === [], 'hidden alias listed');
     check(donationSupporters($db, $expired)['members']['silver'] === [], 'expired member listed');
 
-    // PayPal: server-side capture, PayPal's amount and our order id are authoritative.
-    $orders = [];
-    $paypal = function($method, $path, $payload, $requestId) use (&$orders) {
-        if($path === 'v2/checkout/orders') {
-            $id = 'ORDER' . (count($orders) + 10000);
-            $orders[$id] = ['id' => $id, 'status' => 'CREATED', 'unit' => $payload['purchase_units'][0], 'capture' => 'COMPLETED'];
-            return [201, ['id' => $id]];
-        }
-        preg_match('~orders/(ORDER\d+)~', $path, $match); $order = &$orders[$match[1]];
-        if(str_ends_with($path, '/capture')) {
-            if($order['status'] !== 'APPROVED') return [422, []];
-            $order['status'] = 'COMPLETED';
-        }
-        $unit = ['custom_id' => $order['unit']['custom_id']];
-        if($order['status'] === 'COMPLETED') $unit['payments']['captures'][0] = ['status' => $order['capture'],
-            'custom_id' => $order['forged'] ?? $order['unit']['custom_id'], 'amount' => $order['paid'] ?? $order['unit']['amount']];
-        return [200, ['id' => $order['id'], 'status' => $order['status'], 'purchase_units' => [$unit]]];
+    // PayPal: the server fixes the amount and recipient; only IPNs PayPal re-validates count.
+    $verdict = true;
+    $pp = $io; $pp['ipn'] = function($raw) use (&$verdict) { return $verdict; };
+    $start = function(array $choice) use ($db, $pp): string {
+        parse_str((string)parse_url(donationPaypalStart($choice, $db, $pp)['redirect'], PHP_URL_QUERY), $query);
+        return $query['custom'];
     };
-    $pp = $io; $pp['paypal'] = $paypal; $pp['paypal_client_id'] = 'client';
-    check(isset(donationPaypalOrder($member, $db, $io)['error']), 'PayPal used without credentials');
+    $ipn = function(string $id, array $fields) use ($db, $pp): bool {
+        $fields += ['txn_type' => 'web_accept', 'business' => 'Donations@dunelegacy.com', 'receiver_email' => 'owner@example.com',
+            'mc_currency' => 'USD', 'payment_status' => 'Completed', 'custom' => $id];
+        return donationPaypalIpn(http_build_query($fields), $fields, $db, $pp);
+    };
     $gold = ['kind' => 'member', 'tier' => 'gold', 'alias' => 'Leto'];
-    $order = donationPaypalOrder($gold, $db, $pp)['order'];
-    check($orders[$order]['unit']['amount'] === ['currency_code' => 'USD', 'value' => '100.00'], 'client influenced amount');
-    check(isset(donationPaypalCapture(['order' => $order], $db, $pp)['error']), 'unapproved order captured');
-    $orders[$order]['status'] = 'APPROVED';
-    check(donationPaypalCapture(['order' => $order], $db, $pp)['ok'] ?? false, 'approved order not captured');
-    check(donationPaypalCapture(['order' => $order], $db, $pp)['ok'] ?? false, 'capture retry failed');
+    parse_str((string)parse_url(donationPaypalStart(['amount' => '1'] + $gold, $db, $pp)['redirect'], PHP_URL_QUERY), $query);
+    check($query['amount'] === '100.00' && $query['currency_code'] === 'USD' && $query['business'] === 'donations@dunelegacy.com'
+        && str_ends_with($query['notify_url'], '/metaserver/donations.php?action=paypal-ipn'), 'client influenced PayPal payment');
+    $leto = $query['custom'];
+    check(isset(donationPaypalStatus(['id' => $leto], $db, $pp)['waiting']), 'unpaid PayPal choice confirmed');
+    $verdict = false;
+    check($ipn($leto, ['txn_id' => 'FORGED00000000001', 'mc_gross' => '100.00']), 'forged IPN not acknowledged');
+    check(isset(donationPaypalStatus(['id' => $leto], $db, $pp)['waiting']), 'forged IPN accepted');
+    $verdict = null;
+    check(!$ipn($leto, ['txn_id' => 'TXN00000000000001', 'mc_gross' => '100.00']), 'unverifiable IPN not retried');
+    $verdict = true;
+    check($ipn($leto, ['txn_id' => 'TXN00000000000001', 'mc_gross' => '100.00']), 'valid IPN not acknowledged');
+    check(donationPaypalStatus(['id' => $leto], $db, $pp)['ok'] ?? false, 'PayPal payment not confirmed');
+    check($ipn($leto, ['txn_id' => 'TXN00000000000001', 'mc_gross' => '100.00']), 'duplicate IPN failed');
     check(array_column(donationSupporters($db, $pp)['members']['gold'], 'alias') === ['Leto'], 'PayPal member not listed');
-    check(isset(donationPaypalCapture(['order' => 'ORDER99999'], $db, $pp)['error']), 'unknown order accepted');
+    check(isset(donationPaypalStatus(['id' => str_repeat('0', 32)], $db, $pp)['error']), 'unknown PayPal payment accepted');
 
-    $cheap = donationPaypalOrder(['alias' => 'Feyd'] + $gold, $db, $pp)['order'];
-    $orders[$cheap]['status'] = 'APPROVED'; $orders[$cheap]['paid'] = ['currency_code' => 'USD', 'value' => '1.00'];
-    check(str_contains(donationPaypalCapture(['order' => $cheap], $db, $pp)['error'] ?? '', 'does not match'), 'underpaid PayPal accepted');
-    $forged = donationPaypalOrder(['alias' => 'Rabban'] + $gold, $db, $pp)['order'];
-    $orders[$forged]['status'] = 'APPROVED'; $orders[$forged]['forged'] = 'other';
-    check(str_contains(donationPaypalCapture(['order' => $forged], $db, $pp)['error'] ?? '', 'does not match'), 'foreign capture accepted');
+    $rejected = [['mc_gross' => '1.00'], ['mc_currency' => 'AUD'], ['business' => 'someone@example.com'],
+        ['payment_status' => 'Denied'], ['txn_id' => 'TXN00000000000001']];
+    foreach($rejected as $n => $bad) {
+        $id = $start(['alias' => "Feyd $n"] + $gold);
+        $ipn($id, $bad + ['txn_id' => 'TXNBAD00000000' . $n, 'mc_gross' => '100.00']);
+        check(isset(donationPaypalStatus(['id' => $id], $db, $pp)['waiting']), 'mismatched IPN accepted: ' . json_encode($bad));
+    }
 
-    // Pending captures and browsers closed after approval are completed in the background.
-    $slow = donationPaypalOrder(['alias' => 'Jessica'] + $gold, $db, $pp)['order'];
-    $orders[$slow]['status'] = 'APPROVED'; $orders[$slow]['capture'] = 'PENDING';
-    check(isset(donationPaypalCapture(['order' => $slow], $db, $pp)['pending']), 'pending capture not reported');
-    $closed = donationPaypalOrder(['alias' => 'Gurney'] + $gold, $db, $pp)['order'];
-    $orders[$closed]['status'] = 'APPROVED';
-    $orders[$slow]['capture'] = 'COMPLETED';
-    $later = $pp; $later['now'] = NOW + 601;
-    donationSupporters($db, $later); $later['now'] = NOW + 1202; donationSupporters($db, $later);
-    $gold = array_column(donationSupporters($db, $later)['members']['gold'], 'alias');
-    check(in_array('Jessica', $gold, true) && in_array('Gurney', $gold, true), 'background PayPal completion failed');
-    check(!in_array('Feyd', $gold, true) && !in_array('Rabban', $gold, true), 'mismatched PayPal payments listed');
+    // Pending clears later; refunds take the alias off the wall.
+    $jessica = $start(['alias' => 'Jessica'] + $gold);
+    $ipn($jessica, ['txn_id' => 'TXN00000000000002', 'mc_gross' => '100.00', 'payment_status' => 'Pending']);
+    check(isset(donationPaypalStatus(['id' => $jessica], $db, $pp)['pending']), 'pending PayPal payment not reported');
+    $ipn($jessica, ['txn_id' => 'TXN00000000000002', 'mc_gross' => '100.00']);
+    check(donationPaypalStatus(['id' => $jessica], $db, $pp)['ok'] ?? false, 'cleared PayPal payment not confirmed');
+    $ipn($leto, ['txn_id' => 'TXN00000000000003', 'parent_txn_id' => 'TXN00000000000001', 'mc_gross' => '-100.00',
+        'payment_status' => 'Refunded']);
+    check(array_column(donationSupporters($db, $pp)['members']['gold'], 'alias') === ['Jessica'], 'refunded member still listed');
+    check(isset(donationPaypalStatus(['id' => $leto], $db, $pp)['error']), 'refunded payment still confirmed');
+
+    // A PayPal feature opens its issue from the IPN, before the donor returns.
+    $feature = $start(['tier' => 'medium', 'alias' => 'Duncan', 'title' => 'Spice storms'] + $small);
+    $ipn($feature, ['txn_id' => 'TXN00000000000004', 'mc_gross' => '50.00']);
+    check(count($issues) === 3 && str_contains($issues[2]['body'], '50.00 USD via PayPal'), 'PayPal feature issue missing');
+    check(str_ends_with(donationPaypalStatus(['id' => $feature], $db, $pp)['issue'] ?? '', '/issues/3'), 'PayPal feature issue not returned');
+
+    // Unpaid choices are deleted after two days.
+    $abandoned = $start(['alias' => 'Abandoned'] + $gold);
+    $later = $pp; $later['now'] = NOW + 2 * 86400 + 1;
+    donationSupporters($db, $later);
+    check(isset(donationPaypalStatus(['id' => $abandoned], $db, $pp)['error']), 'unpaid choice kept');
+    check(donationPaypalStatus(['id' => $jessica], $db, $pp)['ok'] ?? false, 'paid PayPal donation deleted');
 
     check(donationAdmit($db, '1.2.3.4', 'k', NOW), 'first attempt refused');
     for($i = 1; $i < 30; ++$i) donationAdmit($db, '1.2.3.4', 'k', NOW);

@@ -1,8 +1,9 @@
 <?php
 // Supporter memberships and sponsored features, verified without manual approval:
-// PayPal orders are captured server-side and crypto transfers are read from the chain.
-// Clients never choose amounts, recipients, tokens, RPC or upstream URLs. Payer emails
-// and wallet addresses are never stored or published; only the chosen alias is public.
+// PayPal payments are confirmed by PayPal's IPN (re-validated with PayPal) and crypto
+// transfers are read from the chain. Clients never choose amounts, recipients, tokens, RPC
+// or upstream URLs. Payer emails, names and wallet addresses are never stored or published;
+// only the chosen alias is public.
 require_once __DIR__ . '/feedback_service.php';
 
 const DONATION_ENS = 'ggtothemax.eth';
@@ -12,6 +13,9 @@ const DONATION_OPENED = 1794528000; // 2026-11-13T00:00:00Z
 const DONATION_MEMBER_SECONDS = 365 * 86400;
 // Rounding and ETH price movement between payment and verification.
 const DONATION_TOLERANCE = 0.97;
+// PayPal account email that receives payments (a forwarded dunelegacy.com alias).
+const DONATION_PAYPAL_EMAIL = 'donations@dunelegacy.com';
+const DONATION_SITE = 'https://dunelegacy.com';
 const DONATION_TIERS = [
     'member' => ['bronze' => 20, 'silver' => 50, 'gold' => 100],
     'feature' => ['small' => 20, 'medium' => 50, 'large' => 100],
@@ -31,7 +35,7 @@ function donationDatabase(string $path, bool $forcePython = false) {
         ? new PDO('sqlite:' . $path, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION])
         : new FeedbackPythonDatabase($path);
     $db->exec('PRAGMA busy_timeout=5000');
-    // state: created (PayPal order opened), pending (PayPal still clearing), paid.
+    // state: created (sent to PayPal), pending (PayPal still clearing), paid, reversed (refunded).
     // hidden=1 removes an entry from the public page without losing the record.
     $db->exec('CREATE TABLE IF NOT EXISTS donations (
         id TEXT PRIMARY KEY, kind TEXT NOT NULL, tier TEXT NOT NULL, usd INTEGER NOT NULL,
@@ -77,20 +81,17 @@ function donationEthPrice(int $time): float {
     return (float)$amount;
 }
 
-function donationPaypalClient(string $clientId, string $secret): callable {
-    $token = null;
-    return function(string $method, string $path, ?array $payload, string $requestId) use ($clientId, $secret, &$token): array {
-        if($token === null) {
-            [$status, $json] = donationHttp('POST', 'https://api-m.paypal.com/v1/oauth2/token',
-                'Authorization: Basic ' . base64_encode($clientId . ':' . $secret) . "\r\nContent-Type: application/x-www-form-urlencoded\r\n",
-                'grant_type=client_credentials');
-            $token = $status === 200 && is_string($json['access_token'] ?? null) ? $json['access_token'] : '';
-        }
-        if($token === '') return [0, null];
-        return donationHttp($method, 'https://api-m.paypal.com/' . $path,
-            "Authorization: Bearer $token\r\nContent-Type: application/json\r\nPayPal-Request-Id: $requestId\r\n",
-            $payload === null ? '' : json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
-    };
+// PayPal IPN postback: true when PayPal vouches for the exact message, false when it does
+// not, null when PayPal could not be reached (PayPal then retries the notification).
+function donationIpnVerify(string $raw): ?bool {
+    $context = stream_context_create(['http' => ['method' => 'POST', 'timeout' => 20, 'ignore_errors' => true,
+        'follow_location' => 0, 'content' => 'cmd=_notify-validate&' . $raw,
+        'header' => "Content-Type: application/x-www-form-urlencoded\r\nUser-Agent: DuneCity-Donations\r\nConnection: close\r\n"],
+        'ssl' => ['verify_peer' => true, 'verify_peer_name' => true]]);
+    $response = @file_get_contents('https://ipnpb.paypal.com/cgi-bin/webscr', false, $context, 0, 64);
+    if($response === false) return null;
+    $response = trim($response);
+    return $response === 'VERIFIED' ? true : ($response === 'INVALID' ? false : null);
 }
 
 // Production collaborators. Tests substitute every upstream call.
@@ -98,17 +99,13 @@ function donationIo(string $dataDir): array {
     $read = fn(string $name) => is_readable("$dataDir/$name") ? trim((string)file_get_contents("$dataDir/$name")) : '';
     $githubToken = $read('feedback_github_token.txt');
     $githubReady = $githubToken !== '' && !preg_match('/\s/', $githubToken);
-    $paypal = json_decode($read('paypal.json') ?: 'null', true);
-    $paypalReady = is_array($paypal) && is_string($paypal['client_id'] ?? null) && is_string($paypal['secret'] ?? null)
-        && preg_match('/^[A-Za-z0-9_-]{20,128}$/D', $paypal['client_id']) && $paypal['secret'] !== '';
     return [
         'now' => time(),
         'key' => $githubReady ? $githubToken : 'dunecity-donations',
         'rpc' => 'donationRpc',
         'price' => 'donationEthPrice',
         'github' => $githubReady ? fn($method, $path, $payload) => feedbackGithub($method, $path, $payload, $githubToken) : null,
-        'paypal' => $paypalReady ? donationPaypalClient($paypal['client_id'], $paypal['secret']) : null,
-        'paypal_client_id' => $paypalReady ? $paypal['client_id'] : '',
+        'ipn' => 'donationIpnVerify',
     ];
 }
 
@@ -250,59 +247,78 @@ function donationCrypto(array $input, $db, array $io): array {
     return donationFinish($db, donationRow($db, 'id', $id), $io);
 }
 
-function donationPaypalOrder(array $input, $db, array $io): array {
-    if(!$io['paypal']) return ['error' => 'PayPal is not available yet. Please use crypto for now.'];
+// Records the donor's choice and sends them to PayPal for that exact amount. The row stays
+// 'created' until PayPal's IPN confirms a payment for it.
+function donationPaypalStart(array $input, $db, array $io): array {
     $request = donationRequest($input);
     if(is_string($request)) return ['error' => $request];
     $id = bin2hex(random_bytes(16));
+    donationInsert($db, $id, $request, 'paypal', 'paypal-order:' . $id, 'created', $io['now'], 0, '');
     $label = $request['kind'] === 'member'
-        ? 'DuneCity ' . ucfirst($request['tier']) . ' supporter, 12 months'
+        ? 'DuneCity ' . ucfirst($request['tier']) . ' supporter donation, 12 months'
         : 'DuneCity sponsored feature, ' . $request['tier'];
-    [$status, $order] = $io['paypal']('POST', 'v2/checkout/orders', [
-        'intent' => 'CAPTURE',
-        'purchase_units' => [['custom_id' => $id, 'invoice_id' => 'dunecity-' . $id, 'description' => $label,
-            'amount' => ['currency_code' => 'USD', 'value' => $request['usd'] . '.00']]],
-        'application_context' => ['brand_name' => 'DuneCity', 'shipping_preference' => 'NO_SHIPPING', 'user_action' => 'PAY_NOW'],
-    ], 'order-' . $id);
-    $orderId = is_array($order) ? ($order['id'] ?? '') : '';
-    if(!in_array($status, [200, 201], true) || !is_string($orderId) || !preg_match('/^[A-Z0-9]{10,40}$/D', $orderId))
-        return ['error' => 'PayPal could not start the payment. Please try again.'];
-    donationInsert($db, $id, $request, 'paypal', 'paypal:' . $orderId, 'created', $io['now'], 0, '');
-    return ['order' => $orderId];
+    return ['redirect' => 'https://www.paypal.com/cgi-bin/webscr?' . http_build_query([
+        'cmd' => '_xclick', 'business' => DONATION_PAYPAL_EMAIL, 'item_name' => $label, 'item_number' => 'dunecity-' . $id,
+        'amount' => $request['usd'] . '.00', 'currency_code' => 'USD', 'quantity' => 1, 'no_shipping' => 1, 'no_note' => 1,
+        'custom' => $id, 'charset' => 'utf-8', 'rm' => 1,
+        'notify_url' => DONATION_SITE . '/metaserver/donations.php?action=paypal-ipn',
+        'return' => DONATION_SITE . '/support.html?paypal=' . $id,
+        'cancel_return' => DONATION_SITE . '/support.html#donate',
+    ], '', '&', PHP_QUERY_RFC3986)];
 }
 
-function donationPaypalCapture(array $input, $db, array $io): array {
-    if(!$io['paypal']) return ['error' => 'PayPal is not available yet. Please use crypto for now.'];
-    $orderId = $input['order'] ?? '';
-    $row = is_string($orderId) && preg_match('/^[A-Z0-9]{10,40}$/D', $orderId) ? donationRow($db, 'payment_ref', 'paypal:' . $orderId) : null;
-    if(!$row) return ['error' => 'Unknown PayPal order.'];
-    return $row['state'] === 'created' ? donationPaypalSettle($db, $row, $io, true) : donationFinish($db, $row, $io);
+// Handles one PayPal IPN. Only messages PayPal itself vouches for, paid to our address in USD
+// for at least the recorded amount, can change a donation. Returns false only when PayPal
+// could not be reached, so the caller asks PayPal to resend.
+function donationPaypalIpn(string $raw, array $fields, $db, array $io): bool {
+    $verified = $io['ipn']($raw);
+    if($verified === null) return false;
+    if(!$verified) return true;
+    $receivers = [strtolower(trim((string)($fields['business'] ?? ''))), strtolower(trim((string)($fields['receiver_email'] ?? '')))];
+    $id = (string)($fields['custom'] ?? '');
+    $row = preg_match('/^[0-9a-f]{32}$/D', $id) ? donationRow($db, 'id', $id) : null;
+    $txn = (string)($fields['txn_id'] ?? '');
+    if(!in_array(DONATION_PAYPAL_EMAIL, $receivers, true) || !$row || $row['method'] !== 'paypal'
+        || !preg_match('/^[A-Z0-9]{8,32}$/D', $txn)) return true;
+    $status = (string)($fields['payment_status'] ?? '');
+    $parent = 'paypal:' . ($fields['parent_txn_id'] ?? '');
+    if(in_array($status, ['Refunded', 'Reversed', 'Canceled_Reversal'], true)) {
+        if($parent === $row['payment_ref']) $db->prepare('UPDATE donations SET state=? WHERE id=?')
+            ->execute([$status === 'Canceled_Reversal' ? 'paid' : 'reversed', $id]);
+        return true;
+    }
+    $state = ['Completed' => 'paid', 'Pending' => 'pending'][$status] ?? null;
+    $gross = $fields['mc_gross'] ?? '';
+    if($state === null || ($fields['mc_currency'] ?? '') !== 'USD' || !is_numeric($gross) || (float)$gross < $row['usd'])
+        return true;
+    $ref = 'paypal:' . $txn;
+    $db->exec('BEGIN IMMEDIATE');
+    try {
+        $current = donationRow($db, 'id', $id);
+        $owner = donationRow($db, 'payment_ref', $ref);
+        $update = !in_array($current['state'], ['paid', 'reversed'], true) && (!$owner || $owner['id'] === $id)
+            && in_array($current['payment_ref'], ['paypal-order:' . $id, $ref], true);
+        if($update) $db->prepare('UPDATE donations SET state=?, payment_ref=?, paid=?, received=? WHERE id=?')
+            ->execute([$state, $ref, $io['now'], sprintf('%.2f USD via PayPal', (float)$gross), $id]);
+        $db->exec('COMMIT');
+    } catch(Throwable $error) { $db->exec('ROLLBACK'); throw $error; }
+    if($update && $state === 'paid') donationFinish($db, donationRow($db, 'id', $id), $io);
+    return true;
 }
 
-// Captures an approved order (idempotent per order), then trusts only PayPal's capture record.
-function donationPaypalSettle($db, array $row, array $io, bool $capture): array {
-    $orderId = substr($row['payment_ref'], 7);
-    [$status, $order] = $io['paypal']('GET', "v2/checkout/orders/$orderId", null, 'read-' . $row['id']);
-    if($status === 200 && $capture && ($order['status'] ?? '') === 'APPROVED')
-        [$status, $order] = $io['paypal']('POST', "v2/checkout/orders/$orderId/capture", null, 'capture-' . $row['id']);
-    $unit = is_array($order) ? ($order['purchase_units'][0] ?? null) : null;
-    $payment = is_array($unit) ? ($unit['payments']['captures'][0] ?? null) : null;
-    if(!in_array($status, [200, 201], true) || !is_array($payment))
-        return ['error' => 'PayPal has not confirmed this payment yet. If you were charged, your listing will appear within a few minutes.'];
-    $amount = $payment['amount'] ?? [];
-    if(($payment['custom_id'] ?? $unit['custom_id'] ?? '') !== $row['id'] || ($amount['currency_code'] ?? '') !== 'USD'
-        || !is_numeric($amount['value'] ?? null) || (float)$amount['value'] < $row['usd'])
-        return ['error' => 'PayPal returned a payment that does not match this order.'];
-    $state = ['COMPLETED' => 'paid', 'PENDING' => 'pending'][$payment['status'] ?? ''] ?? null;
-    if($state === null) return ['error' => 'PayPal declined or reversed this payment.'];
-    $db->prepare('UPDATE donations SET state=?, paid=?, received=?, checked=? WHERE id=?')
-        ->execute([$state, $io['now'], sprintf('%.2f USD via PayPal', (float)$amount['value']), $io['now'], $row['id']]);
-    return donationFinish($db, donationRow($db, 'id', $row['id']), $io);
+// Polled by the donor's browser after returning from PayPal.
+function donationPaypalStatus(array $input, $db, array $io): array {
+    $id = $input['id'] ?? '';
+    $row = is_string($id) && preg_match('/^[0-9a-f]{32}$/D', $id) ? donationRow($db, 'id', $id) : null;
+    if(!$row || $row['method'] !== 'paypal') return ['error' => 'Unknown PayPal payment.'];
+    if($row['state'] === 'created') return ['waiting' => 'Waiting for PayPal to confirm your payment…'];
+    return donationFinish($db, $row, $io);
 }
 
 function donationFinish($db, array $row, array $io): array {
     if($row['state'] === 'pending')
         return ['pending' => 'PayPal is still clearing this payment. Your entry appears automatically once it does.'];
+    if($row['state'] === 'reversed') return ['error' => 'This payment was refunded or reversed.'];
     if($row['state'] !== 'paid') return ['error' => 'This payment has not been confirmed.'];
     $result = ['ok' => true, 'kind' => $row['kind'], 'tier' => $row['tier'], 'alias' => $row['alias']];
     if($row['kind'] === 'member') return $result + ['until' => gmdate('Y-m-d', (int)$row['paid'] + DONATION_MEMBER_SECONDS)];
@@ -350,20 +366,19 @@ function donationCreateIssue($db, array $row, array $io): string {
     return $url;
 }
 
-// Bounded background completion: PayPal payments whose browser closed before capture or that
-// were still clearing, and paid features whose issue could not be created yet.
+// Bounded background completion: paid features whose issue could not be created yet. Choices
+// that were never paid are deleted after two days so their text is not kept.
 function donationReconcile($db, array $io): void {
-    $query = $db->prepare("SELECT * FROM donations WHERE checked < ? AND (
-        (method='paypal' AND state='created' AND created > ?) OR (method='paypal' AND state='pending')
-        OR (state='paid' AND kind='feature' AND issue_url='')) ORDER BY checked LIMIT 2");
-    $query->execute([$io['now'] - 600, $io['now'] - 86400]);
+    $db->prepare("DELETE FROM donations WHERE state='created' AND created < ?")->execute([$io['now'] - 2 * 86400]);
+    $query = $db->prepare("SELECT * FROM donations WHERE checked < ? AND state='paid' AND kind='feature' AND issue_url=''
+        ORDER BY checked LIMIT 2");
+    $query->execute([$io['now'] - 600]);
     $rows = [];
     while($row = $query->fetch(2)) $rows[] = $row;
     foreach($rows as $row) {
         $db->prepare('UPDATE donations SET checked=? WHERE id=?')->execute([$io['now'], $row['id']]);
         try {
-            if($row['state'] === 'paid') donationCreateIssue($db, $row, $io);
-            elseif($io['paypal']) donationPaypalSettle($db, $row, $io, $row['state'] === 'created');
+            donationCreateIssue($db, $row, $io);
         } catch(Throwable $error) {
             // Retried on a later page view.
         }
@@ -392,5 +407,5 @@ function donationSupporters($db, array $io): array {
     foreach(DONATION_NETWORKS as $name => $chain) $networks[$name] = ['label' => $chain['label'],
         'assets' => array_merge(['ETH'], array_column(array_values($chain['tokens']), 0))];
     return ['members' => $members, 'features' => $features, 'tiers' => DONATION_TIERS, 'ens' => DONATION_ENS,
-        'address' => DONATION_ADDRESS, 'networks' => $networks, 'paypal' => $io['paypal_client_id'] ?: null];
+        'address' => DONATION_ADDRESS, 'networks' => $networks];
 }

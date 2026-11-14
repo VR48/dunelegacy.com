@@ -280,8 +280,6 @@ jobs:
           DROPLET_IP: ${{ secrets.METASERVER_DROPLET_IP }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           FEEDBACK_GITHUB_TOKEN: ${{ secrets.FEEDBACK_GITHUB_TOKEN }}
-          PAYPAL_CLIENT_ID: ${{ secrets.PAYPAL_CLIENT_ID }}
-          PAYPAL_CLIENT_SECRET: ${{ secrets.PAYPAL_CLIENT_SECRET }}
         run: |
           set -euo pipefail
           SSH_ARGS=(-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
@@ -316,12 +314,6 @@ jobs:
             printf '%s' "$FEEDBACK_GITHUB_TOKEN" \
               | ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" \
                   'umask 027; token_file=$(mktemp /var/www/data/.feedback-token.XXXXXX); cat > "$token_file"; chmod 0640 "$token_file"; mv -f "$token_file" /var/www/data/feedback_github_token.txt'
-          fi
-
-          if [ "$DEPLOY_CHANNEL" != staging ] && [ -n "$PAYPAL_CLIENT_ID" ] && [ -n "$PAYPAL_CLIENT_SECRET" ]; then
-            python3 -c 'import json, os; print(json.dumps({"client_id": os.environ["PAYPAL_CLIENT_ID"], "secret": os.environ["PAYPAL_CLIENT_SECRET"]}))' \
-              | ssh "${SSH_ARGS[@]}" dunelegacy-deploy@"$DROPLET_IP" \
-                  'umask 027; config=$(mktemp /var/www/data/.paypal.XXXXXX); cat > "$config"; chmod 0640 "$config"; mv -f "$config" /var/www/data/paypal.json'
           fi
 
           if [ "$DEPLOY_CHANNEL" != staging ] && [ -n "$DISCORD_WEBHOOK_URL" ]; then

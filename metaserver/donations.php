@@ -10,19 +10,22 @@ if($origin !== '' && $origin !== 'https://dunelegacy.com' && $origin !== 'https:
 }
 $method = $_SERVER['REQUEST_METHOD'] ?? '';
 $action = is_string($_GET['action'] ?? null) ? $_GET['action'] : '';
-$posts = ['crypto' => 'donationCrypto', 'paypal-order' => 'donationPaypalOrder', 'paypal-capture' => 'donationPaypalCapture'];
-if(!($method === 'GET' && $action === 'supporters') && !($method === 'POST' && isset($posts[$action])
+$posts = ['crypto' => 'donationCrypto', 'paypal-start' => 'donationPaypalStart', 'paypal-status' => 'donationPaypalStatus'];
+$ipn = $method === 'POST' && $action === 'paypal-ipn';
+if(!($method === 'GET' && $action === 'supporters') && !($method === 'POST' && ($ipn || isset($posts[$action]))
     && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) <= 16384)) {
     http_response_code(400); exit('{"error":"Invalid request."}');
 }
-// Donations are paused pending legal review (2026-11-14). No payment is accepted or verified.
-if($method === 'POST') { http_response_code(503); exit('{"error":"Donations are paused."}'); }
 try {
     $dataDir = getenv('DATA_DIR') ?: '/var/www/data';
     // Credentials are provisioned outside the published web root.
     $io = donationIo($dataDir);
     $db = donationDatabase($dataDir . '/donations.sqlite');
     if($method === 'GET') $result = donationSupporters($db, $io);
+    // PayPal's server notification: validated by posting it back to PayPal, so no rate limit.
+    elseif($ipn) { http_response_code(donationPaypalIpn(file_get_contents('php://input'), $_POST, $db, $io) ? 200 : 503); exit; }
+    // Status polls only read the database, so they do not use up payment attempts.
+    elseif($action === 'paypal-status') $result = donationPaypalStatus($_POST, $db, $io);
     elseif(!donationAdmit($db, $_SERVER['REMOTE_ADDR'] ?? '', $io['key'], $io['now']))
         $result = ['error' => 'Too many attempts. Please try again in an hour.'];
     else $result = $posts[$action]($_POST, $db, $io);

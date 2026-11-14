@@ -241,12 +241,9 @@ git push origin main
 
 ## Donations and sponsored features
 
-**Paused since 2026-11-14 pending legal review.** `metaserver/donations.php`
-rejects every payment request and `website/support.html` only says donations are
-paused. The donation page front end (`website/js/support.js`, `website/css/support.css`)
-was removed in that change; restore it from git history (commit `c46d9c4`) and
-remove the POST guard in `donations.php` to resume. While open, payments were
-verified automatically; nothing waited for manual approval.
+`website/support.html` (script `website/js/support.js`) talks to
+`metaserver/donations.php`. Payments are verified automatically; nothing waits
+for manual approval.
 
 - **Tiers:** supporter Bronze/Silver/Gold $20/$50/$100 per year (alias listed for
   365 days), sponsored feature Small/Medium/Large $20/$50/$100. Amounts live in
@@ -256,12 +253,14 @@ verified automatically; nothing waited for manual approval.
   sums transfers to `ggtothemax.eth` (`0x03b4…3114`), values ETH at that day's
   Coinbase price and accepts 97% of the tier. Transactions before 2026-11-13 and
   reused hashes are refused.
-- **PayPal:** Orders v2, captured server-side. Requires repository secrets
-  `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` (live REST app from
-  developer.paypal.com, PayPal Business account); the deploy writes them to
-  `/var/www/data/paypal.json`. Without them the page shows crypto only. Captures that
-  were still clearing, or approved orders whose browser closed, are completed in the
-  background when the supporters list is next loaded.
+- **PayPal:** PayPal Payments Standard to the account holding
+  `donations@dunelegacy.com` (Stefan's personal account; the address forwards via
+  Forward Email DNS). `paypal-start` records the choice and returns a PayPal URL with
+  the fixed amount and the donation id in `custom`. PayPal posts an IPN to
+  `donations.php?action=paypal-ipn`; the server re-validates it with PayPal
+  (`cmd=_notify-validate`), then requires `business`/`receiver_email` to be that
+  address, USD, and at least the tier amount. Refunds and reversals take the entry
+  off the wall. No API credentials are needed. Unpaid choices are deleted after two days.
 - **Features:** each paid feature opens one issue in `dunecity-project/dunecity` with
   labels `enhancement`, `sponsored-feature`, `size: <tier>`, using the feedback token
   (`/var/www/data/feedback_github_token.txt`). If GitHub is down the payment is kept
