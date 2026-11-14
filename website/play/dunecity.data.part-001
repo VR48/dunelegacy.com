@@ -1,4 +1,120 @@
-rd
+27404f2e5770bcf78a08419c3644ea44bc9dde68
+SourceHashNormalization=LF
+SharedQuota=0
+OriginalWinFlags=3
+OriginalLoseFlags=1
+OwnerCorrectionCount=0
+OwnerCorrectionHouseCount=0
+EnemyFaction1=8
+EnemyPresent1=1
+EnemyDeclared1=1
+EnemyDeferred1=0
+SourceOpponent1=Tharpique
+EnemyFaction2=2
+EnemyPresent2=1
+EnemyDeclared2=1
+EnemyDeferred2=0
+SourceOpponent2=Ordos
+EnemyFaction3=-1
+EnemyPresent3=0
+EnemyDeclared3=0
+EnemyDeferred3=0
+SourceOpponent3=Neutral
+; Original campaign terrain and forces; cooperative starts only.
+[BASIC]
+LosePicture=LOSTBILD.WSA
+WinPicture=WIN2.WSA
+BriefPicture=SARDUKAR.WSA
+TimeOut=0
+TechLevel=9
+MapScale=0
+CursorPos=3422
+TacticalPos=3095
+LoseFlags=1
+WinFlags=3
+
+[MAP]
+Bloom=983,1762,2015,3343,3383
+Field=83,130,156,177,231,381,567
+Seed=392
+
+[Player4]
+Quota=0
+Credits=1500
+Brain=Team 2
+MaxUnit=20
+
+[Player1]
+Quota=2500
+Credits=1000
+Brain=Team 1
+MaxUnit=25
+
+[Player3]
+Quota=0
+Credits=1500
+Brain=Team 2
+MaxUnit=20
+
+[Player5]
+Quota=0
+Credits=2500
+Brain=Team 2
+MaxUnit=20
+
+[CHOAM]
+Trike=5
+Quad=5
+Tank=6
+Launcher=5
+Siege Tank=6
+Harvester=4
+MCV=2
+Thopter=5
+Carryall=2
+
+[TEAMS]
+1=Player3,Kamikaze,Foot,4,6
+2=Player3,Kamikaze,Track,4,6
+3=Player3,Normal,Track,4,6
+4=Player3,Kamikaze,Wheel,3,5
+5=Player4,Normal,Foot,3,5
+6=Player4,Kamikaze,Wheel,4,6
+7=Player4,Kamikaze,Track,5,7
+8=Player4,Normal,Track,4,6
+9=Player5,Kamikaze,Foot,4,6
+10=Player5,Normal,Foot,3,5
+11=Player5,Kamikaze,Foot,4,6
+12=Player5,Kamikaze,Track,4,6
+13=Player5,Normal,Track,3,5
+
+[UNITS]
+ID022=Player1,Special,256,3679,64,Guard
+ID023=Player1,Siege Tank,256,3612,64,Guard
+ID024=Player1,Siege Tank,256,3553,64,Guard
+ID025=Player1,Siege Tank,256,3356,64,Guard
+ID027=Player1,Special,256,3294,64,Guard
+ID026=Player1,Siege Tank,256,3296,64,Guard
+ID019=Player5,Sandworm,256,2515,64,Ambush
+ID020=Player5,Sandworm,256,1951,64,Ambush
+ID028=Player3,Special,256,1406,64,Guard
+ID029=Player3,Siege Tank,256,1209,64,Area Guard
+ID030=Player3,Siege Tank,256,1014,64,Area Guard
+ID031=Player4,Special,256,849,64,Area Guard
+ID034=Player5,Siege Tank,256,814,64,Area Guard
+ID033=Player3,Siege Tank,256,821,64,Area Guard
+ID032=Player4,Special,256,795,64,Area Guard
+ID035=Player3,Special,256,698,64,Area Guard
+ID037=Player4,Launcher,256,531,64,Area Guard
+ID036=Player4,Launcher,256,533,64,Area Guard
+ID039=Player4,Special,256,457,64,Area Guard
+ID038=Player5,Launcher,256,482,64,Area Guard
+ID041=Player5,Launcher,256,352,64,Area Guard
+ID040=Player5,Launcher,256,356,64,Area Guard
+IDCOOPMCV=Player2,MCV,256,3420,64,Guard
+IDCOOP022=Player2,Special,256,3357,64,Guard
+IDCOOP023=Player2,Siege Tank,256,3355,64,Guard
+IDCOOP024=Player2,Siege Tank,256,3419,64,Guard
 IDCOOP025=Player2,Siege Tank,256,3483,64,Guard
 IDCOOP027=Player2,Special,256,3358,64,Guard
 IDCOOP026=Player2,Siege Tank,256,3292,64,Guard
@@ -1081173,15 +1081289,4 @@ $ZKvç…ÃÞÈR'–:åJ™r)òJ£bjÑ:ÀÙœ]»÷!¥&Ð>@j/X}dõœ÷´Óg³Ätb‡t”qœ)áƒ-±h-‹¯é
 ¼zF+fq J¾qÃãE}Håcèƒ@bP àö•T()2ÇAR>ñ¦óØ3TÃ	…ÄKÑ|ê¨¢s[ñX±ÉäâN’V5ëÍ.NP	üêé,36Ùö?_c8 wŠ<KŠÕt^ZoŒß“l¬oèŒóC»ÕB•z‘a	¬—gŽ4ÑJã¤¿„dÁŽFaHê£S	Ív‹ñf«Ð/XRã§cý¡Ù;àÅ1tV*lÛ¶ ŒØ³w?}Ý4šªåÈÓÅNÉ¿-	¦0BJ¢P„a iµÛXc˜½äÌßL£½­Æd4š^¸°øˆU\vÙ•~¡€–ñäI;É|Ö¯tDÒoçˆb¶ÿ!›¯¨Pý]¹Ç"O’(üÂÅiê6Ëc”çy©‹ˆ(EíÄ/PÐR¢´ d”Iœ– HSCš;vMyY—Íü×°9a R9òãÊä‹ ú]ÕÀÿ{í¥i¡öRð<7X-™hÆÌí©·ýúÛ®ŽÈ+…„Æä±Ïî)²~O_LaqÂqÌQ‡²vý¶Bïƒ)rcX0ž¿ò¥ÄYÃî=€aíÚ-LŒŽ³s`˜ÎJ…‰‰:µfŠ9a)ÂâP’¸EÜnñ¶—Íîƒ	óæöqÍ/®cÑÂù”JeôV
 •°-‚;ÿ¦1ÄS±iÒFˆã˜<µTÃ·}úzz¾ögG§è®F<ã¤%è°›MqøÏä]oø0²ù4.%eÐåR(0‘fb¢MìRŸT ÚÑÑTä×Ñ¨¥ˆKg!ÈÈkù]J-¥àºÛ×ñ;–¾“4Yæ‰£PrãÇR-½ÉÓ]7ÖäÆ2ÙHx×+ÎWô0J’Ú%$•ßÇ¸ZN¢Iûu6UìœDKK#³YF³•vU1¦å4¥r‘§¨ÐaGk2š­”ÉáýÄIN–¤Þ­B„Ð}ÔaHåK¦°¤a€Rš<Kh¶¼å¥§ññw_H­Ö$*Ež*Œ©ÖIÆ§bÊ¡DMZA¹£Ê?ù£WG5,[º„ÁCÄí„Z»®xÀŸ2$JyvòànÎ<ñhN9j9¥J…«ïªóÊ‹.dVO[Æùí7sëÃ{¹èU‚#žõÞtÑ|O±íKàØ34Åœî*i3ÑH±ŠÀŒÜC¾¥›Z4^ÒC®Òùtq—ó¯ðkW­ó?dµÚ‰
 CD£„@—4YèŽRPô(Ž81›¢¤"
-5åPC£»hÇ]•pæ–“ä„F’Že¤—t’¦9dEŽNÉ»r­õ»*Â`Šþˆ"pQÐÑÛM«Ö¦)¯l’ŠÍw}t¢K%Þg|ü£|äýÏäÔ}•Ü“„ËýŒ¼éÙÏà×ß¸™;úf:É÷¿ÿ;öì"Ïü†“,IÑZYW,´T„Â‡YšSª–‘J15Ucl|ª@X-»÷îáo=±Ó„å.’|Zæö”)a‚@Þõñ+½ý¡Øx¡µ¦ÙlñŠçžæS.;:Àåˆd’¾étuFÅ2&ÿ$®ß1Ì=ïäÍ/8Ù{õžŒñöo®ñË!›SmÔoZô•Ë¤Y›öUòy¾–ãÈŒŸ[‚;~õ!®»á®¾éN8l.ÃÍ€G×l ÎÚÌÓÇæ­»yÖ9Ç08Vç—œÎ÷»%ï¾ä\ä}Ÿ T|Hy3ˆH’j(ÿxŠ’–H'»¸‚—„öÞA$if]¢çU‘`VªViMN‘§B•p®ÆîM»Êo!cïÖIRxü_ÞC,A¨É”C&ŽÑøUwƒÙwÞ¿‹ãWAm²ÍýO²êáQJ•*Î9ZíYîíõ^N/™;»“±VÊ‚rˆpØ²9Ÿ £¬©V«DJ±ê~¶í=Èüùµ¤‹k™™þç10sÈ"ÖlßE’x5Nn,Q¨i·[”_ñl‚°AÇ´ZÆ÷í&5ž|Eàƒ÷ñÄæ}}
-5ÆtAêhíóÿÚ­×P´ÞÞz¸…:¦Lø›:]w·{Eˆ vîŸ¢Þ¶”KŠ%s:yøîÕìÙ?Lm|œÕëÛì‹Y6·Jž¶íØE5²8@½•ðÍÝÁ®Á)*¡`rxw?º¹sz80Ú$ÏA:èª
-òD‡<# Þ—cÎ¨ ¯™ œ(“ž!¼ã±A¬ÃWt±tn…4Í©~ï@¹£¥†pB#L‹@”¶5H¥I184Ÿ¸âÇÜÄÂ1lÀXw†Q)Í!Y'LµÃ2™±´Û1JÂžñŒr£”ŽâÔd1K-@IÅê­ˆŸmœ¤9ib\ûC¶®~püáö5|îÊk	¢2·Þ½žv’ø¼„§*RA9Ì¸ùË/æOäW·>Šr‚ÃuJª
-²HÚ4Æ08:…ÂI$7?´\–èëë§^¯!pÔšY± Q`l¡~æÎÛ†ìÈˆ¹w¶iÚ”üY=ˆÈ7]QG•O¼ûyº5°m÷§9›û*ÂJÅ[Ÿ¬ß¨¿³Wè pûJBávìäÜ—òšçCgw7ØœÙÝŠ÷|æ÷Ô¬Ã`¨-Ö¨•!?œÂ:I³ÄPÎÒ2mö¿ÆÐsc~_H3Îæ´cW’‡Se9áD>ùå8ñ¼sxdÓv¯¾Ñíú$åj•SŽYÄ'·ßCÏÊ~L=A–$s±#È2ËÀhÌÑÃ˜<cûÞQF'kä…RZ*ÍåÿñC>zék9ÿ¬“ùÝíóÝŸ^Ï‡ßñ
-ºª³ˆÓ'$Q ¹íÇïeçú5¨ À™Œ=ï4v˜â/km{‰z£ÑüO© ÿ9&nàÊËßxÂñŸ*wtqþÓú¸{õVöNøì@!IÚ5Ò$£TŽ°c†M»Ç0NP×Þ±–ã;§K¬_¿<K­eDaLog…{×àlÈ³O_äAAçš˜Ö¾óº^båp‰õK3‹t9Îå8“säŠY3q-yžQR’87(
-÷8›‘ã—C
-)©7Û,œ×KE`3Œ‰	¢Vœhàl:È¡÷GM’’¤ñâ
-¢ƒä&§4'àÜçõaþè­çifÈ3ƒÂë
-ÅÄoïÁYnºî6ö6<o`=D‹€vf8íõ‡qï­{<¸Ÿ{—ŽmåÞcpx„Û$Y³iÖjæövRŠ&IÓœŸß|Ïëùùw’[Ç#kÖò¬óNæw>È…Ï<Ýk œ%Ér:ûæ3:<PðÓ{Szº:pÂSU&†ž:!$Ï-eâÉ”Y=LÔÚOù]»wÞqF@mjŠj¹Bjµ¶áÆ;§«»Ÿw^ül~õÇ5)YÔ_fÏpŽ²bÞ¼^vÓ`|¸Î3’9åbñuäŠ’ÔÔTŽ°^u8\Öâóß¾…Ù½4ãŒ<·”C¿¶.P¢0tx—Qš9r›“gþÍ÷Í–Â €K=ÑhŸ(C %Íñ2@:o[ qY±¬,ÈŒî¬±í¢	Žï›E’†(ÒQýH* 5y€j5d²•â„,2”-iæpÒ›H„´äÒoAÁXºw,ŽÚbJtøEX®x?õE&¢eèàwÝý£ãS,ìïdí†-Ìî*óèº-œwÖ	E„žG8¿øókøðë^Ïþ]ÛÁeÜ|çÞ6@»	sçÏÃ[P´ ÿà}óßsù˜¹g\!¢”tT"¤›ä¥çÉ÷¿òF~ý‹?‘5ÇÙ;ó—Çv342I³•ÒÑiiµR:*8¨tt°ÿà'>—±Zƒz÷Ó¸bãÃh¬vˆÌaHVE¨1Âú,ÿ¼Èh'9AT&MSší„4Ë¨5À8QEJ@ø¥ÌIa†TE&®×6)EÚrJhÁ¢y³Hs¿{ 1”âŠ•}c¯,QúÙî¬à–r¨H…!;;BoÓ(åeaåJ‰JT8‰u‰\ÈªÕDZÐH|²×´	J8‡Ž-XGç0ä[ÚäC)¥—v’t[²–Á:ZÑU‚8ÍÈ²Œ(,aeÄ#›vrö‰‡sõM÷qÄÊ%¬Ù´—e”Dêcô
-sËW¶¬cÕ7¨î]½“‡6ía·@çLÖêTJ%z{»ŸÚ–ªHŠ *‘PZ³bñlöõÅ|`Çülç£d¶Eg- §§›þÙ%,˜šªÓÓY¡\ª"¥ààDB12ÑÄ	Éµ¯¹‹E!é	E B"o×J^Ñ…´`“-¢XËœNÅ·û0ÕÎ®þ{:Rv:=Ü/Tö«i\‘Ž=Í	È">ÖYo7ŸšªqÍå‡óð¦1ŒuD¡"Ñd~QTëåë}>µÛqú!ó0»K÷²ûàãSuN8t>Qà¿v»•!¬—&ùUµÞóX	‹$D‘XâÑÍÖBEÇ¬Nì¯FQô
-LËg%öñð&GIJó’óO ¬vò£_ÞÈUŸ7úÂ/8lù|.}ýsag¡¤ö=Õér—Õ×ÑyJ+KoOqHµŸp©àœ“Vòó?>ÆàH;k˜Vø·½xX	ÆïÛñIÉÁS¼ì¾€×Ä+Ø˜`w)áížÊŽÑ&Cãm6nßÍ‡/áæû·‘ÃÈè(Arã]Y¶b)ÕîZí”Û×îÇÎäûš¨C* iì“½””;$N+*•Àçäé c £Û'r{[¹‡Ae‘-ìl‘R GRùécÚtâ3 ³úûY4¿‡6±{x×Ý4ÈÌØD#Ç…¢[sÓMé¨VÐaÄšÝ“äyF•Ø<0E»`í¦jõöLiËBéËˆ·Õy‡t ˆ·6Éc‚ÉEa‹¡à
-"	íÌ‘§,=dí±ƒè Ì¿#&Ï8bñ,&›‚ÚDa0“ð~¸êåÕ¹<ë?N£ÙJ¹ô3¿aè`XÏïbNgî~õgÂŸ")tàÊËßtü	ŸRÂ‘¤~ŒSC½>Á¶'~ÃÞ‡îbêŒÍ¶á5ú!xtÕj™¡á1*•ý+Ïâä•ë¸³·›îî.Ž<âPjµ™˜šò‡,,açh8ÐÆ<<åg2-‘Z‘çPÛ
+5åPC£»hÇ]•pæ–“ä„F’Že¤—t’¦9dEŽNÉ»r­õ»*Â`Šþˆ"pQÐÑÛM«Ö¦)¯l’ŠÍw}t¢K%Þg|ü£|äýÏäÔ}•Ü“„ËýŒ¼éÙÏà×ß¸™;úf:É÷¿ÿ;öì"Ïü†“,IÑZYW,´T„Â‡YšSª–‘J15Ucl|ª@X-»÷îáo=±Ó„å.’|Zæö”)a‚@Þõñ+½ý¡Øx¡µ¦ÙlñŠçžæS.;:Àåˆd’¾étuFÅ2&ÿ$®ß1Ì=ïäÍ/8Ù{õžŒñöo®ñË!›SmÔoZô•Ë¤Y›öUòy¾–ãÈŒŸ[‚;~õ!
