@@ -15,6 +15,10 @@ The game's release workflow runs this after publishing, so the page stays curren
     scripts/build-changelog.py --game-repo ../dunecity --releases releases.jsonl
 
 Without --releases every vX.Y.Z tag counts as published, dated by its commit.
+
+Consecutive releases listed together in changelog/groups.json show as one entry: its
+summary notes first, then each release's own notes folded underneath. Every release
+keeps its #vX.Y.Z anchor.
 """
 
 from __future__ import annotations
@@ -52,6 +56,7 @@ INTERNAL = re.compile(
 )
 SKIPPED_SECTIONS = re.compile(r"verification|checksum|sha-?256|assets?$", re.IGNORECASE)
 MAX_COMMITS = 12
+GROUPS = Path(__file__).resolve().parents[1] / "changelog" / "groups.json"
 
 
 def git(repo: Path, *args: str) -> str:
@@ -181,8 +186,28 @@ def long_date(iso: str) -> str:
     return f"{day.day} {day.strftime('%B %Y')}"
 
 
-def render(repo: Path, releases: list[tuple[str, str]]) -> str:
-    sections = []
+def date_range(first: str, last: str) -> str:
+    start, end = datetime.date.fromisoformat(first), datetime.date.fromisoformat(last)
+    if start == end:
+        return long_date(first)
+    if (start.year, start.month) == (end.year, end.month):
+        return f"{start.day}\u2013{end.day} {end.strftime('%B %Y')}"
+    return f"{long_date(first)} \u2013 {long_date(last)}"
+
+
+def load_groups(path: Path | None) -> list[dict]:
+    if path is None or not path.exists():
+        return []
+    groups = json.loads(path.read_text(encoding="utf-8"))
+    for group in groups:
+        if not group.get("tags") or not all(TAG.match(tag) for tag in group["tags"]):
+            raise ValueError(f"{path}: every group needs vX.Y.Z tags")
+    return groups
+
+
+def render(repo: Path, releases: list[tuple[str, str]], groups: list[dict] | None = None,
+           groups_dir: Path | None = None) -> str:
+    entries = []
     notes = notes_files(repo)
     previous: str | None = None
     for tag, date in releases:
@@ -207,16 +232,67 @@ def render(repo: Path, releases: list[tuple[str, str]]) -> str:
             if len(summaries) > len(shown):
                 more = len(summaries) - len(shown)
                 body += f'<p class="release-more">and {more} more change{"s" if more != 1 else ""}.</p>'
-        compare = f"{REPO_URL}/compare/{previous}...{tag}" if previous else f"{REPO_URL}/commits/{tag}"
+        entries.append({"tag": tag, "version": version, "date": date, "body": body, "previous": previous})
+        previous = tag
+
+    def compare(start: str | None, tag: str) -> str:
+        return f"{REPO_URL}/compare/{start}...{tag}" if start else f"{REPO_URL}/commits/{tag}"
+
+    def links(tag: str, start: str | None) -> str:
+        return (f'<p class="release-links"><a href="{REPO_URL}/releases/tag/{tag}">Downloads</a> · '
+                f'<a href="{compare(start, tag)}">All code changes</a></p>')
+
+    index = {entry["tag"]: position for position, entry in enumerate(entries)}
+    group_of: dict[str, dict] = {}
+    for group in groups or []:
+        members = sorted((index[tag] for tag in group["tags"] if tag in index))
+        if not members:
+            continue
+        if members != list(range(members[0], members[-1] + 1)):
+            raise ValueError("changelog group must list consecutive published releases: "
+                             + ", ".join(group["tags"]))
+        for position in members:
+            group_of[entries[position]["tag"]] = {**group, "members": members}
+
+    sections = []
+    for position, entry in enumerate(entries):
+        tag, version, date = entry["tag"], entry["version"], entry["date"]
+        group = group_of.get(tag)
+        if group is None:
+            sections.append(
+                f'<section class="release" id="{tag}">\n'
+                f'<h3><a href="#{tag}">Dune City {version}</a> <time datetime="{date}">{long_date(date)}</time></h3>\n'
+                f"{entry['body']}\n"
+                f"{links(tag, entry['previous'])}\n"
+                f"</section>"
+            )
+            continue
+        if position != group["members"][-1]:
+            continue
+        members = [entries[i] for i in group["members"]]
+        first, last = members[0], members[-1]
+        title = group.get("title") or f"Dune City {first['version']} to {last['version']}"
+        summary = ""
+        if group.get("notes"):
+            summary = render_notes(((groups_dir or GROUPS.parent) / group["notes"]).read_text(encoding="utf-8")) + "\n"
+        parts = "\n".join(
+            f'<details class="release-part" id="{member["tag"]}">\n'
+            f'<summary>Dune City {member["version"]} \u00b7 {long_date(member["date"])}</summary>\n'
+            f"{member['body']}\n"
+            f"{links(member['tag'], member['previous'])}\n"
+            f"</details>"
+            for member in reversed(members)
+        )
         sections.append(
-            f'<section class="release" id="{tag}">\n'
-            f'<h3><a href="#{tag}">Dune City {version}</a> <time datetime="{date}">{long_date(date)}</time></h3>\n'
-            f"{body}\n"
-            f'<p class="release-links"><a href="{REPO_URL}/releases/tag/{tag}">Downloads</a> · '
-            f'<a href="{compare}">All code changes</a></p>\n'
+            f'<section class="release release-group" id="{last["tag"]}-group">\n'
+            f'<h3><a href="#{last["tag"]}-group">{html.escape(title)}</a> '
+            f'<time datetime="{first["date"]}">{date_range(first["date"], last["date"])}</time></h3>\n'
+            f"{summary}"
+            f"<h4>Each release in full</h4>\n"
+            f"{parts}\n"
+            f"{links(last['tag'], first['previous'])}\n"
             f"</section>"
         )
-        previous = tag
     sections.reverse()
     return "\n".join(sections)
 
@@ -225,6 +301,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--game-repo", type=Path, required=True)
     parser.add_argument("--releases", type=Path, help="JSON lines {tag, published} of published releases")
+    parser.add_argument("--groups", type=Path, default=GROUPS,
+                        help="JSON list of {tags, title, notes}: releases shown as one entry")
     parser.add_argument("--page", type=Path,
                         default=Path(__file__).resolve().parents[1] / "website" / "changelog.html")
     args = parser.parse_args()
@@ -238,7 +316,7 @@ def main() -> int:
     if start < 0 or end < start:
         print(f"{args.page}: changelog markers not found", file=sys.stderr)
         return 1
-    generated = render(args.game_repo, releases)
+    generated = render(args.game_repo, releases, load_groups(args.groups), args.groups.parent)
     args.page.write_text(page[: start + len(START)] + "\n" + generated + "\n" + page[end:], encoding="utf-8")
     print(f"{args.page}: {len(releases)} releases, newest {releases[-1][0]}")
     return 0

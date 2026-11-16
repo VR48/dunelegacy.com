@@ -114,3 +114,28 @@
 .section .features-more {
     margin-top: 30px;
 }
+
+/* Several releases shown as one entry (changelog/groups.json): each release folds open. */
+.release-part {
+    margin: 0 0 10px;
+    border-left: 2px solid rgba(212, 175, 55, 0.25);
+    padding: 2px 0 2px 14px;
+    scroll-margin-top: 110px;
+}
+
+.release-part summary {
+    cursor: pointer;
+    color: var(--primary);
+    font-weight: 600;
+    padding: 4px 0;
+}
+
+.release-part[open] summary {
+    margin-bottom: 6px;
+}
+
+@media (max-width: 768px) {
+    .release-part {
+        scroll-margin-top: 390px;
+    }
+}

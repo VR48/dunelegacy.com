@@ -89,8 +89,27 @@
 <ul><li>Multiplayer uses <strong>protocol 127</strong>. All players need 1.0.872; it cannot play with 1.0.871.</li><li>The save format is unchanged at <strong>9886</strong>.</li><li>Android has a separate version and publication process.</li></ul>
 <p class="release-links"><a href="https://github.com/dunecity-project/dunecity/releases/tag/v1.0.872">Downloads</a> · <a href="https://github.com/dunecity-project/dunecity/compare/v1.0.871...v1.0.872">All code changes</a></p>
 </section>
-<section class="release" id="v1.0.871">
-<h3><a href="#v1.0.871">Dune City 1.0.871</a> <time datetime="2026-11-15">15 November 2026</time></h3>
+<section class="release release-group" id="v1.0.871-group">
+<h3><a href="#v1.0.871-group">Dune City 1.0.867 to 1.0.871</a> <time datetime="2026-11-14">14–15 November 2026</time></h3>
+<p>Four releases over two days took Dune City from 1.0.865 to 1.0.871. Versions 1.0.866 and 1.0.868 were built but never published. This summary describes the game as it stands in 1.0.871. Each release's own notes are below it.</p>
+<h4>Campaign AI opponent</h4>
+<ul><li>The <strong>Campaign AI</strong> opponent follows the original Dune II campaign rules in new games. An enemy house stays idle until one of your units has seen one of its ground units. Its factories choose what to build the original way. It attacks with newly built units and reinforcements one or two at a time, not massed groups.</li><li>Each Campaign AI house keeps its mission's unit limit (15 to 25 units), unless you set your own maximum. Destroyed buildings are rebuilt from up to five remembered slots. The Death Hand aims at the first enemy building. Damage to its base no longer sends its whole army out.</li><li>1.0.869 made this opponent far too hard from level 6, and 1.0.870 fixed that. In 264 Full campaign test games, with an idle human and a Hard QuantBot helper standing in for the player, levels 1 to 5 were won 78 of 78 times. Levels 6 to 9 were won 51 of 54 times, against 49 of 54 in 1.0.867. Nobody has yet confirmed this by playing the missions.</li><li>Games saved before 1.0.869 keep the earlier Campaign AI behaviour when loaded. QuantBot is a separate choice.</li></ul>
+<h4>QuantBot campaign opponents</h4>
+<ul><li>Easy, Medium and Hard opponents now differ in clear steps. They keep at most 1, 2 and 4 harvesters and send attack waves worth 1,700, 2,500 and 3,500. A Hard opponent waits one more minute after the map's first enemy reinforcement before its first attack. Brutal opponents are unchanged.</li><li>Only Easy opponents are denied a Repair Yard. Medium QuantBots in Custom games no longer inherit that ban.</li><li>Campaign QuantBots no longer upgrade their Construction Yard straight away. They wait until they have income and the power they need, and can keep 2,000 credits in reserve.</li><li>The campaign setup screen now describes the opponent levels correctly.</li></ul>
+<h4>QuantBot campaign helper</h4>
+<p>These apply to the QuantBot that plays alongside you in the classic campaign.</p>
+<ul><li><strong>It holds its ground.</strong> Troops that are not out on an attack no longer chase targets more than 14 tiles from your nearest building.</li><li><strong>It waits for a strong army.</strong> It holds its attacks until its army matches the strongest enemy alliance, instead of sending small waves one at a time.</li><li><strong>It builds a bigger economy.</strong> With a Starport available it builds six refineries before the Starport and eight once the Repair Yard is up, with one carryall for every two harvesters.</li><li><strong>It saves on concrete and tanks.</strong> It lays concrete only under its factories. It builds the Repair Yard before its first Heavy Factory and buys early tanks from the Starport.</li><li>It builds a Repair Yard at every difficulty. On spice-quota missions a helper that shares your house stops spending once half the quota is banked.</li><li>On missions 20 to 22 against Hard QuantBot opponents, 216 test games for each helper level, a Brutal helper won 129 against 74 in 1.0.869. A Hard helper won 121 (95 before), a Medium helper 81 (41) and an Easy helper 15 (3).</li></ul>
+<h4>Controls</h4>
+<ul><li><strong>The classic command keys are the defaults:</strong> A Attack, S Stop, M Move, Q Patrol, H Hold, C Capture, D Carryall, R Repair, U Upgrade, P Place, G next Construction Yard and F next factory.</li><li><strong>Every unit command has a key:</strong> E Guard, X Area Guard, B Ambush, N Hunt, K Retreat, Y Deploy MCV, V movement paths and Delete for a Devastator's self-destruct.</li><li><strong>Options &gt; Hotkeys</strong> is new: any of the 33 commands can be given a different key.</li><li><strong>W, A, S and D scroll the map only if you switch on "WASD camera"</strong> under Options &gt; Controls. It is off by default.</li></ul>
+<h4>Also new</h4>
+<ul><li>Long matches with large armies use less AI time.</li><li>The city graphics skin is called Classic, and the bundled two-player city map is "2P - 192x192 - City".</li><li>The About screen says Dune City is an unofficial fan project, not affiliated with or endorsed by Electronic Arts, Westwood Studios, the Herbert estate or any Dune licensee.</li></ul>
+<h4>Known issues</h4>
+<ul><li>Late missions against Hard QuantBot opponents are still lost about four times in ten with a Brutal helper and an idle human. The weakest are Atreides mission 20 and Harkonnen mission 21.</li><li>Against Brutal QuantBot opponents the helper lost all 216 late-mission test games.</li><li>The new keys have not been tried on German or French keyboard layouts.</li></ul>
+<h4>Compatibility</h4>
+<ul><li>Multiplayer uses <strong>protocol 126</strong>: all players should run the same version.</li><li>Saves use format <strong>9886</strong>. Saves from earlier versions still load.</li><li>Android has a separate version and publication process.</li></ul>
+<h4>Each release in full</h4>
+<details class="release-part" id="v1.0.871">
+<summary>Dune City 1.0.871 · 15 November 2026</summary>
 <h4>Controls</h4>
 <p>1.0.870 moved the command keys to make room for a W/A/S/D camera. This release puts the classic keys back and keeps the newer commands as extras.</p>
 <ul><li><strong>The classic command keys are back</strong>: A Attack, S Stop, M Move, Q Patrol, H Hold, C Capture, D Carryall, R Repair, U Upgrade, P Place, G next Construction Yard and F next factory, with Ctrl+A, T and Ctrl+T for selections as before.</li><li><strong>Every unit command now has a key</strong>: E Guard, X Area Guard, B Ambush, N Hunt, K Retreat, Y Deploy MCV, V movement paths and Delete for a Devastator's self-destruct. The buttons' tooltips name them.</li><li>All 33 commands can be changed under <strong>Options &gt; Hotkeys</strong>.</li><li><strong>W, A, S and D scroll the map only if you switch on "WASD camera"</strong> under Options &gt; Controls. It is off by default. While it is on, the commands on those keys need Shift, for example Shift+A to attack.</li><li>If you never changed a key in 1.0.870 you get these keys automatically. Keys you chose yourself are kept. In such a profile seven of the newer commands can start without a key because their letters are in use: choose Defaults and then Apply to switch to the keys above.</li></ul>
@@ -101,9 +120,9 @@
 <h4>Compatibility</h4>
 <ul><li>Multiplayer still uses <strong>protocol 126</strong>. All players should run the same version.</li><li>The save format is unchanged at <strong>9886</strong>.</li><li>Android has a separate version and publication process.</li></ul>
 <p class="release-links"><a href="https://github.com/dunecity-project/dunecity/releases/tag/v1.0.871">Downloads</a> · <a href="https://github.com/dunecity-project/dunecity/compare/v1.0.870...v1.0.871">All code changes</a></p>
-</section>
-<section class="release" id="v1.0.870">
-<h3><a href="#v1.0.870">Dune City 1.0.870</a> <time datetime="2026-11-15">15 November 2026</time></h3>
+</details>
+<details class="release-part" id="v1.0.870">
+<summary>Dune City 1.0.870 · 15 November 2026</summary>
 <h4>Campaign AI opponent</h4>
 <ul><li>Fixed: the <strong>Campaign AI</strong> opponent was far too hard in 1.0.869, and unwinnable from level 6. It woke at the first moment of every mission and sent its whole starting army at your base within about two game minutes. As in the original Dune II, an enemy house now stays idle until one of your units has seen one of its ground units.</li><li>It no longer forms mission attack teams. The original game never creates them in the campaign, so its attacks are newly built units and reinforcements arriving one or two at a time, not a massed group.</li><li>Each Campaign AI house keeps the unit limit its mission gives it (15 to 25 units), as in the original. If you set a specific maximum number of units yourself, your number still applies.</li><li>Measured in 264 Full campaign games with an idle human and a Hard QuantBot helper standing in for the player: levels 6 to 9 were won 51 of 54 times, against 0 of 54 in 1.0.869 and 49 of 54 in 1.0.867. Levels 1 to 5 were won 78 of 78 times. Every one of the 66 missions was won at least once. The first enemy unit reaches the base around minute 11 on those levels.</li><li>A helper bot is a stand-in for a person. This has not yet been confirmed by people playing the missions.</li><li>QuantBot opponents are a separate choice and are not changed by this. Games saved before 1.0.869 keep the earlier Campaign AI behaviour when loaded.</li></ul>
 <h4>QuantBot campaign helper</h4>
@@ -116,9 +135,9 @@
 <h4>Compatibility</h4>
 <ul><li>Multiplayer uses <strong>protocol 126</strong>: all players need 1.0.870.</li><li>The save format is unchanged at <strong>9886</strong>.</li><li>To restore the 1.0.869 helper, set <code>CampaignHelperDefenceLeash=0</code>, <code>CampaignHelperNoConcrete=0</code>, <code>CampaignHelperFactoryConcrete=0</code>, <code>CampaignHelperOpeningRefineries=0</code>, <code>CampaignHelperRefineryGoal=0</code>, <code>CampaignHelperCarryallRatio=0</code> and <code>CampaignHelperFactoryLast=0</code> in the QuantBot config.</li><li>Android has a separate version and publication process.</li></ul>
 <p class="release-links"><a href="https://github.com/dunecity-project/dunecity/releases/tag/v1.0.870">Downloads</a> · <a href="https://github.com/dunecity-project/dunecity/compare/v1.0.869...v1.0.870">All code changes</a></p>
-</section>
-<section class="release" id="v1.0.869">
-<h3><a href="#v1.0.869">Dune City 1.0.869</a> <time datetime="2026-11-14">14 November 2026</time></h3>
+</details>
+<details class="release-part" id="v1.0.869">
+<summary>Dune City 1.0.869 · 14 November 2026</summary>
 <h4>Campaign AI opponent</h4>
 <ul><li>The <strong>Campaign AI</strong> opponent you can choose for a game now follows the original Dune II campaign rules in new games. Its factories pick what to build the original way. Each unit it builds goes on the attack as it is produced, rather than gathering into timed waves. The teams written into each mission run their original team scripts, read from your own DUNE.PAK. Destroyed buildings are rebuilt from up to five remembered slots, and the Death Hand aims at the first enemy building instead of the strongest base. Damage to its base no longer sends its whole army out.</li><li>This is the original behaviour adapted to DuneCity's engine, not a frame-by-frame copy of the original game. QuantBot is a separate choice and is not changed by this. Games saved before 1.0.869 keep the previous Campaign AI behaviour when loaded.</li><li>It was tested for correct operation, not for a particular win rate: 1,665 automated games finished without an engine error, and saved games were loaded and continued.</li></ul>
 <h4>QuantBot AI</h4>
@@ -128,9 +147,9 @@
 <h4>Compatibility</h4>
 <ul><li>Multiplayer uses <strong>protocol 125</strong>: all players need 1.0.869, not 1.0.867 (protocol 123).</li><li>The save format is now <strong>9886</strong>. Two campaign saves made with 1.0.867 on the original rules were loaded and continued in this version.</li><li>Android has a separate version and publication process.</li><li>There is no 1.0.868 release. It was this same game; its Mac package could not be completed, so 1.0.869 replaces it.</li></ul>
 <p class="release-links"><a href="https://github.com/dunecity-project/dunecity/releases/tag/v1.0.869">Downloads</a> · <a href="https://github.com/dunecity-project/dunecity/compare/v1.0.867...v1.0.869">All code changes</a></p>
-</section>
-<section class="release" id="v1.0.867">
-<h3><a href="#v1.0.867">Dune City 1.0.867</a> <time datetime="2026-11-14">14 November 2026</time></h3>
+</details>
+<details class="release-part" id="v1.0.867">
+<summary>Dune City 1.0.867 · 14 November 2026</summary>
 <h4>Campaign difficulty</h4>
 <ul><li>Easy, Medium and Hard campaign opponents now differ in clear steps: they keep at most 1, 2 and 4 harvesters, send attack waves worth 1,700, 2,500 and 3,500, and a Hard opponent waits one more minute after the map's first enemy reinforcement before its first attack. Easy opponents keep their smaller waves on early missions.</li><li>Brutal campaign opponents are unchanged: full strength, no harvester ceiling and no opening delay.</li><li>A QuantBot helper on your side follows its own difficulty. Easy, Medium and Hard helpers keep at most 4, 6 and 8 harvesters. Hard and Brutal helpers build a ground army before they grow their economy.</li><li>Helpers hold their ground attacks until their army matches the strongest enemy alliance, instead of sending small waves one at a time.</li><li>On spice-quota missions a helper that shares your house stops spending once half the quota is banked, or when the map is running short of spice, so the mission can be won on credits.</li><li>Single mission and Single mission co-op use the same QuantBot rules as the full campaign.</li></ul>
 <h4>Performance</h4>
@@ -140,6 +159,8 @@
 <h4>Compatibility</h4>
 <p>Multiplayer uses <strong>protocol 123</strong>: all players need 1.0.867, not 1.0.865 (protocol 122). New saves use <strong>save format 9885</strong>; saves from earlier versions still load. Android has a separate version and publication process. Version 1.0.866 was tagged but never published.</p>
 <p class="release-links"><a href="https://github.com/dunecity-project/dunecity/releases/tag/v1.0.867">Downloads</a> · <a href="https://github.com/dunecity-project/dunecity/compare/v1.0.865...v1.0.867">All code changes</a></p>
+</details>
+<p class="release-links"><a href="https://github.com/dunecity-project/dunecity/releases/tag/v1.0.871">Downloads</a> · <a href="https://github.com/dunecity-project/dunecity/compare/v1.0.865...v1.0.871">All code changes</a></p>
 </section>
 <section class="release" id="v1.0.865">
 <h3><a href="#v1.0.865">Dune City 1.0.865</a> <time datetime="2026-11-12">12 November 2026</time></h3>
