@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game usage statistics — Dune Legacy &amp; Dune City</title>
-    <meta name="description" content="Explore recorded Dune Legacy and Dune City game sessions and players: daily and monthly activity, browser, desktop, Android and iPhone play, campaign levels, mods and AI opponents.">
+    <meta name="description" content="Explore recorded Dune Legacy and Dune City game sessions and players: daily and monthly activity, browser, desktop, Android and iPhone play, campaign levels, the DuneCity Campaign, mods and AI opponents.">
     <link rel="canonical" href="https://dunelegacy.com/usage.html">
     <link rel="stylesheet" href="css/style.css?v=20260915-usage">
-    <link rel="stylesheet" href="css/usage.css?v=20261121-players">
+    <link rel="stylesheet" href="css/usage.css?v=20261121-campaign">
     <link rel="icon" href="img/favicon.ico">
-    <script src="js/usage.js?v=20261121-players" defer></script>
+    <script src="js/usage.js?v=20261121-campaign" defer></script>
 </head>
 <body>
 <header><div class="container">
@@ -24,7 +24,7 @@
     <div id="usage-content" hidden>
         <div class="usage-cards" id="usage-cards"></div>
         <p class="usage-note">Session counts are recorded games, not installs or downloads. Player counts are distinct identified players; see <a href="#players-section">how players are counted</a>. Repeat attempts and development games are included.</p>
-        <nav class="usage-jump" aria-label="Statistics sections"><a href="#activity">Activity</a><a href="#players-section">Players</a><a href="#modes">Modes &amp; mods</a><a href="#campaign">Campaign</a><a href="#bots">AI players</a><a href="#outcomes">Outcomes &amp; duration</a><a href="#history">Multiplayer history</a></nav>
+        <nav class="usage-jump" aria-label="Statistics sections"><a href="#activity">Activity</a><a href="#players-section">Players</a><a href="#modes">Modes &amp; mods</a><a href="#campaign">Campaign</a><a href="#dunecity-campaign">DuneCity Campaign</a><a href="#bots">AI players</a><a href="#outcomes">Outcomes &amp; duration</a><a href="#history">Multiplayer history</a></nav>
         <section class="usage-panel" id="activity"><h3>Activity over time</h3>
             <div class="usage-legend"><span class="browser-key">Browser</span><span class="native-key">Desktop</span><span class="android-key">Android</span><span class="ios-key">iPhone &amp; iPad</span><span class="unknown-key">Platform unknown</span></div>
             <h4>Daily sessions</h4><p id="daily-note" class="usage-note"></p><div id="daily-chart" class="usage-chart-scroll"></div>
@@ -45,6 +45,18 @@
             <section class="usage-panel"><h3>Campaign levels</h3><p class="usage-note">House and scenario variations combined into the game’s nine campaign levels. Select a platform column to rank by its starts. These are not individual player progression rates.</p><div id="levels-table"></div><details><summary>How scenarios are grouped</summary><p class="usage-note">Level 1: scenario 1 · Level 2: 2–4 · Level 3: 5–7 · Level 4: 8–10 · Level 5: 11–13 · Level 6: 14–16 · Level 7: 17–19 · Level 8: 20–21 · Level 9: 22.</p></details></section>
             <section class="usage-panel"><h3>Popular custom &amp; multiplayer maps</h3><p class="usage-note">The 15 most-played map names in this period. Identically named maps are grouped together.</p><div id="maps-table"></div></section>
         </div>
+        <section class="usage-panel" id="dunecity-campaign" hidden><h3>DuneCity Campaign</h3>
+            <p class="usage-note">The ten-mission DuneCity Campaign, started from the main menu’s DuneCity Campaign item. Counts follow the time period selected above.</p>
+            <p id="dc-empty" class="usage-note">No DuneCity Campaign games recorded in this period.</p>
+            <div id="dc-body" hidden>
+                <div class="usage-cards" id="dc-cards"></div>
+                <h4>Games per day</h4><div id="dc-daily-chart" class="usage-chart-scroll"></div>
+                <h4>Players per day</h4><div id="dc-players-chart" class="usage-chart-scroll"></div>
+                <h4>Missions</h4><div id="dc-missions-table"></div>
+                <p class="usage-note">Starts count every game of a mission, including retries. Players are distinct identified players, counted as described under Players. A missing end report is neither a win nor a loss.</p>
+                <p id="dc-since" class="usage-note"></p>
+            </div>
+        </section>
         <section class="usage-panel" id="bots"><h3>AI opponents &amp; teammates</h3><p class="usage-note">Each count is a session containing that AI, relative to a recorded human. A game can contain several bot types or difficulties, so rows can overlap.</p>
             <h4>Played against</h4><div id="opponents-table"></div>
             <div class="usage-pair"><div><h4>Played with</h4><div id="assist-table"></div><p class="usage-note">Same-house bots share control. Allied-house bots control another house on the same team. Support and regular shared-control rows are subsets of same-house assistance.</p></div><div><h4>QuantBot opponent difficulty</h4><div id="difficulty-table"></div></div></div>

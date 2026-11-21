@@ -12,8 +12,46 @@ $database = $dataDir.'/games.sqlite';
 $cache = $dataDir.'/usage-public-v1.json';
 $lockPath = $dataDir.'/usage-public.lock';
 $historyLockPath = $dataDir.'/usage-history.lock';
-function serveUsage(string $cache): void {
-    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'HEAD') readfile($cache);
+/**
+ * Sends the cached report with an exact length. A gzip copy written by the same refresh goes to
+ * clients that accept it; an older or missing copy falls back to the plain file.
+ */
+function serveUsage(string $cache, bool $closeAfter = false): void {
+    clearstatcache();
+    $compressed = $cache.'.gz';
+    $gzip = preg_match('/\bgzip\b/i', $_SERVER['HTTP_ACCEPT_ENCODING'] ?? '') === 1
+        && is_file($compressed) && filemtime($compressed) >= filemtime($cache);
+    $path = $gzip ? $compressed : $cache;
+    if (function_exists('apache_setenv')) @apache_setenv('no-gzip', '1');
+    header('Vary: Accept-Encoding');
+    if ($gzip) header('Content-Encoding: gzip');
+    header('Content-Length: '.filesize($path));
+    if ($closeAfter) header('Connection: close');
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'HEAD') readfile($path);
+}
+/** Rebuilds the cache unless another request already is. No request parameter reaches the helper. */
+function refreshUsage(string $database, string $cache, string $lockPath): void {
+    $lock = @fopen($lockPath, 'c');
+    if ($lock === false) return;
+    if (flock($lock, LOCK_EX | LOCK_NB)) {
+        try {
+            clearstatcache();
+            // A request that waited behind the lock may find the work already done.
+            if (!is_file($cache) || time() - filemtime($cache) >= 300) {
+                $result = runHelper(__DIR__.'/usage_stats.py', [$database], 4000000);
+                if ($result !== null && ($result['data']['schema'] ?? null) === 1) {
+                    $tmp = $cache.'.tmp';
+                    if (file_put_contents($tmp, $result['body']) !== false && rename($tmp, $cache)) {
+                        $packed = gzencode($result['body'], 6);
+                        if ($packed !== false && file_put_contents($cache.'.gz.tmp', $packed) !== false) {
+                            rename($cache.'.gz.tmp', $cache.'.gz');
+                        }
+                    }
+                }
+            }
+        } finally { flock($lock, LOCK_UN); }
+    }
+    fclose($lock);
 }
 function unavailable(string $message, int $retryAfter): void {
     http_response_code(503);
@@ -66,16 +104,18 @@ if (isset($_GET['history_page'])) {
     exit;
 }
 if (is_file($cache) && time() - filemtime($cache) < 300) { serveUsage($cache); exit; }
-$lock = @fopen($lockPath, 'c');
-if ($lock !== false && flock($lock, LOCK_EX | LOCK_NB)) {
-    try {
-        // No request parameter reaches the helper, filesystem paths or SQL.
-        $result = runHelper(__DIR__.'/usage_stats.py', [$database], 4000000);
-        if ($result !== null && ($result['data']['schema'] ?? null) === 1) {
-            $tmp = $cache.'.tmp';
-            if (file_put_contents($tmp, $result['body']) !== false) rename($tmp, $cache);
-        }
-    } finally { flock($lock, LOCK_UN); fclose($lock); }
-} elseif (is_resource($lock)) fclose($lock);
+if (is_file($cache)) {
+    // Stale: answer at once with the last good report and rebuild after the response is complete,
+    // so no visitor waits the helper's several seconds. The page fetches again shortly after.
+    ignore_user_abort(true);
+    serveUsage($cache, true);
+    while (ob_get_level() > 0) ob_end_flush();
+    flush();
+    if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+    refreshUsage($database, $cache, $lockPath);
+    exit;
+}
+// No report yet (first deployment): this request has to wait for one.
+refreshUsage($database, $cache, $lockPath);
 if (is_file($cache)) { serveUsage($cache); exit; }
 unavailable('Usage statistics are temporarily unavailable.', 30);

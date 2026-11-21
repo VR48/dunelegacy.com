@@ -118,6 +118,36 @@ class UsageTests(unittest.TestCase):
         self.assertEqual((players['total'],players['install_ids'],players['browser'],players['unidentified_sessions']),(5,4,1,0))
         self.assertNotIn('a'*32,json.dumps(self.report()))
 
+    def test_dunecity_campaign_games_players_and_missions(self):
+        self.match('m1-win',rt='native',outcome='finished',map_name='DCITY_M01');self.player('m1-win',name='Alice',result='winner')
+        self.match('m1-retry',rt='native',outcome='abandoned',map_name='dcity_m01.ini');self.player('m1-retry',name='Alice')
+        self.match('m2-loss',rt='browser',outcome='finished',map_name='/maps/DCITY_M02.INI');self.player('m2-loss',name='Player',result='defeated')
+        self.match('m10-open',rt='android',end=None,outcome='started',map_name='DCITY_M10');self.player('m10-open',name='Bob')
+        self.match('old-day',rt='native',start=NOW-2*86400,outcome='finished',map_name='DCITY_M03');self.player('old-day',name='Carol',result='winner')
+        self.match('other',map_name='SCENA001');self.player('other',name='Dave')
+        self.match('not-a-mission',mode='single_custom',map_name='DCITY_M11');self.player('not-a-mission',name='Erin')
+        report=self.report()
+        day=report['periods']['day']['dunecity_campaign']
+        self.assertEqual((day['games'],day['players']['total'],day['players']['unidentified_sessions'],day['won'],day['lost']),(4,2,1,1,1))
+        missions={m['mission']:m for m in day['missions']}
+        self.assertEqual(len(missions),10)
+        self.assertEqual((missions[1]['name'],missions[1]['starts'],missions[1]['players'],missions[1]['won'],missions[1]['exited']),('Sihaya Basin',2,1,1,1))
+        self.assertEqual((missions[2]['lost'],missions[2]['players'],missions[10]['missing_end'],missions[5]['starts']),(1,0,1,0))
+        self.assertEqual(sum(d['total'] for d in day['daily']),4)
+        every=report['periods']['all']['dunecity_campaign']
+        self.assertEqual((every['games'],every['players']['total']),(5,3))
+        # Zero days run from the first campaign game, not from when tracking began.
+        self.assertEqual([d['total'] for d in every['daily']],[1,4,0])
+        self.assertEqual([d['total'] for d in every['daily_players']],[1,2,0])
+        self.assertNotIn('Alice',json.dumps(report))
+
+    def test_no_campaign_games_and_map_list_is_bounded(self):
+        for i in range(40):
+            self.match('custom%d'%i,mode='single_custom',map_name='Map %02d'%i)
+        period=self.report()['periods']['all']
+        self.assertEqual((period['dunecity_campaign']['games'],period['dunecity_campaign']['since'],period['dunecity_campaign']['daily']),(0,None,[]))
+        self.assertEqual(len(period['maps']),usage.MAP_LIMIT)
+
     def history(self,page=1):
         self.db.commit()
         return usage.build_history_page(self.db,page,NOW)

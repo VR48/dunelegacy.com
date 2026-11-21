@@ -19,6 +19,13 @@ RUNTIMES = ('browser', 'native', 'android', 'ios', 'unknown')   # native is desk
 AI_NAMES = {'qbot': 'QuantBot', 'campaign': 'Campaign AI', 'classic': 'Classic AI',
             'smartbot': 'SmartBot', 'mentat': 'Mentat'}
 HISTORY_PAGE_SIZE = 20
+MAP_LIMIT = 15   # the page lists the most-played maps; publishing every map name made the report ~0.5 MB
+# The DuneCity Campaign (1.0.875): ten missions DCITY_M01..M10, whatever the reported game type,
+# matching the game's GameInitSettings::isDuneCityCampaign() file name test.
+DUNECITY_MISSION = re.compile(r'DCITY_M(\d{2})(?:\.INI)?', re.I)
+DUNECITY_MISSIONS = ('Sihaya Basin', 'Hagal Flats', 'Ash Quarter', 'Arrakeen Blackout', 'Cielago Watch',
+                     'Harg Pass Convoy', 'Shield Wall Breach', 'Tuono Crossing', 'Carthag Vise',
+                     'All Against Atreides')
 HISTORY_MAX_PAGE = 10 ** 7
 # A game qualifies only on recorded controllers: two or more player rows that the reporting
 # client called human.  Unknown or missing controllers never qualify a game.
@@ -239,6 +246,39 @@ def clean_map(value):
     return re.split(r'[/\\]', value or '')[-1][:120] or 'Unknown map'
 
 
+def dunecity_mission(map_name):
+    match = DUNECITY_MISSION.fullmatch(clean_map(map_name))
+    number = int(match[1]) if match else 0
+    return number if 1 <= number <= len(DUNECITY_MISSIONS) else None
+
+
+def dunecity_campaign(rows, players, identities, today):
+    """Games, players and results of the DuneCity Campaign within one period's rows."""
+    whole = player_counts(rows, identities, lambda r: 'all').get('all', empty_player_count('all'))
+    result = outcomes(rows, players)
+    missions = []
+    for number, name in enumerate(DUNECITY_MISSIONS, 1):
+        subset = [r for r in rows if r['mission'] == number]
+        mission = outcomes(subset, players)
+        missions.append({'mission': number, 'name': name, 'starts': len(subset),
+                         'players': player_counts(subset, identities, lambda r: 'm').get('m', empty_player_count('m'))['total'],
+                         'won': mission['human_wins'], 'lost': mission['human_losses'],
+                         'exited': mission['exited'], 'missing_end': mission['missing_end']})
+    daily = {r['label']: r for r in matrix(rows, lambda r: r['day'])}
+    daily_players = player_counts(rows, identities, lambda r: r['day'])
+    if rows:   # zero days from the first campaign game in this period
+        day = dt.date.fromisoformat(min(r['day'] for r in rows))
+        while day <= today:
+            key = day.isoformat()
+            daily.setdefault(key, dict(label=key, **dict.fromkeys(RUNTIMES, 0), total=0))
+            daily_players.setdefault(key, empty_player_count(key))
+            day += dt.timedelta(days=1)
+    return {'since': iso(min(r['started_at'] for r in rows)) if rows else None, 'games': len(rows),
+            'players': whole, 'won': result['human_wins'], 'lost': result['human_losses'],
+            'missions': missions, 'daily': sorted(daily.values(), key=lambda r: r['label']),
+            'daily_players': sorted(daily_players.values(), key=lambda r: r['label'])}
+
+
 def display_name(value, fallback='Unknown'):
     # Lobby display names only; control characters never reach the page.
     return re.sub(r'[\x00-\x1f\x7f]', '', str(value or '')).strip()[:32] or fallback
@@ -331,6 +371,7 @@ def build_report(connection, now=None, content_dir=CONTENT_DIR):
     for row in rows:   # UTC day and month labels, formatted once for every chart and period
         row['day'] = iso(row['started_at'])[:10]
         row['month'] = row['day'][:7]
+        row['mission'] = dunecity_mission(row['map_name'])
     columns = {row[1] for row in connection.execute('PRAGMA table_info(analytics_players)')}
     players = collections.defaultdict(list)
     for row in connection.execute('''SELECT match_id, house_slot, team, controller,
@@ -351,7 +392,7 @@ def build_report(connection, now=None, content_dir=CONTENT_DIR):
                   'modes': matrix(selected, lambda r: r['game_type'] or 'unknown'),
                   'mods': matrix(selected, lambda r: mod_label(r['mod_name'])),
                   'levels': matrix([r for r in selected if r['game_type'] == 'campaign'], lambda r: level(r['map_name'])),
-                  'maps': matrix([r for r in selected if r['game_type'] in ('single_custom','multiplayer')], lambda r: clean_map(r['map_name'])),
+                  'maps': matrix([r for r in selected if r['game_type'] in ('single_custom','multiplayer')], lambda r: clean_map(r['map_name']))[:MAP_LIMIT],
                   'daily': matrix(selected, lambda r: r['day']),
                   'monthly': matrix(selected, lambda r: r['month']),
                   'outcomes': [], 'lengths': [], 'bots': bot_stats(selected, players),
@@ -376,6 +417,7 @@ def build_report(connection, now=None, content_dir=CONTENT_DIR):
         period['monthly'].sort(key=lambda r:r['label'])
         period['daily_players'] = sorted(daily_players.values(), key=lambda r: r['label'])
         period['monthly_players'] = sorted(monthly_players.values(), key=lambda r: r['label'])
+        period['dunecity_campaign'] = dunecity_campaign([r for r in selected if r['mission']], players, identities, end)
         for rt in RUNTIMES:
             cohort = [r for r in selected if runtime(r['client_runtime']) == rt]
             period['outcomes'].append(dict(runtime=rt, **outcomes(cohort, players)))
