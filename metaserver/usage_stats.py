@@ -27,6 +27,10 @@ DUNECITY_MISSIONS = ('Sihaya Basin', 'Hagal Flats', 'Ash Quarter', 'Arrakeen Bla
                      'Harg Pass Convoy', 'Shield Wall Breach', 'Tuono Crossing', 'Carthag Vise',
                      'All Against Atreides')
 HISTORY_MAX_PAGE = 10 ** 7
+# Modes as players see them. A DuneCity Campaign mission reports game type "campaign" but is its own
+# mode here, so the Dune Legacy campaign figures never include it.
+MODE_ORDER = ('campaign', 'dunecity_campaign', 'skirmish', 'single_custom', 'multiplayer', 'load', 'unknown')
+MIX_LIMIT = 12   # most common combinations of modes or mods per player; the rest are summed
 # A game qualifies only on recorded controllers: two or more player rows that the reporting
 # client called human.  Unknown or missing controllers never qualify a game.
 HISTORY_WHERE = '''FROM analytics_matches AS m WHERE m.game_type = 'multiplayer'
@@ -160,7 +164,8 @@ def bot_stats(rows, players):
                 elif bot['team'] is not None and human['team'] is not None:
                     relations.add('ally' if bot['team'] == human['team'] else 'opponent')
             ai = AI_NAMES.get(bot['ai_type'], 'Other AI')
-            mode = 'Campaign' if row['game_type'] == 'campaign' else 'Other modes'
+            mode = ('DuneCity Campaign' if row['mode'] == 'dunecity_campaign' else
+                    'Campaign' if row['mode'] == 'campaign' else 'Other modes')
             rt = runtime(row['client_runtime'])
             for relation in relations:
                 counts[('ai', mode + ' · ' + ai, relation, rt)].add(mid)
@@ -235,6 +240,32 @@ def player_counts(rows, identities, key):
                         install_ids=sum(i.startswith('install:') for i in g['total']),
                         sessions=sessions[label], unidentified_sessions=unidentified[label])
             for label, g in groups.items()}
+
+
+def players_by(rows, identities, key):
+    """Distinct players per label (mode, mod, level), most players first."""
+    counts = player_counts([r for r in rows if key(r) is not None], identities, lambda r: str(key(r)))
+    return sorted(counts.values(), key=lambda r: (-r['total'], -r['sessions'], r['label']))
+
+
+def player_mix(rows, identities, key, order=()):
+    """How many identified players played each combination of labels (e.g. campaign + skirmish).
+
+    Labels within a combination follow `order`, then alphabetical order. Only the MIX_LIMIT most
+    common combinations are listed; `other_players` counts the players in the rest.
+    """
+    played = collections.defaultdict(set)
+    for row in rows:
+        for identity in identities.get(row['match_id'], ()):
+            played[identity].add(key(row))
+    rank = {label: i for i, label in enumerate(order)}
+    combos = collections.Counter(tuple(sorted(labels, key=lambda l: (rank.get(l, len(rank)), l)))
+                                 for labels in played.values())
+    ranked = sorted(combos.items(), key=lambda item: (-item[1], len(item[0]), item[0]))
+    return {'players': len(played),
+            'combinations': [{'labels': list(labels), 'players': n} for labels, n in ranked[:MIX_LIMIT]],
+            'other_players': sum(n for _, n in ranked[MIX_LIMIT:]),
+            'other_combinations': max(0, len(ranked) - MIX_LIMIT)}
 
 
 def empty_player_count(label):
@@ -372,6 +403,8 @@ def build_report(connection, now=None, content_dir=CONTENT_DIR):
         row['day'] = iso(row['started_at'])[:10]
         row['month'] = row['day'][:7]
         row['mission'] = dunecity_mission(row['map_name'])
+        row['mode'] = 'dunecity_campaign' if row['mission'] else (row['game_type'] or 'unknown')
+        row['mod'] = mod_label(row['mod_name'])
     columns = {row[1] for row in connection.execute('PRAGMA table_info(analytics_players)')}
     players = collections.defaultdict(list)
     for row in connection.execute('''SELECT match_id, house_slot, team, controller,
@@ -389,10 +422,10 @@ def build_report(connection, now=None, content_dir=CONTENT_DIR):
         selected = [r for r in rows if r['started_at'] >= cutoff]
         period = {'since': iso(max(cutoff, first or now)), 'total': len(selected),
                   'runtime': matrix(selected, lambda r: runtime(r['client_runtime'])),
-                  'modes': matrix(selected, lambda r: r['game_type'] or 'unknown'),
-                  'mods': matrix(selected, lambda r: mod_label(r['mod_name'])),
-                  'levels': matrix([r for r in selected if r['game_type'] == 'campaign'], lambda r: level(r['map_name'])),
-                  'maps': matrix([r for r in selected if r['game_type'] in ('single_custom','multiplayer')], lambda r: clean_map(r['map_name']))[:MAP_LIMIT],
+                  'modes': matrix(selected, lambda r: r['mode']),
+                  'mods': matrix(selected, lambda r: r['mod']),
+                  'levels': matrix([r for r in selected if r['mode'] == 'campaign'], lambda r: level(r['map_name'])),
+                  'maps': matrix([r for r in selected if r['mode'] in ('single_custom','multiplayer')], lambda r: clean_map(r['map_name']))[:MAP_LIMIT],
                   'daily': matrix(selected, lambda r: r['day']),
                   'monthly': matrix(selected, lambda r: r['month']),
                   'outcomes': [], 'lengths': [], 'bots': bot_stats(selected, players),
@@ -417,13 +450,22 @@ def build_report(connection, now=None, content_dir=CONTENT_DIR):
         period['monthly'].sort(key=lambda r:r['label'])
         period['daily_players'] = sorted(daily_players.values(), key=lambda r: r['label'])
         period['monthly_players'] = sorted(monthly_players.values(), key=lambda r: r['label'])
+        # What the identified players play: distinct players per mode, mod and campaign level,
+        # and how many play each combination of modes and of mods.
+        period['players_by'] = {
+            'modes': players_by(selected, identities, lambda r: r['mode']),
+            'mods': players_by(selected, identities, lambda r: r['mod']),
+            'levels': players_by([r for r in selected if r['mode'] == 'campaign'], identities, lambda r: level(r['map_name']))}
+        period['player_mix'] = {'modes': player_mix(selected, identities, lambda r: r['mode'], MODE_ORDER),
+                                'mods': player_mix(selected, identities, lambda r: r['mod'], SHIPPED_MODS)}
         period['dunecity_campaign'] = dunecity_campaign([r for r in selected if r['mission']], players, identities, end)
         for rt in RUNTIMES:
             cohort = [r for r in selected if runtime(r['client_runtime']) == rt]
             period['outcomes'].append(dict(runtime=rt, **outcomes(cohort, players)))
-            for label, subset in [('Campaign', [r for r in cohort if r['game_type']=='campaign']),
-                                  ('Campaign level 1', [r for r in cohort if r['game_type']=='campaign' and level(r['map_name'])==1]),
-                                  ('Other modes', [r for r in cohort if r['game_type']!='campaign'])]:
+            for label, subset in [('Campaign', [r for r in cohort if r['mode']=='campaign']),
+                                  ('Campaign level 1', [r for r in cohort if r['mode']=='campaign' and level(r['map_name'])==1]),
+                                  ('DuneCity Campaign', [r for r in cohort if r['mode']=='dunecity_campaign']),
+                                  ('Other modes', [r for r in cohort if r['mode'] not in ('campaign','dunecity_campaign')])]:
                 period['lengths'].append(dict(runtime=rt, label=label, **lengths(subset, players)))
         report['periods'][name] = period
     return report

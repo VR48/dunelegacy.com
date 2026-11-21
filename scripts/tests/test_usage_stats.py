@@ -148,6 +148,55 @@ class UsageTests(unittest.TestCase):
         self.assertEqual((period['dunecity_campaign']['games'],period['dunecity_campaign']['since'],period['dunecity_campaign']['daily']),(0,None,[]))
         self.assertEqual(len(period['maps']),usage.MAP_LIMIT)
 
+    def test_dunecity_campaign_is_its_own_mode(self):
+        # The game reports DuneCity Campaign missions as game type "campaign".
+        self.match('dc',rt='native',start=NOW-1000,end=NOW-100,outcome='finished',map_name='DCITY_M01',mod='dunecity')
+        self.player('dc',name='Alice',result='winner');self.player('dc',house=2,team=2,controller='qbot',ai='qbot')
+        self.match('legacy',rt='native',map_name='SCENA001');self.player('legacy',name='Bob')
+        self.player('legacy',house=2,team=2,controller='ai',ai='campaign')
+        p=self.report()['periods']['day']
+        self.assertEqual({r['label']:r['total'] for r in p['modes']},{'campaign':1,'dunecity_campaign':1})
+        self.assertEqual(sum(r['total'] for r in p['levels']),1)
+        self.assertEqual(p['maps'],[])
+        lengths={r['label']:r for r in p['lengths'] if r['runtime']=='native'}
+        self.assertEqual((lengths['Campaign']['sessions'],lengths['DuneCity Campaign']['sessions'],lengths['Other modes']['sessions']),(1,1,0))
+        self.assertEqual(lengths['DuneCity Campaign']['average_seconds'],900)
+        opponents={r['label'] for r in p['bots']['ai'] if r['relation']=='opponent'}
+        self.assertEqual(opponents,{'DuneCity Campaign · QuantBot','Campaign · Campaign AI'})
+
+    def test_players_by_what_they_play(self):
+        self.match('a-camp',rt='native',map_name='SCENA001');self.player('a-camp',name='Alice')
+        self.match('a-camp2',rt='native',map_name='SCENA002');self.player('a-camp2',name='Alice')
+        self.match('a-sk',rt='browser',mode='skirmish',map_name='Map',mod='dunecity');self.player('a-sk',name='Alice')
+        self.match('b-dc',rt='native',map_name='DCITY_M02',mod='dunecity');self.player('b-dc',name='Bob')
+        self.match('c-mp',rt='native',mode='multiplayer',map_name='Map');self.player('c-mp',name='Carol');self.player('c-mp',name='Dave')
+        self.match('anon',rt='browser',mode='skirmish',map_name='Map');self.player('anon',name='Player')
+        report=self.report();p=report['periods']['day']
+        modes={r['label']:r for r in p['players_by']['modes']}
+        self.assertEqual({k:v['total'] for k,v in modes.items()},{'campaign':1,'skirmish':1,'dunecity_campaign':1,'multiplayer':2})
+        self.assertEqual((modes['campaign']['sessions'],modes['skirmish']['sessions'],modes['skirmish']['unidentified_sessions'],modes['skirmish']['browser']),(2,2,1,1))
+        self.assertEqual([r['label'] for r in p['players_by']['modes']][0],'multiplayer')
+        self.assertEqual({r['label']:r['total'] for r in p['players_by']['mods']},{'vanilla':3,'dunecity':2})
+        levels={r['label']:r['total'] for r in p['players_by']['levels']}
+        self.assertEqual(levels,{'1':1,'2':1})
+        mix=p['player_mix']['modes']
+        self.assertEqual(mix['players'],4)
+        self.assertEqual(mix['combinations'],[{'labels':['multiplayer'],'players':2},
+            {'labels':['dunecity_campaign'],'players':1},{'labels':['campaign','skirmish'],'players':1}])
+        mods=p['player_mix']['mods']
+        self.assertEqual({tuple(c['labels']):c['players'] for c in mods['combinations']},{('vanilla',):2,('dunecity',):1,('vanilla','dunecity'):1})
+        for name in ['Alice','Bob','Carol','name:']:self.assertNotIn(name,json.dumps(report))
+
+    def test_player_mix_is_bounded(self):
+        modes=['campaign','skirmish','single_custom','multiplayer']
+        for i in range(1,16):   # 15 distinct combinations of four modes, one player each
+            for bit,mode in enumerate(modes):
+                if i>>bit&1:
+                    self.match('g%d-%s'%(i,mode),mode=mode,map_name='SCENA001' if mode=='campaign' else 'Map');self.player('g%d-%s'%(i,mode),name='P%d'%i)
+        mix=self.report()['periods']['day']['player_mix']['modes']
+        self.assertEqual((mix['players'],len(mix['combinations']),mix['other_players'],mix['other_combinations']),(15,usage.MIX_LIMIT,3,3))
+        self.assertEqual(mix['combinations'][0]['labels'],['campaign'])
+
     def history(self,page=1):
         self.db.commit()
         return usage.build_history_page(self.db,page,NOW)
