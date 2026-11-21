@@ -328,6 +328,9 @@ def build_report(connection, now=None, content_dir=CONTENT_DIR):
     rows = [dict(r) for r in connection.execute('''SELECT match_id, client_runtime, started_at, ended_at,
         outcome, game_type, map_name, mod_name, start_json IS NOT NULL AS has_start
         FROM analytics_matches WHERE started_at IS NOT NULL AND started_at <= ?''', (now,))]
+    for row in rows:   # UTC day and month labels, formatted once for every chart and period
+        row['day'] = iso(row['started_at'])[:10]
+        row['month'] = row['day'][:7]
     columns = {row[1] for row in connection.execute('PRAGMA table_info(analytics_players)')}
     players = collections.defaultdict(list)
     for row in connection.execute('''SELECT match_id, house_slot, team, controller,
@@ -349,12 +352,12 @@ def build_report(connection, now=None, content_dir=CONTENT_DIR):
                   'mods': matrix(selected, lambda r: mod_label(r['mod_name'])),
                   'levels': matrix([r for r in selected if r['game_type'] == 'campaign'], lambda r: level(r['map_name'])),
                   'maps': matrix([r for r in selected if r['game_type'] in ('single_custom','multiplayer')], lambda r: clean_map(r['map_name'])),
-                  'daily': matrix(selected, lambda r: iso(r['started_at'])[:10]),
-                  'monthly': matrix(selected, lambda r: iso(r['started_at'])[:7]),
+                  'daily': matrix(selected, lambda r: r['day']),
+                  'monthly': matrix(selected, lambda r: r['month']),
                   'outcomes': [], 'lengths': [], 'bots': bot_stats(selected, players),
                   'players': player_counts(selected, identities, lambda r: 'period').get('period', empty_player_count('period'))}
-        daily_players = player_counts(selected, identities, lambda r: iso(r['started_at'])[:10])
-        monthly_players = player_counts(selected, identities, lambda r: iso(r['started_at'])[:7])
+        daily_players = player_counts(selected, identities, lambda r: r['day'])
+        monthly_players = player_counts(selected, identities, lambda r: r['month'])
         # Include zero-activity days/months within the observed tracking period.
         begin = dt.datetime.fromtimestamp(max(cutoff, first or now), UTC).date()
         end = dt.datetime.fromtimestamp(now, UTC).date()
