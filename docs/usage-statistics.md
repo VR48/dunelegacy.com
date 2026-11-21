@@ -2,6 +2,8 @@
 
 `website/usage.html` fetches `metaserver/usage.php`, which invokes the fixed
 `usage_stats.py` helper against `/var/www/data/games.sqlite` in read-only mode.
+Maps list only the 15 most-played names per period (`MAP_LIMIT`), which is all
+the page shows; publishing every map name made the report about 0.5 MB.
 The default response publishes aggregate JSON. The multiplayer history response
 also publishes recorded display names and game metadata, without match IDs,
 player IDs or raw events.
@@ -70,6 +72,19 @@ and the sessions without an identified player (`unidentified_sessions`).
   sessions are identified. Browser and iPhone/iPad games almost all use the
   default name, so those players are mostly missing from historical counts.
 
+## DuneCity Campaign
+
+Each period has `dunecity_campaign`: games, players (as above), human wins and
+losses, one row per mission and daily games and players. A game belongs to the
+campaign when its map file name is `DCITY_M01`..`DCITY_M10` (optionally `.INI`,
+any directory), whatever the reported game type; this mirrors the game's
+`GameInitSettings::isDuneCityCampaign()`. The game already reports this name, so
+no client change was needed. Mission names come from the mission files' header
+comments in the game repository (`DUNECITY_MISSIONS`). Per mission: starts
+(every game, retries included), distinct players, games with a human win, a
+human loss, an early exit and no end report. Daily rows start at the first
+campaign game within the period.
+
 ## Multiplayer history
 
 `usage.php?history_page=1` returns the newest 20 qualifying games. Positive integer
@@ -95,9 +110,19 @@ aggregate statistics and refreshes every five minutes.
 
 ## Operations
 
-A good cache remains available during refresh or helper failure; the UI flags
-stale data after 15 minutes. Without a good cache the endpoint returns 503.
+A request never waits for the helper while a report exists. A report younger
+than five minutes is served as is. An older one is served at once, the response
+is completed (`Content-Length`, `Connection: close`, flush), and the same request
+then rebuilds the cache under the lock; the page fetches again 15 seconds after
+receiving a report older than six minutes. Only the very first request, with no
+report at all, waits. Each refresh also writes `usage-public-v1.json.gz`, served
+with `Content-Encoding: gzip` to clients that accept it when it is at least as
+new as the JSON (about 10 KB instead of about 65 KB). A good cache remains
+available during refresh or helper failure; the UI flags stale data after 15
+minutes. Without a good cache the endpoint returns 503.
 Inspect permissions, Python errors and database availability if refresh fails;
 do not alter or delete the analytics database to fix the public page.
-Tests: `python3 -m unittest discover -s scripts/tests -p 'test_usage_stats.py'`.
+Tests: `python3 -m unittest discover -s scripts/tests -p 'test_usage_stats.py'`;
+`test_usage_endpoint.py` runs `usage.php` under `php -S` with a temporary
+`DATA_DIR` (first build, gzip copy, stale answer then rebuild).
 PHP syntax and aggregation tests run in compatibility and deployment workflows.

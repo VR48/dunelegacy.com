@@ -16,6 +16,7 @@
 .usage-cards { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin: 18px 0 8px; }
 .usage-card { padding: 18px 20px; background: #252219; border: 1px solid #55481c; border-radius: 8px; }
 .usage-card h3 { font-size: 1rem; color: #ddd; }
+.usage-panel .usage-card h3 { font-size: 1rem; color: #ddd; margin: 0; }
 .usage-card strong { font-size: 2rem; color: var(--primary); display: block; font-variant-numeric: tabular-nums; }
 .usage-card p { font-size: .875rem; color: #bebebe; }
 .usage-jump { gap: 12px 24px; padding: 14px 0; border-bottom: 1px solid #49412c; margin-bottom: 22px; }

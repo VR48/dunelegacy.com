@@ -116,6 +116,7 @@ function renderUsage() {
     document.getElementById('online-summary').textContent=count(offline)+' single-player sessions · '+count(online)+' network multiplayer sessions.';
     document.getElementById('platform-note').textContent=usageReport.platform_since?'Browser/desktop identification available from '+date(usageReport.platform_since)+'; Android and iPhone/iPad from engine 1.0.857. Android app 0.2.32 and earlier (engine 1.0.855) report as Desktop. Older or unmarked clients remain unknown.':'';
     comparison('levels-table',p.levels,'Level',x=>'Level '+x);comparison('maps-table',p.maps.slice(0,15),'Map');
+    renderDuneCityCampaign(p.dunecity_campaign);
     comparison('opponents-table',p.bots.ai.filter(r=>r.relation==='opponent'),'Opponent');
     comparison('assist-table',p.bots.assistance.filter(r=>r.relation!=='opponent'),'Assistance');
     comparison('difficulty-table',p.bots.difficulty,'Difficulty',x=>x[0].toUpperCase()+x.slice(1));
@@ -126,6 +127,26 @@ function renderUsage() {
     document.getElementById('coverage-note').textContent=usageReport.tracking_since?'Tracking began '+date(usageReport.tracking_since)+'. Statistics cover games reported to the metaserver. Multiplayer history below lists games with at least two recorded human players.':'';
     document.getElementById('usage-content').hidden=false;
 }
+// The DuneCity Campaign (DCITY_M01..M10): games, players and results per mission within this view.
+function renderDuneCityCampaign(c) {
+    const panel=document.getElementById('dunecity-campaign');panel.hidden=!c;
+    if(!c)return;
+    const body=document.getElementById('dc-body');body.hidden=!c.games;
+    document.getElementById('dc-empty').hidden=!!c.games;
+    if(!c.games)return;
+    const cards=document.getElementById('dc-cards');cards.replaceChildren();
+    [['Games',c.games,'Mission starts in this view'],
+     ['Players',c.players.total,count(c.players.unidentified_sessions)+' games without an identified player'],
+     ['Missions won',c.won,count(c.lost)+' lost · '+pct(c.won,c.games)+' of games won']].forEach(([title,n,note])=>{
+        const card=element('article',undefined,'usage-card');card.append(element('h3',title),element('strong',count(n)),element('p',note));cards.append(card);
+    });
+    chart('dc-daily-chart',c.daily.slice(-30),false);chart('dc-players-chart',c.daily_players.slice(-30),false,true);
+    table('dc-missions-table',['Mission','Starts','Players','Won','Lost','Early exit','No end report'],
+        c.missions.map(m=>[m.mission+' · '+m.name,count(m.starts),count(m.players),count(m.won),count(m.lost),count(m.exited),count(m.missing_end)]),'DuneCity Campaign missions');
+    document.getElementById('dc-since').textContent='First DuneCity Campaign game in this view: '+new Date(c.since).toLocaleString('en-GB',{timeZone:'UTC',dateStyle:'medium',timeStyle:'short'})+' UTC.';
+}
+// A stale first answer is served at once while the server rebuilds; fetch again shortly for fresh data.
+let staleRetry=false;
 async function refreshUsage() {
     const status=document.getElementById('usage-status');
     try {
@@ -133,9 +154,13 @@ async function refreshUsage() {
         if(!response.ok)throw new Error('unavailable');
         const report=await response.json(); if(report.schema!==1||!report.periods)throw new Error('invalid');
         usageReport=report;renderUsage();
-        const stale=Date.now()-new Date(report.generated).getTime()>15*60*1000;
+        const age=Date.now()-new Date(report.generated).getTime();
+        if(age<=6*60*1000)staleRetry=false;
+        const retrying=age>6*60*1000&&!staleRetry;
+        if(retrying){staleRetry=true;setTimeout(refreshUsage,15000);}
+        const stale=!retrying&&age>15*60*1000;
         status.classList.toggle('stale',stale);
-        status.textContent=(stale?'Update delayed · ':'Refreshes every five minutes · ')+'last updated '+new Date(report.generated).toLocaleTimeString();
+        status.textContent=(retrying?'Updating · showing statistics from ':(stale?'Update delayed · ':'Refreshes every five minutes · ')+'last updated ')+new Date(report.generated).toLocaleTimeString();
     } catch(error) {
         status.classList.add('stale');status.textContent=usageReport?'Update delayed. Showing the last available statistics.':'Statistics are temporarily unavailable. Please try again shortly.';
     }
