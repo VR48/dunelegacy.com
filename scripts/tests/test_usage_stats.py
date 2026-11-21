@@ -18,7 +18,7 @@ class UsageTests(unittest.TestCase):
         self.db.execute('INSERT INTO analytics_matches VALUES(?,?,?,?,?,?,?,?,?,?)',(mid,rt,start,end,outcome,mode,map_name,mod,version,'{"private":"NEVER_PUBLISH_ME"}' if has_start else None))
     def player(self,mid,house=1,team=1,controller='human',ai=None,support=0,result='alive',name=None,house_name=None):
         slot=self.slots.get(mid,0);self.slots[mid]=slot+1
-        self.db.execute('INSERT INTO analytics_players VALUES(?,?,?,?,?,?,?,?,?,?,?)',
+        self.db.execute('INSERT INTO analytics_players(match_id,slot,player_name,house_name,house_slot,team,controller,ai_type,ai_difficulty,ai_support,result) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
             (mid,slot,name if name is not None else 'Player%d'%slot,house_name,house,team,controller,ai,'easy' if ai else None,support,result))
     def report(self):
         self.db.commit();return usage.build_report(self.db,NOW)
@@ -74,6 +74,49 @@ class UsageTests(unittest.TestCase):
         self.assertEqual(lengths['longest_outcome'],'Human loss')
     def test_empty_database(self):
         r=self.report();self.assertIsNone(r['tracking_since']);self.assertEqual(r['periods']['all']['total'],0)
+
+    def test_players_by_name_without_shared_defaults(self):
+        self.match('browser',rt='browser');self.player('browser',name='Player')
+        self.match('desk1',rt='native');self.player('desk1',name='Alice')
+        self.match('desk2',rt='native');self.player('desk2',name=' alice ')
+        self.match('generic',rt='native');self.player('generic',name='User')
+        self.match('phone',rt='android');self.player('phone',name='ALICE')
+        self.match('mp',rt='native',mode='multiplayer');self.player('mp',name='Bob');self.player('mp',name='Carol')
+        self.player('mp',name='Dave',controller='qbot',ai='qbot');self.player('mp',name='Erin',controller='unknown')
+        self.match('empty',rt='ios')
+        report=self.report();players=report['periods']['day']['players']
+        self.assertEqual((players['total'],players['native'],players['android'],players['browser'],players['ios']),(3,3,1,0,0))
+        self.assertEqual((players['sessions'],players['unidentified_sessions'],players['install_ids']),(7,3,0))
+        encoded=json.dumps(report)
+        for name in ['Alice','alice','Bob','Carol','name:']:self.assertNotIn(name,encoded)
+
+    def test_daily_and_monthly_players_fill_tracked_days(self):
+        self.match('old',rt='native',start=NOW-3*86400);self.player('old',name='Alice')
+        self.match('new1',rt='native',start=NOW-100);self.player('new1',name='Alice')
+        self.match('new2',rt='browser',start=NOW-90);self.player('new2',name='Bob')
+        self.match('new3',rt='browser',start=NOW-80);self.player('new3',name='Player')
+        period=self.report()['periods']['all']
+        daily={d['label']:d for d in period['daily_players']}
+        self.assertEqual([daily[day]['total'] for day in sorted(daily)],[1,0,2,0])
+        yesterday=daily[sorted(daily)[-2]]
+        self.assertEqual((yesterday['native'],yesterday['browser'],yesterday['sessions'],yesterday['unidentified_sessions']),(1,1,3,1))
+        self.assertTrue(all({*usage.RUNTIMES,'total','sessions','unidentified_sessions','install_ids'}<=set(d) for d in period['daily_players']))
+        self.assertEqual(sum(m['sessions'] for m in period['monthly_players']),4)
+        self.assertEqual(period['players']['total'],2)
+
+    def test_install_keys_count_installations_and_absorb_their_names(self):
+        self.db.execute('ALTER TABLE analytics_players ADD COLUMN install_key TEXT')
+        def keyed(mid,name,key,rt='native',start=NOW-100):
+            self.match(mid,rt=rt,start=start);self.player(mid,name=name)
+            if key:self.db.execute('UPDATE analytics_players SET install_key=? WHERE match_id=?',(key,mid))
+        keyed('rob1','Rob','a'*32);keyed('rob2','Rob','b'*32);keyed('rob3','Rob',None)
+        keyed('dana-before','Dana',None,start=NOW-200);keyed('dana-after','Dana','c'*32)
+        keyed('browser','Player','d'*32,rt='browser')
+        players=self.report()['periods']['day']['players']
+        # Rob's name belongs to two installations, so his unkeyed game stays a separate name; Dana's
+        # earlier game joins her installation; a shared default name still counts by its install key.
+        self.assertEqual((players['total'],players['install_ids'],players['browser'],players['unidentified_sessions']),(5,4,1,0))
+        self.assertNotIn('a'*32,json.dumps(self.report()))
 
     def history(self,page=1):
         self.db.commit()

@@ -9,8 +9,11 @@ bounded JSON request on stdin and never emits or stores client log streams.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import os
+import secrets
 import re
 import sqlite3
 import sys
@@ -25,6 +28,11 @@ MAX_ITEM_ROWS = 96
 MAX_PAYLOAD_BYTES = 64 * 1024
 # native is desktop; android and ios come from the phone builds (1.0.857+).
 CLIENT_RUNTIMES = ("browser", "native", "android", "ios")
+# A human player row may carry the reporting installation's random id: 128 bits as lowercase hex.
+# Only a keyed hash of it is stored (install_key); the id itself never reaches SQLite or the
+# stored JSON.  The key is a random server secret beside the database, created on first use.
+INSTALL_ID = re.compile(r"[0-9a-f]{32}")
+INSTALL_SECRET_FILE = "analytics-install-key"
 
 
 SCHEMA = """
@@ -206,7 +214,7 @@ def open_database(database_path: str) -> sqlite3.Connection:
     for column, definition in (
         ("player_id", "INTEGER"), ("player_name", "TEXT"), ("house_slot", "INTEGER"),
         ("player_class", "TEXT"), ("ai_type", "TEXT"), ("ai_difficulty", "TEXT"),
-        ("ai_support", "INTEGER")
+        ("ai_support", "INTEGER"), ("install_key", "TEXT")
     ):
         if column not in existing_columns:
             connection.execute(f"ALTER TABLE analytics_players ADD COLUMN {column} {definition}")
@@ -219,7 +227,59 @@ def open_database(database_path: str) -> sqlite3.Connection:
     return connection
 
 
-def store_players(connection: sqlite3.Connection, match_id: str, payload: dict[str, Any]) -> None:
+def install_secret(directory: Path) -> bytes | None:
+    """The server's install-id hashing key; created once, never overwritten or published."""
+    path = directory / INSTALL_SECRET_FILE
+    try:
+        if not path.exists():
+            temporary = directory / f".{INSTALL_SECRET_FILE}.{os.getpid()}.{secrets.token_hex(8)}"
+            descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o640)
+            try:
+                with os.fdopen(descriptor, "w", encoding="ascii") as stream:
+                    stream.write(secrets.token_hex(32) + "\n")
+                try:
+                    os.link(temporary, path)   # atomic; a concurrent creator's key wins
+                except FileExistsError:
+                    pass
+            finally:
+                temporary.unlink(missing_ok=True)
+        with path.open("rb") as stream:
+            value = stream.read(129).strip()
+    except OSError:
+        return None
+    return bytes.fromhex(value.decode("ascii")) if re.fullmatch(rb"[0-9a-f]{64}", value) else None
+
+
+def install_key(value: Any, secret: bytes | None) -> str | None:
+    if secret is None or not isinstance(value, str) or not INSTALL_ID.fullmatch(value):
+        return None
+    return hmac.new(secret, value.encode("ascii"), hashlib.sha256).hexdigest()[:32]
+
+
+def without_install_ids(payload: dict[str, Any], secret_directory: Path) -> tuple[dict[str, Any], dict[int, str]]:
+    """The payload to store, with every install_id removed, and the keyed hash per human row."""
+    clean = {key: value for key, value in payload.items() if key != "install_id"}
+    players = payload.get("players")
+    keys: dict[int, str] = {}
+    if isinstance(players, list):
+        secret: bytes | None = None
+        rows = []
+        for index, player in enumerate(players):
+            if isinstance(player, dict) and "install_id" in player:
+                raw = player["install_id"]
+                player = {key: value for key, value in player.items() if key != "install_id"}
+                if player.get("controller") == "human" and isinstance(raw, str) and INSTALL_ID.fullmatch(raw):
+                    secret = secret or install_secret(secret_directory)
+                    key = install_key(raw, secret)
+                    if key:
+                        keys[index] = key
+            rows.append(player)
+        clean["players"] = rows
+    return clean, keys
+
+
+def store_players(connection: sqlite3.Connection, match_id: str, payload: dict[str, Any],
+                  install_keys: dict[int, str] | None = None) -> None:
     connection.execute("DELETE FROM analytics_players WHERE match_id = ?", (match_id,))
     players = payload.get("players")
     if not isinstance(players, list):
@@ -228,8 +288,9 @@ def store_players(connection: sqlite3.Connection, match_id: str, payload: dict[s
         (match_id, slot, player_id, player_name, house_slot, house_id, house_name, team, controller,
          player_class, ai_type, ai_difficulty, ai_support, qbot_difficulty, result,
          final_credits, spice_harvested, units_built, structures_built, units_destroyed,
-         structures_destroyed, units_lost, structures_lost, military_value, city_population, city_value)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+         structures_destroyed, units_lost, structures_lost, military_value, city_population, city_value,
+         install_key)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
     item_sql = """INSERT OR REPLACE INTO analytics_player_items
         (match_id, slot, item_id, item_name, item_kind, produced, killed, lost)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
@@ -261,7 +322,7 @@ def store_players(connection: sqlite3.Connection, match_id: str, payload: dict[s
             integer(player.get("units_destroyed"), 0), integer(player.get("structures_destroyed"), 0),
             integer(player.get("units_lost"), 0), integer(player.get("structures_lost"), 0),
             integer(player.get("military_value"), 0), integer(player.get("city_population"), 0),
-            integer(player.get("city_value"), 0),
+            integer(player.get("city_value"), 0), (install_keys or {}).get(default_slot),
         ))
         item_stats = player.get("item_stats")
         if isinstance(item_stats, list):
@@ -306,6 +367,7 @@ def record(connection: sqlite3.Connection, request: dict[str, Any]) -> None:
     source = text(request.get("source", "v1"), 32) or "v1"
     if phase not in {"start", "end"} or not match_id or not isinstance(payload, dict):
         raise ValueError("invalid record request")
+    payload, install_keys = without_install_ids(payload, Path(str(request.get("database") or ".")).parent)
     encoded = json.dumps(payload, separators=(",", ":"), ensure_ascii=True)
     if len(encoded.encode("utf-8")) > MAX_PAYLOAD_BYTES:
         raise ValueError("payload exceeds storage limit")
@@ -350,7 +412,7 @@ def record(connection: sqlite3.Connection, request: dict[str, Any]) -> None:
         # A missing/invalid field from an older event must not erase a known runtime.
         connection.execute("UPDATE analytics_matches SET client_runtime = COALESCE(?, client_runtime) WHERE match_id = ?",
                            (data["client_runtime"], match_id))
-        store_players(connection, match_id, payload)
+        store_players(connection, match_id, payload, install_keys)
 
 
 class RelayEventConflict(ValueError):

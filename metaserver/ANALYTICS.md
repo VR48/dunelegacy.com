@@ -113,11 +113,34 @@ GROUP BY q.item_id, q.item_name;
 ```
 
 Display names are the same names already advertised when multiplayer begins.
-IP addresses, chat, and local decision logs are not stored.
+IP addresses, chat, and local decision logs are not stored. An optional
+installation id is stored only as a keyed hash (see below).
 
 PHP's SQLite PDO driver (`php-sqlite3`) is preferred. Existing restricted hosts
 without it use the bundled Python `sqlite3` helper with the same schema and
 transactions.
+
+## Installation id (optional)
+
+A game may add `"install_id"` to the player row of its own local human player:
+128 random bits as 32 lowercase hex characters, created once per installation
+and kept in its settings. It carries nothing derived from the device, account,
+name or network. Other rows never carry one; in multiplayer only the host's own
+row does.
+
+The server stores only `analytics_players.install_key`: the first 32 hex
+characters of HMAC-SHA256 of the id, keyed with a random server secret in
+`$DATA_DIR/analytics-install-key` (64 hex characters, mode 0640, outside
+DocumentRoot). The PDO backend and `analytics_store.py` share that file and
+create it on first use; an existing file is never replaced, because a new key
+would split every installation into two players. Every `install_id` field is
+removed from the payload before `start_json`/`end_json` are written, so the raw
+id is never stored. A malformed id, an id on a non-human row, or a missing or
+unreadable key file stores no key and does not fail the report. The public
+usage page counts players by this key; see `docs/usage-statistics.md`.
+
+Do not delete or rotate the key file unless every stored key is meant to stop
+matching new reports.
 
 ## Browser versus native runtime (1.0.655+)
 

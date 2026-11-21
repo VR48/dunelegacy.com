@@ -1,4 +1,7 @@
+import hashlib
+import hmac
 import importlib.util
+import json
 from pathlib import Path
 import sqlite3
 import tempfile
@@ -56,6 +59,54 @@ class RuntimeAnalyticsTests(unittest.TestCase):
         self.db.close()
         self.db = store.open_database(self.path)
         self.assertEqual(self.db.execute('SELECT COUNT(*) FROM analytics_matches').fetchone()[0], 2)
+
+    def install_payload(self, raw, name='Host'):
+        return {'schema_version': 3, 'game_type': 'multiplayer', 'install_id': raw, 'players': [
+            {'slot': 0, 'player_name': name, 'controller': 'human', 'install_id': raw},
+            {'slot': 1, 'player_name': 'Bot', 'controller': 'qbot', 'install_id': 'f' * 32},
+            {'slot': 2, 'player_name': 'Guest', 'controller': 'human', 'install_id': 'NOT-HEX'},
+            {'slot': 3, 'player_name': 'Other', 'controller': 'human'}]}
+
+    def test_install_ids_are_stored_only_as_keyed_hashes(self):
+        raw = '0123456789abcdef0123456789abcdef'
+        for phase in ('start', 'end'):
+            store.record(self.db, {'phase': phase, 'match_id': 'install-test-0001',
+                                   'payload': self.install_payload(raw), 'database': self.path})
+        secret = Path(self.temp.name) / 'analytics-install-key'
+        expected = hmac.new(bytes.fromhex(secret.read_text().strip()), raw.encode(), hashlib.sha256).hexdigest()[:32]
+        self.assertEqual(self.db.execute('SELECT slot, install_key FROM analytics_players ORDER BY slot').fetchall(),
+                         [(0, expected), (1, None), (2, None), (3, None)])
+        self.assertEqual(secret.stat().st_mode & 0o777, 0o640)
+        stored = '\n'.join(self.db.iterdump())
+        for private in (raw, 'f' * 32, 'NOT-HEX', 'install_id'):
+            self.assertNotIn(private, stored)
+        start = json.loads(self.db.execute('SELECT start_json FROM analytics_matches').fetchone()[0])
+        self.assertEqual(start['players'][0], {'slot': 0, 'player_name': 'Host', 'controller': 'human'})
+        # One installation keeps one key across games; the key file is created once and kept.
+        before = secret.read_text()
+        store.record(self.db, {'phase': 'start', 'match_id': 'install-test-0002',
+                               'payload': self.install_payload(raw, 'Renamed'), 'database': self.path})
+        self.assertEqual(secret.read_text(), before)
+        self.assertEqual(self.db.execute("SELECT COUNT(DISTINCT install_key) FROM analytics_players"
+                                         " WHERE install_key IS NOT NULL").fetchone()[0], 1)
+
+    def test_unusable_key_file_drops_the_install_id(self):
+        (Path(self.temp.name) / 'analytics-install-key').write_text('not a key\n')
+        raw = 'a' * 32
+        store.record(self.db, {'phase': 'start', 'match_id': 'install-test-0003',
+                               'payload': self.install_payload(raw), 'database': self.path})
+        self.assertEqual(self.db.execute('SELECT COUNT(*) FROM analytics_players WHERE install_key IS NOT NULL').fetchone()[0], 0)
+        self.assertNotIn(raw, '\n'.join(self.db.iterdump()))
+
+    def test_install_key_column_is_added_to_older_databases(self):
+        self.db.close()
+        Path(self.path).unlink()
+        old = sqlite3.connect(self.path)
+        old.executescript(store.SCHEMA)
+        old.close()
+        self.db = store.open_database(self.path)
+        columns = {row[1] for row in self.db.execute('PRAGMA table_info(analytics_players)')}
+        self.assertIn('install_key', columns)
 
 
 if __name__ == '__main__':

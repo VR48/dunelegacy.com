@@ -14,8 +14,8 @@ publishes all these files together; no database migration is needed.
 - Last 24 hours, last 30 days and all recorded time use session start times.
 - Daily/monthly buckets use UTC. Partial periods show only observed data, and
   zero days are filled only after tracking began. Refresh interval: five minutes.
-- Counts are sessions, not unique people. Retries and manual development games
-  count. Probe and local multiplayer test games (isolated `DUNECITY_USERDIR`
+- Session counts are sessions, not unique people. Retries and manual development
+  games count. Player counts are described under "Players" below. Probe and local multiplayer test games (isolated `DUNECITY_USERDIR`
   profiles) stop reporting from game commit 2dc819da; the 886 probe games
   recorded before were deleted on 2026-10-31 (backup
   `/var/www/data/backups/games-pre-probe-cleanup-20261031T113922Z.sqlite`).
@@ -42,6 +42,33 @@ publishes all these files together; no database migration is needed.
   exits after at most 60 seconds.
 - AI counts deduplicate the same bot type per match and relationship to a human:
   same house, allied house or opponent. Different types/difficulties may overlap.
+
+## Players
+
+Each period, day and month also reports distinct players (`players`,
+`daily_players`, `monthly_players`): per platform, the total, how many of them
+were counted by installation key (`install_ids`), the sessions in that bucket
+and the sessions without an identified player (`unidentified_sessions`).
+
+- Only player rows whose recorded controller is `human` count.
+- A player is identified by `analytics_players.install_key`, the keyed hash of
+  the random installation id a game sends (see `metaserver/ANALYTICS.md`).
+  Without one, the display name stands in: case-folded with whitespace
+  collapsed. A name the data links to exactly one installation key counts as
+  that installation, so games from before and after a client sent its id are
+  one player. A name linked to several keys stays a separate name identity.
+- Names many people share identify nobody and are not counted (`SHARED_NAMES`
+  in `usage_stats.py`): the game defaults `Player` (browser) and `Mobile`
+  (iPhone/iPad), and computer account names such as `User`, `Admin` or a
+  laptop brand. A session whose human players all have such names, or that has
+  no human player row, counts as a session without an identified player.
+- A player on two platforms counts in both platform columns and once in the
+  total. Someone using two names or devices counts more than once.
+- Identities are never published: the output has counts only.
+- History before installation ids is counted by name only. Desktop and Android
+  names are mostly distinct (computer or app account names), so most of those
+  sessions are identified. Browser and iPhone/iPad games almost all use the
+  default name, so those players are mostly missing from historical counts.
 
 ## Multiplayer history
 

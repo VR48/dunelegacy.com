@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game usage statistics — Dune Legacy &amp; Dune City</title>
-    <meta name="description" content="Explore recorded Dune Legacy and Dune City game sessions: daily and monthly activity, browser, desktop, Android and iPhone play, campaign levels, mods and AI opponents.">
+    <meta name="description" content="Explore recorded Dune Legacy and Dune City game sessions and players: daily and monthly activity, browser, desktop, Android and iPhone play, campaign levels, mods and AI opponents.">
     <link rel="canonical" href="https://dunelegacy.com/usage.html">
     <link rel="stylesheet" href="css/style.css?v=20260915-usage">
-    <link rel="stylesheet" href="css/usage.css?v=20261029-mobile">
+    <link rel="stylesheet" href="css/usage.css?v=20261121-players">
     <link rel="icon" href="img/favicon.ico">
-    <script src="js/usage.js?v=20261030-android-note" defer></script>
+    <script src="js/usage.js?v=20261121-players" defer></script>
 </head>
 <body>
 <header><div class="container">
@@ -23,12 +23,18 @@
     <noscript><p>Enable JavaScript to view the live usage tables and charts.</p></noscript>
     <div id="usage-content" hidden>
         <div class="usage-cards" id="usage-cards"></div>
-        <p class="usage-note">Counts are recorded game sessions, not unique players, installs or downloads. Repeat attempts and development games are included.</p>
-        <nav class="usage-jump" aria-label="Statistics sections"><a href="#activity">Activity</a><a href="#modes">Modes &amp; mods</a><a href="#campaign">Campaign</a><a href="#bots">AI players</a><a href="#outcomes">Outcomes &amp; duration</a><a href="#history">Multiplayer history</a></nav>
+        <p class="usage-note">Session counts are recorded games, not installs or downloads. Player counts are distinct identified players; see <a href="#players-section">how players are counted</a>. Repeat attempts and development games are included.</p>
+        <nav class="usage-jump" aria-label="Statistics sections"><a href="#activity">Activity</a><a href="#players-section">Players</a><a href="#modes">Modes &amp; mods</a><a href="#campaign">Campaign</a><a href="#bots">AI players</a><a href="#outcomes">Outcomes &amp; duration</a><a href="#history">Multiplayer history</a></nav>
         <section class="usage-panel" id="activity"><h3>Activity over time</h3>
             <div class="usage-legend"><span class="browser-key">Browser</span><span class="native-key">Desktop</span><span class="android-key">Android</span><span class="ios-key">iPhone &amp; iPad</span><span class="unknown-key">Platform unknown</span></div>
             <h4>Daily sessions</h4><p id="daily-note" class="usage-note"></p><div id="daily-chart" class="usage-chart-scroll"></div>
             <h4>Monthly sessions</h4><p id="monthly-note" class="usage-note"></p><div id="monthly-chart" class="usage-chart-scroll"></div>
+            <div id="players-section" hidden>
+                <h4>Daily players</h4><p id="daily-players-note" class="usage-note"></p><div id="daily-players-chart" class="usage-chart-scroll"></div>
+                <h4>Monthly players</h4><p id="monthly-players-note" class="usage-note"></p><div id="monthly-players-chart" class="usage-chart-scroll"></div>
+                <p id="players-coverage" class="usage-note"></p>
+                <details><summary>How players are counted</summary><p class="usage-note">A player is a distinct in-game name among the recorded human players, or an anonymous installation ID once a game version sends one. Names that many people share identify nobody and are not counted: the game’s defaults (“Player” in the browser, “Mobile” on iPhone and iPad) and common computer account names such as “User”, “Admin” or a laptop brand. Most browser and iPhone/iPad games still use the default name, so those players are largely missing from these counts. One person using two names or devices counts more than once; the same name on two platforms counts once in the total. Player counts never show names.</p></details>
+            </div>
             <p class="usage-note">Dates use UTC. First and current days/months may be partial. Dates before tracking began are not shown.</p>
         </section>
         <div class="usage-pair" id="modes">

@@ -23,6 +23,13 @@ if (!defined('ANALYTICS_MAX_UNIT_ROWS_PER_PLAYER')) {
 if (!defined('ANALYTICS_MAX_ITEM_ROWS_PER_PLAYER')) {
     define('ANALYTICS_MAX_ITEM_ROWS_PER_PLAYER', 96);
 }
+// A human player row may carry the reporting installation's random id (128 bits, lowercase
+// hex). Only a keyed hash is stored (install_key); the id itself never reaches SQLite or the
+// stored JSON. The key is a random server secret beside the database, created on first use and
+// shared with analytics_store.py.
+if (!defined('ANALYTICS_INSTALL_SECRET_FILE')) {
+    define('ANALYTICS_INSTALL_SECRET_FILE', dirname(ANALYTICS_DB_FILE) . '/analytics-install-key');
+}
 
 function analyticsAvailable() {
     return class_exists('PDO') && in_array('sqlite', PDO::getAvailableDrivers(), true);
@@ -202,6 +209,7 @@ function analyticsMigrate(PDO $database) {
     analyticsEnsureColumn($database, 'analytics_players', 'ai_type', 'TEXT');
     analyticsEnsureColumn($database, 'analytics_players', 'ai_difficulty', 'TEXT');
     analyticsEnsureColumn($database, 'analytics_players', 'ai_support', 'INTEGER');
+    analyticsEnsureColumn($database, 'analytics_players', 'install_key', 'TEXT');
     $database->exec('CREATE INDEX IF NOT EXISTS analytics_matches_started_idx ON analytics_matches(started_at)');
     $database->exec('CREATE INDEX IF NOT EXISTS analytics_matches_mode_idx ON analytics_matches(game_type, mod_name)');
     $database->exec('CREATE INDEX IF NOT EXISTS analytics_qbot_units_item_idx ON analytics_qbot_units(item_id)');
@@ -288,7 +296,48 @@ function analyticsMatchFields(array $payload) {
     ];
 }
 
-function analyticsStorePlayers(PDO $database, $matchId, array $players, $replace) {
+function analyticsInstallSecret() {
+    $path = ANALYTICS_INSTALL_SECRET_FILE;
+    if (!is_file($path)) {
+        $temporary = dirname($path) . '/.analytics-install-key.' . getmypid() . '.' . bin2hex(random_bytes(8));
+        $stream = @fopen($temporary, 'x');
+        if ($stream !== false) {
+            @chmod($temporary, 0640);
+            $written = fwrite($stream, bin2hex(random_bytes(32)) . "\n");
+            fclose($stream);
+            if ($written === 65) @link($temporary, $path);   // atomic; a concurrent creator's key wins
+            @unlink($temporary);
+        }
+    }
+    $value = @file_get_contents($path, false, null, 0, 129);
+    $value = is_string($value) ? trim($value) : '';
+    return preg_match('/^[0-9a-f]{64}$/D', $value) ? hex2bin($value) : null;
+}
+
+function analyticsInstallKey($value) {
+    if (!is_string($value) || !preg_match('/^[0-9a-f]{32}$/D', $value)) return null;
+    $secret = analyticsInstallSecret();
+    return $secret === null ? null : substr(hash_hmac('sha256', $value, $secret), 0, 32);
+}
+
+/** The payload to store, with every install_id removed, and the keyed hash per human row. */
+function analyticsWithoutInstallIds(array $payload) {
+    unset($payload['install_id']);
+    $keys = [];
+    if (is_array($payload['players'] ?? null)) {
+        foreach ($payload['players'] as $index => $player) {
+            if (!is_array($player) || !array_key_exists('install_id', $player)) continue;
+            if (($player['controller'] ?? null) === 'human') {
+                $key = analyticsInstallKey($player['install_id']);
+                if ($key !== null) $keys[$index] = $key;
+            }
+            unset($payload['players'][$index]['install_id']);
+        }
+    }
+    return [$payload, $keys];
+}
+
+function analyticsStorePlayers(PDO $database, $matchId, array $players, $replace, array $installKeys = []) {
     if ($replace) {
         $delete = $database->prepare('DELETE FROM analytics_players WHERE match_id = ?');
         $delete->execute([$matchId]);
@@ -297,8 +346,9 @@ function analyticsStorePlayers(PDO $database, $matchId, array $players, $replace
         (match_id, slot, player_id, player_name, house_slot, house_id, house_name, team, controller,
          player_class, ai_type, ai_difficulty, ai_support, qbot_difficulty, result,
          final_credits, spice_harvested, units_built, structures_built, units_destroyed,
-         structures_destroyed, units_lost, structures_lost, military_value, city_population, city_value)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+         structures_destroyed, units_lost, structures_lost, military_value, city_population, city_value,
+         install_key)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $itemInsert = $database->prepare('INSERT OR REPLACE INTO analytics_player_items
         (match_id, slot, item_id, item_name, item_kind, produced, killed, lost)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
@@ -309,6 +359,7 @@ function analyticsStorePlayers(PDO $database, $matchId, array $players, $replace
 
     foreach (array_slice($players, 0, ANALYTICS_MAX_PLAYERS) as $slot => $player) {
         if (!is_array($player)) continue;
+        $installKey = $installKeys[$slot] ?? null;
         $slot = analyticsInt($player['slot'] ?? $slot, 0, ANALYTICS_MAX_PLAYERS - 1);
         $controller = analyticsString($player['controller'] ?? 'unknown', 32);
         $aiType = analyticsString($player['ai_type'] ?? null, 32);
@@ -328,6 +379,7 @@ function analyticsStorePlayers(PDO $database, $matchId, array $players, $replace
             analyticsInt($player['structures_destroyed'] ?? null, 0), analyticsInt($player['units_lost'] ?? null, 0),
             analyticsInt($player['structures_lost'] ?? null, 0), analyticsInt($player['military_value'] ?? null, 0),
             analyticsInt($player['city_population'] ?? null, 0), analyticsInt($player['city_value'] ?? null, 0),
+            $installKey,
         ]);
 
         if (is_array($player['item_stats'] ?? null)) {
@@ -368,6 +420,7 @@ function analyticsRecordMatch($phase, $matchId, array $payload, $source = 'v1') 
             'phase' => $phase, 'match_id' => $matchId, 'payload' => $payload, 'source' => $source,
         ]) !== null;
     }
+    [$payload, $installKeys] = analyticsWithoutInstallIds($payload);
     $fields = analyticsMatchFields($payload);
     $now = time();
     $json = json_encode($payload, JSON_UNESCAPED_SLASHES);
@@ -390,7 +443,7 @@ function analyticsRecordMatch($phase, $matchId, array $payload, $source = 'v1') 
                 $fields['map_name'], $fields['map_width'], $fields['map_height'], $fields['map_seed'],
                 $fields['mod_name'], $fields['mod_version'], $fields['game_version'], $fields['player_count'],
                 $fields['human_count'], $fields['qbot_count'], $json]);
-            analyticsStorePlayers($database, $matchId, is_array($payload['players'] ?? null) ? $payload['players'] : [], true);
+            analyticsStorePlayers($database, $matchId, is_array($payload['players'] ?? null) ? $payload['players'] : [], true, $installKeys);
         } else {
             $statement = $database->prepare('INSERT INTO analytics_matches
                 (match_id, schema_version, source, started_at, ended_at, updated_at, outcome, game_type, map_name,
@@ -410,7 +463,7 @@ function analyticsRecordMatch($phase, $matchId, array $payload, $source = 'v1') 
                 $fields['human_count'], $fields['qbot_count'], $fields['duration_cycles'], $fields['duration_seconds'],
                 $fields['winning_house'], $fields['total_spice_harvested'], $fields['total_units_destroyed'],
                 $fields['total_structures_destroyed'], $json]);
-            analyticsStorePlayers($database, $matchId, is_array($payload['players'] ?? null) ? $payload['players'] : [], true);
+            analyticsStorePlayers($database, $matchId, is_array($payload['players'] ?? null) ? $payload['players'] : [], true, $installKeys);
         }
         // Preserve a known runtime if an older/retried event omits the field.
         $runtime = $database->prepare('UPDATE analytics_matches SET client_runtime = COALESCE(?, client_runtime) WHERE match_id = ?');

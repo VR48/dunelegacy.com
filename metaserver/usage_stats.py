@@ -36,6 +36,16 @@ CONTENT_DIR = '/var/www/data/dunecity-p2p/run/state/content'
 SHIPPED_MODS = ('vanilla', 'dunecity', 'Tornie', 'Dune2R', 'TornieLite', 'Jericho', 'JerichoLite',
                 'ArcaKev', 'ArcaKevLite')
 SNAPSHOT = re.compile(r'ws-([0-9a-f]{64})')
+# Players are counted by identity, never published: the keyed hash of a reporting installation's
+# random id (install_key) when the game sent one, otherwise the recorded display name. Display names
+# that many different people share identify nobody: the game's own defaults ("Player", and
+# "Mobile" on iPhone and iPad) and common computer account names. Sessions whose human players
+# have only such names count as sessions without an identified player.
+SHARED_NAMES = frozenset((
+    'player', 'mobile', 'user', 'admin', 'administrator', 'owner', 'root', 'guest', 'test', 'me',
+    'home', 'pc', 'windows', 'asus', 'lenovo', 'hp', 'dell', 'acer', 'deck', 'steamuser', 'steam',
+    'gebruiker', 'usuario', 'utilisateur', 'benutzer', 'utente', 'web_user', 'ubuntu', 'pi',
+    'default', 'unknown'))
 
 
 def snapshot_base(digest, content_dir):
@@ -164,6 +174,67 @@ def bot_stats(rows, players):
     return output
 
 
+def name_identity(value):
+    name = ' '.join(display_name(value, '').casefold().split())
+    return None if not name or name in SHARED_NAMES else 'name:' + name
+
+
+def player_identities(players, columns):
+    """Identities of the recorded human players in each match.
+
+    An install key is authoritative. A distinctive display name stands in for it, and a name the
+    data has linked to exactly one install key counts as that installation, so a player's games
+    before and after their game reported an install id are one player.
+    """
+    keyed = 'install_key' in columns
+    linked = collections.defaultdict(set)
+    if keyed:
+        for rows in players.values():
+            for p in rows:
+                name = name_identity(p['player_name']) if p['controller'] == 'human' and p['install_key'] else None
+                if name:
+                    linked[name].add('install:' + p['install_key'])
+    aliases = {name: next(iter(keys)) for name, keys in linked.items() if len(keys) == 1}
+    identities = {}
+    for match_id, rows in players.items():
+        found = set()
+        for p in rows:
+            if p['controller'] != 'human':
+                continue
+            if keyed and p['install_key']:
+                found.add('install:' + p['install_key'])
+                continue
+            name = name_identity(p['player_name'])
+            if name:
+                found.add(aliases.get(name, name))
+        identities[match_id] = frozenset(found)
+    return identities
+
+
+def player_counts(rows, identities, key):
+    """Distinct identified players per label, overall and per platform, plus unidentified sessions."""
+    groups = collections.defaultdict(lambda: collections.defaultdict(set))
+    sessions = collections.Counter()
+    unidentified = collections.Counter()
+    for row in rows:
+        label = key(row)
+        found = identities.get(row['match_id'], frozenset())
+        sessions[label] += 1
+        if not found:
+            unidentified[label] += 1
+        groups[label][runtime(row['client_runtime'])].update(found)
+        groups[label]['total'].update(found)
+    return {label: dict(label=label, **{rt: len(g[rt]) for rt in RUNTIMES}, total=len(g['total']),
+                        install_ids=sum(i.startswith('install:') for i in g['total']),
+                        sessions=sessions[label], unidentified_sessions=unidentified[label])
+            for label, g in groups.items()}
+
+
+def empty_player_count(label):
+    return dict(label=label, **dict.fromkeys(RUNTIMES, 0), total=0, install_ids=0, sessions=0,
+                unidentified_sessions=0)
+
+
 def clean_map(value):
     return re.split(r'[/\\]', value or '')[-1][:120] or 'Unknown map'
 
@@ -257,11 +328,15 @@ def build_report(connection, now=None, content_dir=CONTENT_DIR):
     rows = [dict(r) for r in connection.execute('''SELECT match_id, client_runtime, started_at, ended_at,
         outcome, game_type, map_name, mod_name, start_json IS NOT NULL AS has_start
         FROM analytics_matches WHERE started_at IS NOT NULL AND started_at <= ?''', (now,))]
+    columns = {row[1] for row in connection.execute('PRAGMA table_info(analytics_players)')}
     players = collections.defaultdict(list)
     for row in connection.execute('''SELECT match_id, house_slot, team, controller,
-        ai_type, ai_difficulty, ai_support, result FROM analytics_players'''):
+        ai_type, ai_difficulty, ai_support, result, '''
+            + ('player_name' if 'player_name' in columns else 'NULL AS player_name')
+            + (', install_key' if 'install_key' in columns else '') + ' FROM analytics_players'):
         players[row['match_id']].append(dict(row))
     connection.rollback()
+    identities = player_identities(players, columns)
     first = min((r['started_at'] for r in rows), default=None)
     known_first = min((r['started_at'] for r in rows if runtime(r['client_runtime']) != 'unknown'), default=None)
     report = {'schema': 1, 'generated': iso(now), 'tracking_since': iso(first) if first else None,
@@ -276,7 +351,10 @@ def build_report(connection, now=None, content_dir=CONTENT_DIR):
                   'maps': matrix([r for r in selected if r['game_type'] in ('single_custom','multiplayer')], lambda r: clean_map(r['map_name'])),
                   'daily': matrix(selected, lambda r: iso(r['started_at'])[:10]),
                   'monthly': matrix(selected, lambda r: iso(r['started_at'])[:7]),
-                  'outcomes': [], 'lengths': [], 'bots': bot_stats(selected, players)}
+                  'outcomes': [], 'lengths': [], 'bots': bot_stats(selected, players),
+                  'players': player_counts(selected, identities, lambda r: 'period').get('period', empty_player_count('period'))}
+        daily_players = player_counts(selected, identities, lambda r: iso(r['started_at'])[:10])
+        monthly_players = player_counts(selected, identities, lambda r: iso(r['started_at'])[:7])
         # Include zero-activity days/months within the observed tracking period.
         begin = dt.datetime.fromtimestamp(max(cutoff, first or now), UTC).date()
         end = dt.datetime.fromtimestamp(now, UTC).date()
@@ -287,10 +365,14 @@ def build_report(connection, now=None, content_dir=CONTENT_DIR):
             day_key, month_key = day.isoformat(), day.strftime('%Y-%m')
             daily.setdefault(day_key, dict(label=day_key, **dict.fromkeys(RUNTIMES, 0), total=0))
             months.setdefault(month_key, dict(label=month_key, **dict.fromkeys(RUNTIMES, 0), total=0))
+            daily_players.setdefault(day_key, empty_player_count(day_key))
+            monthly_players.setdefault(month_key, empty_player_count(month_key))
             day += dt.timedelta(days=1)
         period['daily'], period['monthly'] = list(daily.values()), list(months.values())
         period['daily'].sort(key=lambda r:r['label'])
         period['monthly'].sort(key=lambda r:r['label'])
+        period['daily_players'] = sorted(daily_players.values(), key=lambda r: r['label'])
+        period['monthly_players'] = sorted(monthly_players.values(), key=lambda r: r['label'])
         for rt in RUNTIMES:
             cohort = [r for r in selected if runtime(r['client_runtime']) == rt]
             period['outcomes'].append(dict(runtime=rt, **outcomes(cohort, players)))
