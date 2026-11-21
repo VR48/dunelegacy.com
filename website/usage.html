@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="css/style.css?v=20260915-usage">
     <link rel="stylesheet" href="css/usage.css?v=20261121-campaign">
     <link rel="icon" href="img/favicon.ico">
-    <script src="js/usage.js?v=20261121-refetch" defer></script>
+    <script src="js/usage.js?v=20261121-players-by" defer></script>
 </head>
 <body>
 <header><div class="container">
@@ -24,7 +24,7 @@
     <div id="usage-content" hidden>
         <div class="usage-cards" id="usage-cards"></div>
         <p class="usage-note">Session counts are recorded games, not installs or downloads. Player counts are distinct identified players; see <a href="#players-section">how players are counted</a>. Repeat attempts and development games are included.</p>
-        <nav class="usage-jump" aria-label="Statistics sections"><a href="#activity">Activity</a><a href="#players-section">Players</a><a href="#modes">Modes &amp; mods</a><a href="#campaign">Campaign</a><a href="#dunecity-campaign">DuneCity Campaign</a><a href="#bots">AI players</a><a href="#outcomes">Outcomes &amp; duration</a><a href="#history">Multiplayer history</a></nav>
+        <nav class="usage-jump" aria-label="Statistics sections"><a href="#activity">Activity</a><a href="#players-section">Players</a><a href="#modes">Modes &amp; mods</a><a href="#players-by">What players play</a><a href="#campaign">Campaign</a><a href="#dunecity-campaign">DuneCity Campaign</a><a href="#bots">AI players</a><a href="#outcomes">Outcomes &amp; duration</a><a href="#history">Multiplayer history</a></nav>
         <section class="usage-panel" id="activity"><h3>Activity over time</h3>
             <div class="usage-legend"><span class="browser-key">Browser</span><span class="native-key">Desktop</span><span class="android-key">Android</span><span class="ios-key">iPhone &amp; iPad</span><span class="unknown-key">Platform unknown</span></div>
             <h4>Daily sessions</h4><p id="daily-note" class="usage-note"></p><div id="daily-chart" class="usage-chart-scroll"></div>
@@ -38,9 +38,17 @@
             <p class="usage-note">Dates use UTC. First and current days/months may be partial. Dates before tracking began are not shown.</p>
         </section>
         <div class="usage-pair" id="modes">
-            <section class="usage-panel"><h3>Game modes</h3><div id="modes-table"></div><p class="usage-note">Network multiplayer is the reported game mode. Single-player can still have an internet connection or an AI sharing the player’s house.</p><p id="online-summary" class="usage-note"></p></section>
+            <section class="usage-panel"><h3>Game modes</h3><div id="modes-table"></div><p class="usage-note">DuneCity Campaign missions are counted as their own mode, not as Campaign. Network multiplayer is the reported game mode. Single-player can still have an internet connection or an AI sharing the player’s house.</p><p id="online-summary" class="usage-note"></p></section>
             <section class="usage-panel"><h3>Mods</h3><div id="mods-table"></div><p id="platform-note" class="usage-note"></p></section>
         </div>
+        <section class="usage-panel" id="players-by" hidden><h3>What players play</h3>
+            <p id="players-by-note" class="usage-note"></p>
+            <h4>Players by mode</h4><div id="players-modes-table"></div>
+            <h4>Players by mod</h4><div id="players-mods-table"></div>
+            <div class="usage-pair"><div><h4>Combinations of modes</h4><div id="mix-modes-table"></div><p class="usage-note">Each player counts once, under the exact set of modes they played in this view.</p></div><div><h4>Combinations of mods</h4><div id="mix-mods-table"></div></div></div>
+            <h4>Players by campaign level</h4><div id="players-levels-table"></div>
+            <p class="usage-note">Players who started each Dune Legacy campaign level in this view; the DuneCity Campaign has its own panel below. Only identified players are counted; see how players are counted under Activity.</p>
+        </section>
         <div class="usage-pair" id="campaign">
             <section class="usage-panel"><h3>Campaign levels</h3><p class="usage-note">House and scenario variations combined into the game’s nine campaign levels. Select a platform column to rank by its starts. These are not individual player progression rates.</p><div id="levels-table"></div><details><summary>How scenarios are grouped</summary><p class="usage-note">Level 1: scenario 1 · Level 2: 2–4 · Level 3: 5–7 · Level 4: 8–10 · Level 5: 11–13 · Level 6: 14–16 · Level 7: 17–19 · Level 8: 20–21 · Level 9: 22.</p></details></section>
             <section class="usage-panel"><h3>Popular custom &amp; multiplayer maps</h3><p class="usage-note">The 15 most-played map names in this period. Identically named maps are grouped together.</p><div id="maps-table"></div></section>
@@ -63,7 +71,7 @@
             <details><summary>AI teammate types by mode</summary><div id="teammates-table"></div></details>
         </section>
         <section class="usage-panel" id="outcomes"><h3>Recorded outcomes</h3><div id="outcomes-table"></div><p class="usage-note">“No end report” can mean a running game, closed tab, crash or undelivered report. It does not establish abandonment or defeat. A multiplayer session can contain both a human win and a human loss.</p>
-            <h4>Game lengths</h4><div id="lengths-table"></div><p class="usage-note">Average, median and longest use sessions with both start and end reports. Times approximate real elapsed time between server reports, including pauses; they are not accelerated simulation time. Campaign level 1 is a subset of Campaign. Longest-game results refer to recorded humans.</p>
+            <h4>Game lengths</h4><div id="lengths-table"></div><p class="usage-note">Average, median and longest use sessions with both start and end reports. Times approximate real elapsed time between server reports, including pauses; they are not accelerated simulation time. Campaign level 1 is a subset of Campaign; DuneCity Campaign games are counted separately from Campaign. Longest-game results refer to recorded humans.</p>
             <h4>Quick exits from campaign level 1</h4><div id="quick-table"></div><p class="usage-note">A quick exit is a reported early exit within 60 seconds. The share of all starts is a confirmed minimum; missing end reports prevent a reliable overall quit rate.</p>
         </section>
         <p id="coverage-note" class="usage-note"></p>

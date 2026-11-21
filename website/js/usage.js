@@ -3,7 +3,7 @@ let usageReport;
 let usagePeriod = 'day';
 const count = n => Number(n || 0).toLocaleString();
 const pct = (n, d) => d ? (100 * n / d).toFixed(1) + '%' : '—';
-const names = {browser:'Browser', native:'Desktop', android:'Android', ios:'iPhone & iPad', unknown:'Unknown', campaign:'Campaign', single_custom:'Custom single-player', skirmish:'Skirmish', multiplayer:'Network multiplayer', vanilla:'Vanilla', dunecity:'Dune City', same_house:'AI sharing the human’s house', ally:'AI ally in another house', opponent:'AI opponent'};
+const names = {browser:'Browser', native:'Desktop', android:'Android', ios:'iPhone & iPad', unknown:'Unknown', campaign:'Campaign', dunecity_campaign:'DuneCity Campaign', load:'Loaded save', single_custom:'Custom single-player', skirmish:'Skirmish', multiplayer:'Network multiplayer', vanilla:'Vanilla', dunecity:'Dune City', same_house:'AI sharing the human’s house', ally:'AI ally in another house', opponent:'AI opponent'};
 const label = value => names[value] || value;
 // Reported client runtimes, in column order; native is the desktop game (usage_stats.RUNTIMES).
 const PLATFORMS = ['browser','native','android','ios','unknown'];
@@ -112,9 +112,10 @@ function renderUsage() {
     }
     comparison('modes-table',p.modes,'Mode');comparison('mods-table',p.mods,'Mod');
     const online=p.modes.find(r=>r.label==='multiplayer')?.total||0;
-    const offline=p.modes.filter(r=>['campaign','single_custom','skirmish'].includes(r.label)).reduce((n,r)=>n+r.total,0);
+    const offline=p.modes.filter(r=>['campaign','dunecity_campaign','single_custom','skirmish'].includes(r.label)).reduce((n,r)=>n+r.total,0);
     document.getElementById('online-summary').textContent=count(offline)+' single-player sessions · '+count(online)+' network multiplayer sessions.';
     document.getElementById('platform-note').textContent=usageReport.platform_since?'Browser/desktop identification available from '+date(usageReport.platform_since)+'; Android and iPhone/iPad from engine 1.0.857. Android app 0.2.32 and earlier (engine 1.0.855) report as Desktop. Older or unmarked clients remain unknown.':'';
+    renderPlayersByPlay(p);
     comparison('levels-table',p.levels,'Level',x=>'Level '+x);comparison('maps-table',p.maps.slice(0,15),'Map');
     renderDuneCityCampaign(p.dunecity_campaign);
     comparison('opponents-table',p.bots.ai.filter(r=>r.relation==='opponent'),'Opponent');
@@ -126,6 +127,28 @@ function renderUsage() {
     table('quick-table',['Platform','Level-1 starts','Measured','Exits ≤60s','Share of starts','No end report'],p.lengths.filter(r=>r.label==='Campaign level 1').map(r=>[label(r.runtime),count(r.sessions),count(r.measured),count(r.quick_exits),pct(r.quick_exits,r.sessions),count(r.missing_end)]));
     document.getElementById('coverage-note').textContent=usageReport.tracking_since?'Tracking began '+date(usageReport.tracking_since)+'. Statistics cover games reported to the metaserver. Multiplayer history below lists games with at least two recorded human players.':'';
     document.getElementById('usage-content').hidden=false;
+}
+// Distinct identified players per mode, mod and campaign level, and the combinations each player plays.
+function playerRows(rows, transform=label) {
+    return rows.map(r=>{const identified=r.sessions-r.unidentified_sessions;
+        return [transform(r.label),...platformCounts(r),count(r.total),r.total?(identified/r.total).toFixed(1):'—'];});
+}
+function mixTable(target, mix, title) {
+    const rows=mix.combinations.map(c=>[c.labels.map(label).join(' + '),count(c.players),pct(c.players,mix.players)]);
+    if(mix.other_players)rows.push([count(mix.other_combinations)+' other combinations',count(mix.other_players),pct(mix.other_players,mix.players)]);
+    table(target,[title,'Players','Share of players'],rows,'Players by '+title.toLowerCase());
+}
+function renderPlayersByPlay(p) {
+    const panel=document.getElementById('players-by');panel.hidden=!p.players_by;
+    if(!p.players_by)return;
+    const headers=title=>[title,...platformHeaders,'Players','Games per player'];
+    table('players-modes-table',headers('Mode'),playerRows(p.players_by.modes),'Players by mode');
+    table('players-mods-table',headers('Mod'),playerRows(p.players_by.mods),'Players by mod');
+    mixTable('mix-modes-table',p.player_mix.modes,'Modes played');
+    mixTable('mix-mods-table',p.player_mix.mods,'Mods played');
+    const levels=[...p.players_by.levels].sort((a,b)=>Number(a.label)-Number(b.label));
+    table('players-levels-table',headers('Level'),playerRows(levels,x=>'Level '+x),'Players by campaign level');
+    document.getElementById('players-by-note').textContent=count(p.player_mix.modes.players)+' identified players in this view. A player counts once in every mode and mod they played, so rows add up to more than the total. Games per player uses games with an identified player.';
 }
 // The DuneCity Campaign (DCITY_M01..M10): games, players and results per mission within this view.
 function renderDuneCityCampaign(c) {

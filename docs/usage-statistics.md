@@ -72,6 +72,20 @@ and the sessions without an identified player (`unidentified_sessions`).
   sessions are identified. Browser and iPhone/iPad games almost all use the
   default name, so those players are mostly missing from historical counts.
 
+## What players play
+
+Each period has `players_by` and `player_mix`, built from the same player
+identities as above (counts only, never identities):
+
+- `players_by.modes`, `players_by.mods`, `players_by.levels`: distinct players
+  per mode, mod and Dune Legacy campaign level, per platform, with sessions and
+  sessions without an identified player. A player counts in every row they
+  played, so rows add up to more than the period's players.
+- `player_mix.modes`, `player_mix.mods`: each identified player counts once,
+  under the exact set of modes (or mods) they played in the period, for example
+  Campaign + Skirmish. The `MIX_LIMIT` (12) most common combinations are listed;
+  `other_players` and `other_combinations` sum the rest.
+
 ## DuneCity Campaign
 
 Each period has `dunecity_campaign`: games, players (as above), human wins and
@@ -79,7 +93,12 @@ losses, one row per mission and daily games and players. A game belongs to the
 campaign when its map file name is `DCITY_M01`..`DCITY_M10` (optionally `.INI`,
 any directory), whatever the reported game type; this mirrors the game's
 `GameInitSettings::isDuneCityCampaign()`. The game already reports this name, so
-no client change was needed. Mission names come from the mission files' header
+no client change was needed.
+The game reports these missions with game type `campaign`; everywhere else in
+the report (modes, players by mode, AI players, game lengths) they are the
+separate mode `dunecity_campaign` (AI label "DuneCity Campaign"), so Dune
+Legacy campaign figures and levels never include them, and they are not listed
+among custom and multiplayer maps. Mission names come from the mission files' header
 comments in the game repository (`DUNECITY_MISSIONS`). Per mission: starts
 (every game, retries included), distinct players, games with a human win, a
 human loss, an early exit and no end report. Daily rows start at the first
