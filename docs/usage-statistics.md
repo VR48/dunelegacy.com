@@ -86,6 +86,35 @@ identities as above (counts only, never identities):
   Campaign + Skirmish. The `MIX_LIMIT` (12) most common combinations are listed;
   `other_players` and `other_combinations` sum the rest.
 
+## What players like
+
+Each period has `engagement` with five tables: `modes`, `mods`, `maps` (the
+listed top maps), `levels` (Dune Legacy campaign) and `dunecity_missions`. Each
+has `rows` and a pooled `baseline` of the table's rates.
+
+Per row: `games`; `ended` (games with an end report) and `quits` (outcome
+abandoned); `measured` and `quick_quits` (abandoned within 60 s of an observed
+start); identified `players`, `repeat_players` (3+ games) and
+`returning_players` (played on 2+ UTC days); `median_finished_seconds`. Levels
+and missions instead report `continued_players`: players who also started the
+next level or mission in the period (null for the last one present), because
+replaying a mission is usually retrying, not liking it. Repeat and returning
+play are not verdict signals there.
+
+`verdict` compares the row with the table's baseline, so it ranks rows against
+each other rather than judging them in absolute terms:
+
+- good (`good`): returning or repeat rate at least 1.2x baseline, continued
+  rate at least 1.2x, quit rate at most 0.8x;
+- bad (`bad`): quick-quit rate at least 1.5x, quit rate at least 1.25x,
+  returning or continued rate at most 0.6x;
+- `liked`, `disliked`, `mixed` (both) or `average` (neither); `too_few` below
+  20 games or 5 identified players.
+
+A game without an end report is neither a quit nor finished. In the 24-hour
+view almost nobody can return on another day, so a zero baseline gives no
+returning signal.
+
 ## DuneCity Campaign
 
 Each period has `dunecity_campaign`: games, players (as above), human wins and

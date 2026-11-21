@@ -116,6 +116,7 @@ function renderUsage() {
     document.getElementById('online-summary').textContent=count(offline)+' single-player sessions · '+count(online)+' network multiplayer sessions.';
     document.getElementById('platform-note').textContent=usageReport.platform_since?'Browser/desktop identification available from '+date(usageReport.platform_since)+'; Android and iPhone/iPad from engine 1.0.857. Android app 0.2.32 and earlier (engine 1.0.855) report as Desktop. Older or unmarked clients remain unknown.':'';
     renderPlayersByPlay(p);
+    renderEngagement(p);
     comparison('levels-table',p.levels,'Level',x=>'Level '+x);comparison('maps-table',p.maps.slice(0,15),'Map');
     renderDuneCityCampaign(p.dunecity_campaign);
     comparison('opponents-table',p.bots.ai.filter(r=>r.relation==='opponent'),'Opponent');
@@ -150,6 +151,52 @@ function renderPlayersByPlay(p) {
     table('players-levels-table',headers('Level'),playerRows(levels,x=>'Level '+x),'Players by campaign level');
     document.getElementById('players-by-note').textContent=count(p.player_mix.modes.players)+' identified players in this view. A player counts once in every mode and mod they played, so rows add up to more than the total. Games per player uses games with an identified player.';
 }
+// What players like and dislike: quits, quick quits, repeat and returning play, relative to the
+// other rows of the same table (usage_stats.engagement).
+let engagementGroup='modes';
+const ENGAGEMENT_GROUPS={modes:'Mode',mods:'Mod',maps:'Map',levels:'Campaign level',dunecity_missions:'DuneCity mission'};
+const REASONS={returning:'players come back on other days',repeat:'players play it 3+ times',fewer_quits:'fewer quits',
+    continued:'more players go on to the next',quick_quits:'many quit within a minute',quits:'more quits',
+    not_returning:'players rarely come back',stopped:'few players go on to the next'};
+const VERDICTS={liked:'▲ Liked',disliked:'▼ Disliked',mixed:'◆ Mixed',average:'Average',too_few:'Too few games'};
+function engagementLabel(group,value,p){
+    if(group==='levels')return 'Level '+value;
+    if(group==='dunecity_missions'){const m=(p.dunecity_campaign?.missions||[]).find(x=>String(x.mission)===value);return 'Mission '+value+(m?' · '+m.name:'');}
+    return label(value);
+}
+function verdictText(r){
+    const reasons=[...r.good,...r.bad].map(x=>REASONS[x]).filter(Boolean);
+    return VERDICTS[r.verdict]+(r.verdict!=='too_few'&&r.verdict!=='average'&&reasons.length?' · '+reasons.join(', '):'');
+}
+function renderEngagement(p){
+    const panel=document.getElementById('likes');panel.hidden=!p.engagement;
+    if(!p.engagement)return;
+    const progression=engagementGroup==='levels'||engagementGroup==='dunecity_missions';
+    document.querySelectorAll('[data-engagement]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.engagement===engagementGroup)));
+    const data=p.engagement[engagementGroup];
+    const title=ENGAGEMENT_GROUPS[engagementGroup];
+    table('likes-table',[title,'Games','Players','Quit','Quit within 1 min',progression?'Went on to next':'Played 3+ times',...(progression?[]:['Came back another day']),'Typical finished game','Verdict'],
+        data.rows.map(r=>[engagementLabel(engagementGroup,r.label,p),count(r.games),count(r.players),pct(r.quits,r.ended),pct(r.quick_quits,r.measured),
+            progression?(r.continued_players===null?'—':pct(r.continued_players,r.players)):pct(r.repeat_players,r.players),
+            ...(progression?[]:[pct(r.returning_players,r.players)]),duration(r.median_finished_seconds),verdictText(r)]),title+' engagement');
+    document.querySelectorAll('#likes-table tbody tr').forEach((tr,i)=>tr.lastChild.className='verdict-'+data.rows[i].verdict);
+    const b=data.baseline,share=v=>v===null||v===undefined?'—':(100*v).toFixed(1)+'%';
+    document.getElementById('likes-baseline').textContent='Across this table: '+share(b.quit)+' of games with an end report were quit, '+share(b.quick_quit)+' within a minute; '
+        +(progression?share(b.continued)+' of players went on to the next one.':share(b.repeat)+' of players played the same row 3+ times and '+share(b.returning)+' came back on another day.');
+    // Highlights from every table, strongest evidence (most games) first.
+    const picks=verdict=>Object.keys(ENGAGEMENT_GROUPS).flatMap(group=>p.engagement[group].rows.filter(r=>r.verdict===verdict)
+        .map(r=>({r,text:engagementLabel(group,r.label,p)+' ('+ENGAGEMENT_GROUPS[group].toLowerCase()+'): '+[...r.good,...r.bad].filter(x=>verdict==='liked'?r.good.includes(x):r.bad.includes(x)).map(x=>REASONS[x]).join(', ')})))
+        .sort((x,y)=>y.r.games-x.r.games).slice(0,6);
+    [['likes-good','liked','Nothing stands out as liked in this period.'],['likes-bad','disliked','Nothing stands out as disliked in this period.']].forEach(([id,verdict,none])=>{
+        const list=document.getElementById(id);list.replaceChildren();
+        const items=picks(verdict);
+        if(!items.length)list.append(element('li',none));
+        items.forEach(x=>list.append(element('li',x.text)));
+    });
+    document.getElementById('likes-day-note').hidden=usagePeriod!=='day';
+}
+document.querySelectorAll('[data-engagement]').forEach(button=>button.addEventListener('click',()=>{
+    engagementGroup=button.dataset.engagement;if(usageReport)renderEngagement(usageReport.periods[usagePeriod]);}));
 // The DuneCity Campaign (DCITY_M01..M10): games, players and results per mission within this view.
 function renderDuneCityCampaign(c) {
     const panel=document.getElementById('dunecity-campaign');panel.hidden=!c;
