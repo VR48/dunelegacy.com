@@ -196,7 +196,7 @@ jobs:
       - name: Restore stable compressed browser files
         if: env.DEPLOY_CHANNEL != 'staging'
         id: play-transfer-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/play-transfer/play
           key: play-brotli-v2-${{ runner.os }}-${{ hashFiles('website/play/build.json', 'deploy/prepare-play-transfer.mjs') }}
