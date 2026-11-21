@@ -31,6 +31,11 @@ HISTORY_MAX_PAGE = 10 ** 7
 # mode here, so the Dune Legacy campaign figures never include it.
 MODE_ORDER = ('campaign', 'dunecity_campaign', 'skirmish', 'single_custom', 'multiplayer', 'load', 'unknown')
 MIX_LIMIT = 12   # most common combinations of modes or mods per player; the rest are summed
+# Engagement: what players like (they come back and play again) and dislike (they quit, often at once).
+QUICK_QUIT_SECONDS = 60
+REPEAT_GAMES = 3            # a player who played something this many times kept playing it
+VERDICT_MIN_GAMES = 20      # rows with fewer games or identified players get no verdict
+VERDICT_MIN_PLAYERS = 5
 # A game qualifies only on recorded controllers: two or more player rows that the reporting
 # client called human.  Unknown or missing controllers never qualify a game.
 HISTORY_WHERE = '''FROM analytics_matches AS m WHERE m.game_type = 'multiplayer'
@@ -268,6 +273,104 @@ def player_mix(rows, identities, key, order=()):
             'other_combinations': max(0, len(ranked) - MIX_LIMIT)}
 
 
+def engagement_row(label, rows, identities):
+    """Signals of liking and disliking for one group of games.
+
+    Quits: an end report with outcome abandoned, as a share of games with an end report; quick
+    quits: abandoned within QUICK_QUIT_SECONDS of an observed start. Repeat players played the
+    group REPEAT_GAMES or more times; returning players played it on two or more UTC days.
+    """
+    ended = [r for r in rows if r['outcome'] in ('finished', 'abandoned') and r['ended_at'] is not None]
+    measured = [r for r in ended if r['has_start'] and r['started_at'] is not None and r['ended_at'] >= r['started_at']]
+    durations = sorted(r['ended_at'] - r['started_at'] for r in measured if r['outcome'] == 'finished')
+    games = collections.Counter()
+    days = collections.defaultdict(set)
+    for row in rows:
+        for identity in identities.get(row['match_id'], ()):
+            games[identity] += 1
+            days[identity].add(row['day'])
+    return {'label': label, 'games': len(rows), 'ended': len(ended), 'measured': len(measured),
+            'quits': sum(r['outcome'] == 'abandoned' for r in ended),
+            'quick_quits': sum(r['outcome'] == 'abandoned' and r['ended_at'] - r['started_at'] <= QUICK_QUIT_SECONDS
+                               for r in measured),
+            'players': len(games), 'identified_games': sum(games.values()),
+            'repeat_players': sum(n >= REPEAT_GAMES for n in games.values()),
+            'returning_players': sum(len(d) >= 2 for d in days.values()),
+            'median_finished_seconds': (durations[(len(durations)-1)//2] + durations[len(durations)//2]) / 2
+                                       if durations else None, '_ids': set(games)}
+
+
+def rate(part, whole):
+    return part / whole if whole else None
+
+
+def engagement(rows, identities, key, progression=False):
+    """Engagement per label, with a verdict relative to the whole table.
+
+    progression=True is for numbered campaign levels and missions: replaying one is being stuck,
+    not liking it, so repeat and returning play are not signals there. Instead `continued_players`
+    counts players of a level who also started the next one in the period.
+
+    The baseline pools every row of the table, so a verdict says a mode (or mod, level, mission,
+    map) does better or worse than the others, not that it is good in absolute terms. Rows below
+    VERDICT_MIN_GAMES games or VERDICT_MIN_PLAYERS identified players get the verdict too_few.
+    """
+    groups = collections.defaultdict(list)
+    for row in rows:
+        label = key(row)
+        if label is not None:
+            groups[str(label)].append(row)
+    table = [engagement_row(label, subset, identities) for label, subset in groups.items()]
+    ids = {r['label']: r.pop('_ids') for r in table}
+    for row in table:
+        following = ids.get(str(int(row['label']) + 1)) if progression else None
+        row['continued_players'] = len(ids[row['label']] & following) if following is not None else None
+    with_next = [r for r in table if r['continued_players'] is not None]
+    pooled = {field: sum(r[field] for r in table) for field in
+              ('ended', 'measured', 'quits', 'quick_quits', 'players', 'repeat_players', 'returning_players')}
+    base = {'quit': rate(pooled['quits'], pooled['ended']),
+            'quick_quit': rate(pooled['quick_quits'], pooled['measured']),
+            'repeat': rate(pooled['repeat_players'], pooled['players']),
+            'returning': rate(pooled['returning_players'], pooled['players']),
+            'continued': rate(sum(r['continued_players'] for r in with_next), sum(r['players'] for r in with_next))}
+    for row in table:
+        mine = {'quit': rate(row['quits'], row['ended']),
+                'quick_quit': rate(row['quick_quits'], row['measured']),
+                'repeat': rate(row['repeat_players'], row['players']),
+                'returning': rate(row['returning_players'], row['players']),
+                'continued': rate(row['continued_players'] or 0, row['players']) if row['continued_players'] is not None else None}
+        good, bad = [], []
+        def above(name, factor):
+            return mine[name] is not None and base[name] and mine[name] >= base[name] * factor
+        def below(name, factor):
+            return mine[name] is not None and base[name] and mine[name] <= base[name] * factor
+        if progression:
+            if above('continued', 1.2):
+                good.append('continued')
+            if below('continued', 0.6):
+                bad.append('stopped')
+        else:
+            if above('returning', 1.2):
+                good.append('returning')
+            if above('repeat', 1.2):
+                good.append('repeat')
+            if below('returning', 0.6):
+                bad.append('not_returning')
+        if below('quit', 0.8):
+            good.append('fewer_quits')
+        if above('quick_quit', 1.5):
+            bad.append('quick_quits')
+        if above('quit', 1.25):
+            bad.append('quits')
+        if row['games'] < VERDICT_MIN_GAMES or row['players'] < VERDICT_MIN_PLAYERS:
+            verdict = 'too_few'
+        else:
+            verdict = ('mixed' if good and bad else 'liked' if good else 'disliked' if bad else 'average')
+        row.update(verdict=verdict, good=good, bad=bad)
+    table.sort(key=(lambda r: int(r['label'])) if progression else (lambda r: (-r['games'], r['label'])))
+    return {'baseline': base, 'rows': table}
+
+
 def empty_player_count(label):
     return dict(label=label, **dict.fromkeys(RUNTIMES, 0), total=0, install_ids=0, sessions=0,
                 unidentified_sessions=0)
@@ -458,6 +561,15 @@ def build_report(connection, now=None, content_dir=CONTENT_DIR):
             'levels': players_by([r for r in selected if r['mode'] == 'campaign'], identities, lambda r: level(r['map_name']))}
         period['player_mix'] = {'modes': player_mix(selected, identities, lambda r: r['mode'], MODE_ORDER),
                                 'mods': player_mix(selected, identities, lambda r: r['mod'], SHIPPED_MODS)}
+        top_maps = {r['label'] for r in period['maps']}
+        custom = [r for r in selected if r['mode'] in ('single_custom', 'multiplayer')]
+        period['engagement'] = {
+            'modes': engagement(selected, identities, lambda r: r['mode']),
+            'mods': engagement(selected, identities, lambda r: r['mod']),
+            'levels': engagement([r for r in selected if r['mode'] == 'campaign'], identities,
+                                 lambda r: level(r['map_name']), progression=True),
+            'dunecity_missions': engagement(selected, identities, lambda r: r['mission'], progression=True),
+            'maps': engagement(custom, identities, lambda r: clean_map(r['map_name']) if clean_map(r['map_name']) in top_maps else None)}
         period['dunecity_campaign'] = dunecity_campaign([r for r in selected if r['mission']], players, identities, end)
         for rt in RUNTIMES:
             cohort = [r for r in selected if runtime(r['client_runtime']) == rt]

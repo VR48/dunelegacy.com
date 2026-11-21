@@ -7,9 +7,9 @@
     <meta name="description" content="Explore recorded Dune Legacy and Dune City game sessions and players: daily and monthly activity, browser, desktop, Android and iPhone play, campaign levels, the DuneCity Campaign, mods and AI opponents.">
     <link rel="canonical" href="https://dunelegacy.com/usage.html">
     <link rel="stylesheet" href="css/style.css?v=20260915-usage">
-    <link rel="stylesheet" href="css/usage.css?v=20261121-campaign">
+    <link rel="stylesheet" href="css/usage.css?v=20261121-likes">
     <link rel="icon" href="img/favicon.ico">
-    <script src="js/usage.js?v=20261121-players-by" defer></script>
+    <script src="js/usage.js?v=20261121-likes" defer></script>
 </head>
 <body>
 <header><div class="container">
@@ -24,7 +24,7 @@
     <div id="usage-content" hidden>
         <div class="usage-cards" id="usage-cards"></div>
         <p class="usage-note">Session counts are recorded games, not installs or downloads. Player counts are distinct identified players; see <a href="#players-section">how players are counted</a>. Repeat attempts and development games are included.</p>
-        <nav class="usage-jump" aria-label="Statistics sections"><a href="#activity">Activity</a><a href="#players-section">Players</a><a href="#modes">Modes &amp; mods</a><a href="#players-by">What players play</a><a href="#campaign">Campaign</a><a href="#dunecity-campaign">DuneCity Campaign</a><a href="#bots">AI players</a><a href="#outcomes">Outcomes &amp; duration</a><a href="#history">Multiplayer history</a></nav>
+        <nav class="usage-jump" aria-label="Statistics sections"><a href="#activity">Activity</a><a href="#players-section">Players</a><a href="#modes">Modes &amp; mods</a><a href="#players-by">What players play</a><a href="#likes">What players like</a><a href="#campaign">Campaign</a><a href="#dunecity-campaign">DuneCity Campaign</a><a href="#bots">AI players</a><a href="#outcomes">Outcomes &amp; duration</a><a href="#history">Multiplayer history</a></nav>
         <section class="usage-panel" id="activity"><h3>Activity over time</h3>
             <div class="usage-legend"><span class="browser-key">Browser</span><span class="native-key">Desktop</span><span class="android-key">Android</span><span class="ios-key">iPhone &amp; iPad</span><span class="unknown-key">Platform unknown</span></div>
             <h4>Daily sessions</h4><p id="daily-note" class="usage-note"></p><div id="daily-chart" class="usage-chart-scroll"></div>
@@ -48,6 +48,15 @@
             <div class="usage-pair"><div><h4>Combinations of modes</h4><div id="mix-modes-table"></div><p class="usage-note">Each player counts once, under the exact set of modes they played in this view.</p></div><div><h4>Combinations of mods</h4><div id="mix-mods-table"></div></div></div>
             <h4>Players by campaign level</h4><div id="players-levels-table"></div>
             <p class="usage-note">Players who started each Dune Legacy campaign level in this view; the DuneCity Campaign has its own panel below. Only identified players are counted; see how players are counted under Activity.</p>
+        </section>
+        <section class="usage-panel" id="likes" hidden><h3>What players like</h3>
+            <p class="usage-note">Signs of liking: players come back on other days, play the same thing three or more times, or go on to the next campaign level. Signs of disliking: games quit before the end, especially within a minute. Each row is compared with the other rows of its table, so “liked” means better than the alternatives, not good in absolute terms.</p>
+            <div class="usage-pair"><div><h4>Stands out as liked</h4><ul id="likes-good" class="usage-list"></ul></div><div><h4>Stands out as disliked</h4><ul id="likes-bad" class="usage-list"></ul></div></div>
+            <fieldset class="usage-switch"><legend>Compare</legend><button type="button" data-engagement="modes" aria-pressed="true">Modes</button><button type="button" data-engagement="mods" aria-pressed="false">Mods</button><button type="button" data-engagement="maps" aria-pressed="false">Maps</button><button type="button" data-engagement="levels" aria-pressed="false">Campaign levels</button><button type="button" data-engagement="dunecity_missions" aria-pressed="false">DuneCity missions</button></fieldset>
+            <div id="likes-table"></div>
+            <p id="likes-baseline" class="usage-note"></p>
+            <p id="likes-day-note" class="usage-note" hidden>“Came back another day” needs a longer view: choose Last 30 days or All time.</p>
+            <details><summary>How these signals are measured</summary><p class="usage-note">Quit: a game that reported an early exit, as a share of games with an end report; a game without an end report is neither quit nor finished. Quit within 1 minute uses games with an observed start and end. Players, played 3+ times and came back on another day (UTC) count identified players only, as described under Players. For campaign levels and DuneCity missions, replaying is often retrying a hard mission, so they use “went on to next” instead: players of a level who also started the next level in this period. Typical finished game is the median length of finished games. A verdict needs at least 20 games and 5 identified players. Liked: players come back or play again at least 20% more often than across the table, go on 20% more often, or quit 20% less. Disliked: quit 25% more, quit within a minute 50% more, or come back or go on 40% less. Rows with signs both ways are mixed.</p></details>
         </section>
         <div class="usage-pair" id="campaign">
             <section class="usage-panel"><h3>Campaign levels</h3><p class="usage-note">House and scenario variations combined into the game’s nine campaign levels. Select a platform column to rank by its starts. These are not individual player progression rates.</p><div id="levels-table"></div><details><summary>How scenarios are grouped</summary><p class="usage-note">Level 1: scenario 1 · Level 2: 2–4 · Level 3: 5–7 · Level 4: 8–10 · Level 5: 11–13 · Level 6: 14–16 · Level 7: 17–19 · Level 8: 20–21 · Level 9: 22.</p></details></section>

@@ -197,6 +197,42 @@ class UsageTests(unittest.TestCase):
         self.assertEqual((mix['players'],len(mix['combinations']),mix['other_players'],mix['other_combinations']),(15,usage.MIX_LIMIT,3,3))
         self.assertEqual(mix['combinations'][0]['labels'],['campaign'])
 
+    def test_engagement_signals_and_verdicts(self):
+        # Skirmish: 6 players each come back on three days and finish. Custom: 6 players, one game
+        # each, quit within 30 seconds. Campaign: 6 players, finish one game. Multiplayer: too few.
+        n=0
+        def game(mode,name,day,outcome,length,map_name='Map'):
+            nonlocal n;n+=1;start=NOW-day*86400-5000
+            self.match('g%d'%n,mode=mode,start=start,end=start+length,outcome=outcome,map_name=map_name);self.player('g%d'%n,name=name)
+        for i in range(6):
+            for day in range(4):game('skirmish','S%d'%i,day+1,'finished',1200)
+            for k in range(4):game('single_custom','C%d'%i,1,'abandoned',30)
+            for k in range(4):game('campaign','K%d'%i,1,'finished',900,'SCENA001')
+        game('multiplayer','M',1,'abandoned',20)
+        report=self.report();e=report['periods']['month']['engagement']
+        modes={r['label']:r for r in e['modes']['rows']}
+        sk,cu=modes['skirmish'],modes['single_custom']
+        self.assertEqual((sk['games'],sk['players'],sk['repeat_players'],sk['returning_players'],sk['quits']),(24,6,6,6,0))
+        self.assertEqual((cu['quits'],cu['quick_quits'],cu['ended'],cu['measured'],cu['returning_players']),(24,24,24,24,0))
+        self.assertEqual(sk['median_finished_seconds'],1200)
+        self.assertEqual(sk['verdict'],'liked');self.assertIn('returning',sk['good'])
+        self.assertEqual(cu['verdict'],'disliked');self.assertEqual(set(cu['bad']),{'quick_quits','quits','not_returning'})
+        self.assertEqual(modes['multiplayer']['verdict'],'too_few')
+        self.assertAlmostEqual(e['modes']['baseline']['quit'],25/73)
+        self.assertNotIn('S1',json.dumps(report))
+
+    def test_engagement_levels_use_progression_not_replays(self):
+        for i in range(10):   # ten players start level 1; eight go on to level 2; one to level 3
+            self.match('a%d'%i,map_name='SCENA001',outcome='finished');self.player('a%d'%i,name='P%d'%i)
+            self.match('r%d'%i,map_name='SCENA001',outcome='finished');self.player('r%d'%i,name='P%d'%i)
+            if i<8:self.match('b%d'%i,map_name='SCENA002',outcome='finished');self.player('b%d'%i,name='P%d'%i)
+            if i<1:self.match('c%d'%i,map_name='SCENA005',outcome='finished');self.player('c%d'%i,name='P%d'%i)
+        levels=self.report()['periods']['day']['engagement']['levels']['rows']
+        self.assertEqual([r['label'] for r in levels],['1','2','3'])
+        self.assertEqual([r['continued_players'] for r in levels],[8,1,None])
+        self.assertNotIn('repeat',levels[0]['good']);self.assertNotIn('returning',levels[0]['good'])
+        self.assertIn('stopped',levels[1]['bad'])
+
     def history(self,page=1):
         self.db.commit()
         return usage.build_history_page(self.db,page,NOW)
