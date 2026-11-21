@@ -50,26 +50,35 @@ function comparison(target, rows, title, transform=label, sort='total') {
         headers[i+1].setAttribute('aria-sort',sort===key?'descending':'none');
     });
 }
-function chart(target, rows, month) {
+// players=true: distinct players. Someone playing on two platforms appears in both platform
+// columns but once in the total, so bar segments share out the platform sum, not the total.
+function chart(target, rows, month, players) {
     const host=document.getElementById(target); host.replaceChildren();
     if(!rows.length) {host.append(element('p','No activity recorded.','usage-note'));return;}
+    const unit=players?'players':'sessions';
     const bars=element('div',undefined,'usage-bars'); bars.setAttribute('aria-hidden','true');
     const max=Math.max(1,...rows.map(r=>r.total));
     rows.forEach(r=>{
         const column=element('div',undefined,'usage-column'); column.append(element('span',count(r.total),'count'));
         const track=element('div',undefined,'usage-bar-track'); const stack=element('div',undefined,'usage-bar-stack');
         stack.style.height=(r.total/max*100)+'%';
-        PLATFORMS.forEach(rt=>{const segment=element('span',undefined,'bar-'+rt);segment.style.height=(r.total?(r[rt]||0)/r.total*100:0)+'%';stack.append(segment);});
+        const parts=PLATFORMS.reduce((n,rt)=>n+(r[rt]||0),0);
+        PLATFORMS.forEach(rt=>{const segment=element('span',undefined,'bar-'+rt);segment.style.height=(parts?(r[rt]||0)/parts*100:0)+'%';stack.append(segment);});
         track.append(stack);column.append(track);
         const date=new Date(r.label+(month?'-01':'')+'T00:00:00Z');
         column.append(element('span',date.toLocaleDateString('en',{month:'short',...(month?{year:'2-digit'}:{day:'numeric'}),timeZone:'UTC'}),'usage-bar-label'));
-        column.title=r.label+': '+count(r.total)+' sessions; '+PLATFORMS.map(rt=>label(rt).toLowerCase()+' '+count(r[rt])).join(', ');
+        column.title=r.label+': '+count(r.total)+' '+unit+'; '+PLATFORMS.map(rt=>label(rt).toLowerCase()+' '+count(r[rt])).join(', ')
+            +(players?'; '+count(r.unidentified_sessions)+' of '+count(r.sessions)+' sessions without an identified player':'');
         bars.append(column);
     }); host.append(bars);
-    const details=element('details');details.append(element('summary','View exact '+(month?'monthly':'daily')+' counts'));
-    const tab=element('div');comparisonNode(tab,rows,month?'Month (UTC)':'Day (UTC)');details.append(tab);host.append(details);
+    const details=element('details');details.append(element('summary','View exact '+(month?'monthly':'daily')+' '+unit));
+    const tab=element('div');comparisonNode(tab,rows,month?'Month (UTC)':'Day (UTC)',players);details.append(tab);host.append(details);
 }
-function comparisonNode(host,rows,title){table(host,[title,...platformHeaders,'Total'],rows.map(r=>[r.label,...platformCounts(r),count(r.total)]));}
+function comparisonNode(host,rows,title,players){
+    if(!players){table(host,[title,...platformHeaders,'Total'],rows.map(r=>[r.label,...platformCounts(r),count(r.total)]));return;}
+    table(host,[title,...platformHeaders,'Players','Sessions','Without an identified player'],
+        rows.map(r=>[r.label,...platformCounts(r),count(r.total),count(r.sessions),count(r.unidentified_sessions)]));
+}
 function renderUsage() {
     if(!usageReport)return;
     const p=usageReport.periods[usagePeriod];
@@ -79,7 +88,12 @@ function renderUsage() {
     const runtimes=Object.fromEntries(p.runtime.map(r=>[r.label,r.total]));
     const cards=document.getElementById('usage-cards');cards.replaceChildren();
     const known=PLATFORMS.filter(rt=>rt!=='unknown').reduce((n,rt)=>n+(runtimes[rt]||0),0);
-    [['Recorded sessions',p.total,'All platforms'],
+    const everyone=usageReport.periods.all.players;
+    const playerCards=p.players?[[usagePeriod==='all'?'Players since tracking began':'Players',p.players.total,
+        'Identified in '+pct(p.players.sessions-p.players.unidentified_sessions,p.players.sessions)+' of sessions · see note below']]:[];
+    if(p.players&&everyone&&usagePeriod!=='all')playerCards.push(['Players since tracking began',everyone.total,'Distinct identified players, all time']);
+    [...playerCards,
+     ['Recorded sessions',p.total,'All platforms'],
      ...PLATFORMS.filter(rt=>rt!=='unknown').map(rt=>[label(rt),runtimes[rt],rt==='android'&&!runtimes[rt]?ANDROID_PENDING:pct(runtimes[rt]||0,known)+' of identified sessions']),
      ['Platform unknown',runtimes.unknown,'Excluded from platform shares']].forEach(([title,n,note])=>{
         const card=element('article',undefined,'usage-card');card.append(element('h3',title),element('strong',count(n)),element('p',note));cards.append(card);
@@ -87,6 +101,15 @@ function renderUsage() {
     chart('daily-chart',p.daily.slice(-30),false); chart('monthly-chart',p.monthly.slice(-12),true);
     document.getElementById('daily-note').textContent='Recorded sessions within this view, grouped by day'+(p.daily.length>30?' · latest 30 days shown.':'.');
     document.getElementById('monthly-note').textContent='Recorded sessions within this view, grouped by month'+(p.monthly.length>12?' · latest 12 months shown.':'.');
+    const players=document.getElementById('players-section');players.hidden=!p.daily_players;
+    if(p.daily_players){
+        chart('daily-players-chart',p.daily_players.slice(-30),false,true); chart('monthly-players-chart',p.monthly_players.slice(-12),true,true);
+        document.getElementById('daily-players-note').textContent='Distinct identified players within this view, grouped by day'+(p.daily_players.length>30?' · latest 30 days shown.':'.');
+        document.getElementById('monthly-players-note').textContent='Distinct identified players within this view, grouped by month'+(p.monthly_players.length>12?' · latest 12 months shown.':'.');
+        const byPlatform=PLATFORMS.filter(rt=>rt!=='unknown').map(rt=>[rt,p.players[rt]]);
+        document.getElementById('players-coverage').textContent=count(p.players.unidentified_sessions)+' of '+count(p.players.sessions)+' sessions in this view have no identified player and are left out of player counts. Players by platform: '+byPlatform.map(([rt,n])=>label(rt)+' '+count(n)).join(' · ')+'.'
+            +(p.players.install_ids?' '+count(p.players.install_ids)+' players counted by anonymous installation ID.':'');
+    }
     comparison('modes-table',p.modes,'Mode');comparison('mods-table',p.mods,'Mod');
     const online=p.modes.find(r=>r.label==='multiplayer')?.total||0;
     const offline=p.modes.filter(r=>['campaign','single_custom','skirmish'].includes(r.label)).reduce((n,r)=>n+r.total,0);

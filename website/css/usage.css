@@ -12,6 +12,7 @@
 #usage-status { font-size: .875rem; color: #bbb; }
 #usage-status.stale { color: #ffd18a; }
 .usage-note { font-size: .875rem; color: #bebebe; margin: 10px 0; line-height: 1.6; }
+.usage-note a { color: var(--primary); }
 .usage-cards { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin: 18px 0 8px; }
 .usage-card { padding: 18px 20px; background: #252219; border: 1px solid #55481c; border-radius: 8px; }
 .usage-card h3 { font-size: 1rem; color: #ddd; }
