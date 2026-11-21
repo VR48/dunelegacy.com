@@ -155,8 +155,8 @@ async function refreshUsage() {
         const report=await response.json(); if(report.schema!==1||!report.periods)throw new Error('invalid');
         usageReport=report;renderUsage();
         const age=Date.now()-new Date(report.generated).getTime();
-        if(age<=6*60*1000)staleRetry=false;
-        const retrying=age>6*60*1000&&!staleRetry;
+        if(age<=5*60*1000)staleRetry=false;
+        const retrying=age>5*60*1000&&!staleRetry;   // the server rebuilds reports older than five minutes
         if(retrying){staleRetry=true;setTimeout(refreshUsage,15000);}
         const stale=!retrying&&age>15*60*1000;
         status.classList.toggle('stale',stale);
