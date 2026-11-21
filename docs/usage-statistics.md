@@ -114,7 +114,7 @@ A request never waits for the helper while a report exists. A report younger
 than five minutes is served as is. An older one is served at once, the response
 is completed (`Content-Length`, `Connection: close`, flush), and the same request
 then rebuilds the cache under the lock; the page fetches again 15 seconds after
-receiving a report older than six minutes. Only the very first request, with no
+receiving a report older than five minutes (the server cache lifetime). Only the very first request, with no
 report at all, waits. Each refresh also writes `usage-public-v1.json.gz`, served
 with `Content-Encoding: gzip` to clients that accept it when it is at least as
 new as the JSON (about 10 KB instead of about 65 KB). A good cache remains
