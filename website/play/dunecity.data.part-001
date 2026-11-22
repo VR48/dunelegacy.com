@@ -1,4 +1,53 @@
+try,256,1020
+ID037=Player3,R-Turret,256,392
+ID036=Player3,R-Turret,256,720
+ID035=Player3,R-Turret,256,729
+ID034=Player3,Windtrap,256,77
+ID033=Player4,R-Turret,256,1072
+ID032=Player3,Hi-Tech,256,203
+ID031=Player5,Repair,256,425
+ID030=Player3,Windtrap,256,199
+ID029=Player3,Spice Silo,256,75
+ID028=Player3,Const Yard,256,73
+ID027=Player3,Refinery,256,70
+ID026=Player4,R-Turret,256,1211
+ID025=Player3,WOR,256,528
+ID024=Player3,Light Fctry,256,535
+ID023=Player3,Repair,256,399
+ID022=Player5,Const Yard,256,122
+ID021=Player3,Palace,256,338
+ID020=Player1,Const Yard,256,3422
+ID019=Player5,R-Turret,256,307
+ID018=Player5,Windtrap,256,184
+ID017=Player5,Windtrap,256,182
+ID016=Player5,Windtrap,256,180
+ID015=Player3,Const Yard,256,201
+ID014=Player5,R-Turret,256,229
+ID013=Player5,R-Turret,256,223
+ID012=Player5,Hi-Tech,256,107
+ID011=Player5,Const Yard,256,98
+ID010=Player5,Refinery,256,95
+ID009=Player5,R-Turret,256,553
+ID008=Player5,R-Turret,256,689
+ID007=Player5,WOR,256,559
+ID006=Player5,WOR,256,423
+ID005=Player5,Heavy Fctry,256,235
+ID004=Player5,R-Turret,256,549
+ID003=Player5,R-Turret,256,612
+ID002=Player5,R-Turret,256,608
+ID001=Player5,R-Turret,256,543
+ID000=Player5,Palace,256,289
 
+[REINFORCEMENTS]
+1=Player5,Troopers,Enemybase,12+
+2=Player4,Siege Tank,Enemybase,12+
+3=Player5,Troopers,Enemybase,14+
+4=Player4,Special,Enemybase,14+
+5=Player4,Troopers,Enemybase,21+
+6=Player4,Launcher,Enemybase,21+
+7=Player1,Special,Homebase,13
+8=Player1,Troopers,Homebase,13
+9=Player1,Troopers,Homebase,22
 10=Player1,Siege Tank,Homebase,22
 11=Player1,Special,Homebase,22
 12=Player5,Troopers,Enemybase,30+
@@ -1107544,8 +1107593,4 @@ _C†Q"‘ÈDQWïƒá¶H©)ë†û9Ï“Ï­câè9^ş¢kÃpèªÅ¡­ëJ½üòÒ4iÀCªUî²²±\sğ@Ø®­ıÑ˜
 ë<8ËSg68we€ÔŠƒó«»Ê•>v0$&)»©Ã•4I"M¯“Åë-r2gw%Š D
 kĞiJmœ¡µ¦Û	S¼$Šê) ¬-½,¦¬¿*#ZIvws„´»^ıÊ›‰uDU”dYà+TÆQ”¥¡X:Š5EağÂ£”
 {–;ãqI·cŒeggDÃşÅg/í¥Š¢ªHRI“t¢‰2–Ş;?±„8¼àQ¡XgÙŒØî÷*IB#D|u ˜É‰ÒEĞjgä£‚ÁhLm,›Û;ì‡Lß1ÍVöêˆíş.iÖÂª„ñ±¹¶Áñã§ùç¿ô>zßƒœ¸tŠv+Å‹óĞMI¤(«†õAÃÍ×L3ÓKyø±ç°Å€8NK„Šñ" µ±yÅêê˜+»k—á,uÔFP{MUZ:Ó=¼	ö©q–Òî¤Œ‹†Æ„UuÆ+)e0h’²¬Ib…PÁ1,‰ãÀJ’‚8
-bÃa@ )&+ï:™ÂYA;PZN„›µq=²Ÿ‡Ÿ^ãÜ¥]<ã<íVÊ¾½s,-Ìòäs—qÎÒÔ›w"d'ÆÕvƒ;šqƒÍ=ÖxğiÜóò_İ|òü&yåˆ;i˜^õæĞ&¬"5¦Äû0ŞUä•ae·fksöÌ_úØOóÓŸÿ4k›;$­„HyT–pâgX|å"¸à;Ü†İQÎ•Ÿßá±§ÏC/BzÎ$³İ6VÆÊV‰‚v±K+«,-ô(Ë`õDöìeÄÙKgyõË¯ç1™–ö„ı>MÀÃ«¼ÂeŞ¦A¿˜¥¸†HFŒ+ƒT¡Ó2ÜÿÓS-¶®ì´Ãu`mØ×EŠ¼2¤I‚iUm&–·†,‰J1?ß&Ï‹€íÇÑdMÌƒ=ËÜtÂ‘ƒ3a˜å%ãñgÂÃ‘‹<{zN;Fi…ò–™ÙŒù¥ ‰³±`åJÁÁ7ì§É-í–æJpŞÄùPğ*	Qã¼e¼3úË™Di©iª
-=p€²Èyìô?ÿ«ÿ”ıá_çmwîr2írÆT|ø µ Î"
-‹–Ù\Î‡Á ¡%©Ç-SR°g~‘adiL·cÚ™fª“ÑXhÅÆnÉÑÓ|éÁsÜı²#<ùôEî|ÑaÊÒ°²Úg~®Ç½_9Ã_~€'_âæë÷†-Z¨(Æ™*@¥6Q‘ç%IÖ¸å¹cª-è53³)ÆU“V2|¢$Z÷Î0•èXÑ4­,a”7$qØ)ğËØ$RÔŞ£„ &ZyTÄ%‹SÌÎu±Æ±¾¾Í±£ûÉÒÛ@>.I#0BòÔùİIëæxèáçĞæ¸(ØÊ'ë'×µ ™d…~¾Ój²Ë8¼.ğîê"]mïlÓïµYÛóÌ9EQKòë<{ö«g.3Zšc½Îz²x‰Œ$d@nñ	MíJ@,¨Šš‡yˆÅ™rÿÃÒÑj6GÃaMkÒ(á±3}ö/Mó™.€÷œ:½†Pã¼"Ïwxå‹±3,˜ŸiQ6aÕ{Kúı’V"Q2c8ÌÙê[zíhB¹rDIÌ©Ë#úcKœh†ãŠ©n›QQÕapİx¦»^Hj2QfÍ¨ÂA^Z¤˜¦Æ
-I'‹¨š†n+¦i,ŞÆ¥(c+bœAkÍéKckúıÎ5<ñì*k[#RËSšÁp„Š?wÍwñ‰í'H«¬r`ßAìd=İÀÙİé#…dkléµ‚l\è˜íí]”THw•E`;Îè-,Ğ‰ÆØÓeq:å3lmçôO]ãº¥y.m¯ãÒC,‘ØÒá@'g‚€´¥sÖ=¿°„-ûdºbTş÷øNxæç×vyâÁG¹n¼g~±Å·¤?¬¶âÜùM’£‡Úô‡ë[}p°oi†{=‡Pš×¾â(UmqŞ"£˜½‰F–ÒSUmtxÿ;»û;ÇE‘³¼Ğ¦,êª¦Ó°ÎÑÎ4JÇ”eA–…¶0Š3òñ˜©NÚ9Ÿ`MqÎôV®ô¹îèÃqvøÕ­­,,rRÂqËõK,N%Œú–Á¨dÿ\Êx8d®1Ì+ª²ä¾/?Ê/>ñx0éTa?ŞsşÜEÒ4e4Òn·9|ø.]ºHK‡kàà)N_Üfna)4J$WI±`-!DR ·lÉËİ¯B†¾eß`e ¢˜ÆA,¨ÇM€l­ñÕ…ŒÊÀl¯…T)ÿíƒ,ïıØãHQAgÈÆÊ&Â6!]ZXœN¸teÀ½¦×iqacÈS'.sòÌ6/¹i/En AQì¦vT•'I£àØí,iãñˆ²ªqHFƒ0yó–D{‡µ2£'‹¤ëºÆ4†HJªÊQŒš0î¢˜¢(X\hññ{ŸÁ{8wq“á`Œs²(ŸŸi´#Ïæö6İN_—8g¸şğ<+}É…qÆ[ßğ
-öÌ¤ü7ŞÅ[¾æeÌÏ/rë-7155ÍwÜÁ7ŞÈşıûX\XF¨{i,ÑQ Î	)qÂş¹V±f Ô23SGOV‘J¤üê®¨óãÚK\ãQI„NƒZGª0d©w2H¡&;oÂØ5ˆÛ#¾õ‡ÿ7íoó_>ğYÆeÃ8¯(£1Õ]ŠbLœ¦FŸ{ø^(œåÑg¯ğâ—p~ğ»_C¯Û6sÎN·0.PÛ¢HÒÎãQN©ç§2
+bÃa@ )&+ï:™ÂYA;PZN„›µq=²Ÿ‡Ÿ^ãÜ¥]<ã<íVÊ¾½s,-Ìòäs—qÎÒÔ›w"d'ÆÕvƒ;šqƒÍ=ÖxğiÜóò_İ|òü&yåˆ;i˜^õæĞ&¬"5¦Äû0ŞUä•ae·fksöÌ_úØOóÓŸÿ4k›;$­„HyT–pâgX|å"¸à;Ü†İQÎ•Ÿßá±§ÏC/BzÎ$³İ6VÆÊV‰‚v±K+«,-ô(Ë`õDöìeÄÙKgyõË¯ç1™–ö
