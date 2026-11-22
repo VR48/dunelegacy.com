@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Dune City is built and tested — Dune Legacy &amp; Dune City</title>
+    <meta name="description" content="The Dune City development and test pipeline: one Mac mini, GitHub Actions on four platforms, on-demand AWS test workers, the test frameworks and gates, and the path from a commit to a release.">
+    <link rel="canonical" href="https://dunelegacy.com/pipeline.html">
+    <link rel="stylesheet" href="css/style.css?v=20260915-usage">
+    <link rel="stylesheet" href="css/pipeline.css?v=20261122">
+    <link rel="icon" href="img/favicon.ico">
+</head>
+<body>
+<header><div class="container">
+    <div class="logo"><img src="img/logo.png" alt="" class="logo-img"><div class="logo-text"><h1><a href="/">Dune <span>Legacy</span></a></h1><p class="tagline">An open-source remake of Dune II</p></div></div>
+    <nav aria-label="Main navigation"><a href="play/">Play Online</a><a href="/#download">Download</a><a href="dune-city.html">DuneCity</a><a href="tornie.html">Tornie mod</a><a href="changelog.html">What's new</a><a href="usage.html">Usage stats</a><a href="pipeline.html" aria-current="page">How it's built</a><a href="support.html">Support</a></nav>
+</div></header>
+<main class="container pipeline-page">
+    <p class="eyebrow">Behind the game</p>
+    <h2>How Dune City is built and tested</h2>
+    <p class="pipeline-lead">Dune City is developed on one Mac mini, tested in GitHub Actions and on two on-demand AWS machines, and released from a pre-qualified, tagged commit. AI coding agents share a single staging checkout and a single build. A home-grown scheduler, <code>dunecity-queue</code>, fans test games and test suites out to the AWS workers and switches them off when the work is done.</p>
+    <p class="pipeline-note">As of 22 November 2026. The current stable release is 1.0.875, published 21 November 2026.</p>
+
+    <nav class="pipeline-jump" aria-label="Page sections"><a href="#glance">At a glance</a><a href="#infrastructure">Infrastructure</a><a href="#workflow">Development workflow</a><a href="#tests">Test frameworks</a><a href="#queue">AWS test queue</a><a href="#release">Release path</a><a href="#where">Where things live</a></nav>
+
+    <section class="pipeline-panel" id="glance"><h3>At a glance</h3>
+        <figure class="pipeline-figure"><div class="pipeline-scroll">
+            <svg viewBox="0 0 760 548" role="img" aria-labelledby="arch-title arch-desc">
+                <title id="arch-title">The Mac mini is the hub; GitHub builds and AWS plays the test games</title>
+                <desc id="arch-desc">The Mac mini holds a GitHub runner, the staging checkout, the coding agents and the queue scheduler. It exchanges signing jobs with GitHub and pushes batches to it. The scheduler sends jobs to two AWS workers and gets results back. GitHub sends green builds to staging and tagged builds to the stable release channels: desktop, browser and mobile.</desc>
+                <defs><marker id="arch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="dg-head" d="M0 0L10 5L0 10z"/></marker></defs>
+                <text class="dg-title" x="24" y="34">The Mac mini is the hub; GitHub builds and AWS plays the test games</text>
+                <rect class="dg-zone-main" x="24" y="52" width="712" height="120" rx="8"/><text class="dg-name" x="40" y="74">Mac mini: development hub</text>
+                <rect class="dg-zone" x="24" y="228" width="348" height="120" rx="8"/><text class="dg-name" x="40" y="250">GitHub: source and CI</text>
+                <rect class="dg-zone" x="388" y="228" width="348" height="120" rx="8"/><text class="dg-name" x="404" y="250">AWS workers, started on demand</text>
+                <rect class="dg-zone" x="24" y="404" width="712" height="120" rx="8"/><text class="dg-name" x="40" y="426">Release channels</text>
+                <path class="dg-line" d="M119 172V228" marker-start="url(#arch-arrow)" marker-end="url(#arch-arrow)"/>
+                <path class="dg-line" d="M293 172V228" marker-end="url(#arch-arrow)"/>
+                <path class="dg-line" d="M641 172V228" marker-start="url(#arch-arrow)" marker-end="url(#arch-arrow)"/>
+                <path class="dg-line" d="M198 348V404" marker-end="url(#arch-arrow)"/>
+                <text class="dg-body" x="127" y="204">signing jobs</text>
+                <text class="dg-body" x="301" y="204">push a batch</text>
+                <text class="dg-body" x="633" y="204" text-anchor="end">jobs out, results back</text>
+                <text class="dg-body" x="206" y="380">green build to staging, tag to stable</text>
+                <rect class="dg-box" x="40" y="84" width="158" height="72" rx="8"/><text class="dg-name" x="52" y="108">GitHub runner</text><text class="dg-body" x="52" y="126">signs Mac and iOS</text><text class="dg-body" x="52" y="142">builds; qualification</text>
+                <rect class="dg-box" x="214" y="84" width="158" height="72" rx="8"/><text class="dg-name" x="226" y="108">Staging checkout</text><text class="dg-body" x="226" y="126">one branch, one build</text><text class="dg-body" x="226" y="142">CMake, Ninja, ccache</text>
+                <rect class="dg-box" x="388" y="84" width="158" height="72" rx="8"/><text class="dg-name" x="400" y="108">Coding agents</text><text class="dg-body" x="400" y="126">edit the checkout,</text><text class="dg-body" x="400" y="142">submit test jobs</text>
+                <rect class="dg-box" x="562" y="84" width="158" height="72" rx="8"/><text class="dg-name" x="574" y="108">Queue scheduler</text><text class="dg-body" x="574" y="126">dunecity-queue: one</text><text class="dg-body" x="574" y="142">unit per game or test</text>
+                <rect class="dg-box" x="40" y="260" width="150" height="72" rx="8"/><text class="dg-name" x="52" y="284">Actions CI</text><text class="dg-body" x="52" y="302">Linux, Windows,</text><text class="dg-body" x="52" y="318">macOS and browser</text>
+                <rect class="dg-box" x="206" y="260" width="150" height="72" rx="8"/><text class="dg-name" x="218" y="284">Qualification</text><text class="dg-body" x="218" y="302">nightly suite, once</text><text class="dg-body" x="218" y="318">per frozen commit</text>
+                <rect class="dg-box" x="404" y="260" width="150" height="72" rx="8"/><text class="dg-name" x="416" y="284">aws</text><text class="dg-body" x="416" y="302">Sydney, 32 vCPU</text><text class="dg-body" x="416" y="318">32 game slots</text>
+                <rect class="dg-box" x="570" y="260" width="150" height="72" rx="8"/><text class="dg-name" x="582" y="284">aws-mel2</text><text class="dg-body" x="582" y="302">Melbourne, 64 vCPU</text><text class="dg-body" x="582" y="318">96 game slots</text>
+                <rect class="dg-box" x="40" y="436" width="158" height="72" rx="8"/><text class="dg-name" x="52" y="460">Staging</text><text class="dg-body" x="52" y="478">dev pre-releases,</text><text class="dg-body" x="52" y="494">/play-staging</text>
+                <rect class="dg-box" x="214" y="436" width="158" height="72" rx="8"/><text class="dg-name" x="226" y="460">Desktop</text><text class="dg-body" x="226" y="478">GitHub Releases,</text><text class="dg-body" x="226" y="494">SourceForge mirror</text>
+                <rect class="dg-box" x="388" y="436" width="158" height="72" rx="8"/><text class="dg-name" x="400" y="460">Browser</text><text class="dg-body" x="400" y="478">dunelegacy.com/play,</text><text class="dg-body" x="400" y="494">WebAssembly build</text>
+                <rect class="dg-box" x="562" y="436" width="158" height="72" rx="8"/><text class="dg-name" x="574" y="460">Mobile</text><text class="dg-body" x="574" y="478">TestFlight, Android;</text><text class="dg-body" x="574" y="494">separate approvals</text>
+            </svg>
+        </div><figcaption>Agents edit one checkout on the Mini. Pushes go to GitHub for builds, test games go to AWS, and only a qualified, tagged commit reaches the stable channels.</figcaption></figure>
+    </section>
+
+    <section class="pipeline-panel" id="infrastructure"><h3>Infrastructure</h3>
+        <p>The Mac mini is the hub: it holds the source, runs the scheduler and signs releases. Everything else is rented or optional.</p>
+        <div class="pipeline-scroll"><table class="pipeline-table">
+            <thead><tr><th scope="col">Component</th><th scope="col">What it is</th><th scope="col">What it does in the pipeline</th></tr></thead>
+            <tbody>
+                <tr><th scope="row">Mac mini</th><td>Apple M4, 10 cores, 16 GB, always on</td><td>Development host. Holds the staging checkout and its build, runs the queue scheduler, and is the self-hosted GitHub Actions runner (<code>dunecity-builder</code>) for Mac signing and notarising, iOS builds and release qualification. Also runs the four tests that need a real window or calibrated timing.</td></tr>
+                <tr><th scope="row">GitHub</th><td>Public repo <a href="https://github.com/dunecity-project/dunecity">dunecity-project/dunecity</a></td><td>Source of record, four Actions workflows, and GitHub Releases for staging and stable packages.</td></tr>
+                <tr><th scope="row">GitHub-hosted runners</th><td>Ubuntu, Windows Server 2022, macOS 15</td><td>Build and test each platform on every integration push: Linux, Windows, macOS and the browser (WebAssembly via Emscripten).</td></tr>
+                <tr><th scope="row">AWS worker <code>aws</code></th><td>c8g.8xlarge Graviton (32 vCPU), Ubuntu 24.04 arm64, Sydney, Spot</td><td>32 game slots and the Linux reference build. Off unless a job needs it.</td></tr>
+                <tr><th scope="row">AWS worker <code>aws-mel2</code></th><td>c8g.16xlarge Graviton (64 vCPU), Melbourne, Spot</td><td>96 game slots. Off unless a job needs it.</td></tr>
+                <tr><th scope="row">CloudWatch alarms</th><td>One per AWS worker</td><td>Backstop: stop a worker whose CPU stays under 1% for 15 minutes, in case the scheduler is down.</td></tr>
+                <tr><th scope="row">Guest workers</th><td>A MacBook Pro, a MacBook Air and a Windows PC</td><td>Optional extra capacity, never required. AWS carries the load.</td></tr>
+                <tr><th scope="row">Website server</th><td>One Apache host serving dunelegacy.com</td><td>Hosts this website, the browser build (<code>/play</code> and <code>/play-staging</code>) and the multiplayer signalling and relay services.</td></tr>
+                <tr><th scope="row">SourceForge</th><td>Files mirror</td><td>Second download location, synced automatically after a stable release.</td></tr>
+                <tr><th scope="row">Secrets</th><td>A password manager and GitHub Actions secrets</td><td>Hold SSH keys, cloud tokens and signing credentials. Nothing secret lives in the repo.</td></tr>
+            </tbody>
+        </table></div>
+    </section>
+
+    <section class="pipeline-panel" id="workflow"><h3>Development workflow</h3>
+        <p>All work lands in one checkout and one build, so every agent tests the same binary.</p>
+        <ol>
+            <li><strong>Edit.</strong> Coding agents (Claude Code, Codex and OMP) work in the staging checkout on branch <code>integrate/feature-batch</code>. Each claims the files it will touch, so two agents never edit the same file.</li>
+            <li><strong>Build.</strong> There is one build tree: CMake and Ninja, C++17, libraries from Homebrew, compiler output cached by ccache. A shared lock allows only one build, local test run or Git change at a time.</li>
+            <li><strong>Switch.</strong> Any change to AI or game behaviour goes behind an on/off config switch. Tests then compare OFF and ON in the same binary instead of building one tree per idea.</li>
+            <li><strong>Commit and test.</strong> Tests run against a committed, full SHA, never the working tree. Headless tests go to the AWS queue; only the Mini-only tests run locally.</li>
+            <li><strong>Integrate.</strong> One integrator combines accepted changes and pushes the batch to GitHub, which starts CI.</li>
+        </ol>
+        <p>The stack is a C++17 and SDL2 game engine, Python for test harnesses and packaging, Emscripten for the browser build, and Node and PHP for the multiplayer services. CI builds get their libraries from vcpkg rather than Homebrew.</p>
+    </section>
+
+    <section class="pipeline-panel" id="tests"><h3>Test frameworks and gates</h3>
+        <p>CTest is the single registry: 242 tests, each labelled by what it needs (<code>headless</code> or <code>gui</code>) and by tier. 238 are headless and run on Linux; 4 need a real Mac window and stay on the Mini.</p>
+        <div class="pipeline-scroll"><table class="pipeline-table">
+            <thead><tr><th scope="col">Layer</th><th scope="col">Framework or tool</th><th scope="col">What it checks</th><th scope="col">Where it runs</th></tr></thead>
+            <tbody>
+                <tr><th scope="row">Unit tests</th><td>Catch2 v3, one binary (<code>dunelegacy_tests</code>), about 100 suites</td><td>Game rules, AI policies, network protocol, save compatibility</td><td>AWS, hosted Linux CI, any dev machine</td></tr>
+                <tr><th scope="row">Headless game probes</th><td>Python drivers plus small C++ probes compiled against the real engine, run on SDL's dummy video driver</td><td>Menus, skirmish, save and load, unit behaviour, pathfinding, multiplayer commands</td><td>AWS, through <code>dunecity-queue ctest</code></td></tr>
+                <tr><th scope="row">AI regression gates</th><td>Python harnesses that play full AI-versus-AI games on fixed seeds (<code>run-all-against-atreides.py</code>, <code>scenario-matrix.py</code>, <code>run-ffa-army-deploys.py</code>)</td><td>The AI must still win, or deploy its army, inside fixed game-time limits. Mandatory for every AI or unit change.</td><td>AWS</td></tr>
+                <tr><th scope="row">AI research matches</th><td><code>formation-duel.py</code>, <code>vanilla-match.py</code> and <code>scenario-matrix.py</code>, scored by <code>match_score.py</code></td><td>Whether a candidate (switch ON) beats the control (switch OFF). It becomes the default only if the 95% interval of the paired score difference is above zero.</td><td>AWS, through <code>dunecity-queue submit</code>, one game per slot</td></tr>
+                <tr><th scope="row">Performance</th><td><code>perf_regression</code></td><td>Simulation CPU per game cycle and AI update time, against budgets calibrated on the Mini</td><td>Mini only</td></tr>
+                <tr><th scope="row">Native GUI and input</th><td>Pointer-mapping and mouse-control probes, GPU renderer tests</td><td>Real window, real mouse events, accelerated renderer</td><td>Mini only</td></tr>
+                <tr><th scope="row">Multiplayer services</th><td><code>npm test</code> for the room relay, Python <code>unittest</code> driving the real PHP signalling service, Node scripts comparing native and browser message framing</td><td>Relay, signalling and native-to-browser protocol agreement</td><td>Hosted Linux CI; two PHP network probes also run on AWS</td></tr>
+                <tr><th scope="row">Release tooling</th><td>Python <code>unittest</code> under <code>scripts/tests</code></td><td>Update feeds, packaging, release automation, qualification routing</td><td>Hosted Linux CI</td></tr>
+            </tbody>
+        </table></div>
+        <p>Three tiers decide how much runs. <code>integration</code> (56 tests) is the quick gate on every change. <code>nightly</code> (all 242) is the broad regression run and collects every result rather than stopping at the first failure. <code>release-smoke</code> checks the actual packaged app before a release.</p>
+    </section>
+
+    <section class="pipeline-panel" id="queue"><h3>AWS test queue</h3>
+        <figure class="pipeline-figure"><div class="pipeline-scroll">
+            <svg viewBox="0 0 760 416" role="img" aria-labelledby="queue-title queue-desc">
+                <title id="queue-title">AWS workers run only while a job needs them</title>
+                <desc id="queue-desc">On the Mac mini the scheduler takes a submitted job pinned to a commit, freezes the source and splits it into one unit per game or test. It sends the source and a start call to the AWS workers, which start, build once and play the units. Results flow back to the scheduler, which collects and reports them. When idle, the workers stop two minutes after the last unit finishes.</desc>
+                <defs><marker id="queue-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="dg-head" d="M0 0L10 5L0 10z"/></marker></defs>
+                <text class="dg-title" x="24" y="34">AWS workers run only while a job needs them</text>
+                <rect class="dg-zone" x="24" y="52" width="712" height="120" rx="8"/><text class="dg-name" x="40" y="74">Mac mini: dunecity-queue scheduler</text>
+                <rect class="dg-zone" x="24" y="228" width="712" height="164" rx="8"/><text class="dg-name" x="40" y="250">AWS workers</text>
+                <text class="dg-body" x="40" y="354">Backstops: queued work with nothing running for 10 minutes stops the worker;</text>
+                <text class="dg-body" x="40" y="370">a CloudWatch alarm stops any worker under 1% CPU for 15 minutes.</text>
+                <path class="dg-line" d="M186 120H218" marker-end="url(#queue-arrow)"/>
+                <path class="dg-line" d="M291 156V260" marker-end="url(#queue-arrow)"/>
+                <path class="dg-line" d="M364 296H396" marker-end="url(#queue-arrow)"/>
+                <path class="dg-line" d="M469 260V200H617V156" marker-end="url(#queue-arrow)"/>
+                <path class="dg-line" d="M657 156V260" marker-end="url(#queue-arrow)"/>
+                <text class="dg-body" x="299" y="212">source and start call</text>
+                <text class="dg-body" x="543" y="192" text-anchor="middle">results</text>
+                <text class="dg-body" x="665" y="212">when idle</text>
+                <rect class="dg-box" x="40" y="84" width="146" height="72" rx="8"/><text class="dg-name" x="52" y="108">Submit job</text><text class="dg-body" x="52" y="126">pinned to a full</text><text class="dg-body" x="52" y="142">commit SHA</text>
+                <rect class="dg-box" x="218" y="84" width="146" height="72" rx="8"/><text class="dg-name" x="230" y="108">Freeze and split</text><text class="dg-body" x="230" y="126">one unit per game</text><text class="dg-body" x="230" y="142">or per test</text>
+                <rect class="dg-box" x="574" y="84" width="146" height="72" rx="8"/><text class="dg-name" x="586" y="108">Collect, report</text><text class="dg-body" x="586" y="126">results merged as</text><text class="dg-body" x="586" y="142">each unit finishes</text>
+                <rect class="dg-box" x="218" y="260" width="146" height="72" rx="8"/><text class="dg-name" x="230" y="284">Workers start</text><text class="dg-body" x="230" y="302">first game about</text><text class="dg-body" x="230" y="318">2 minutes later</text>
+                <rect class="dg-box" x="396" y="260" width="146" height="72" rx="8"/><text class="dg-name" x="408" y="284">Build and play</text><text class="dg-body" x="408" y="302">build once per SHA,</text><text class="dg-body" x="408" y="318">then run the units</text>
+                <rect class="dg-box-main" x="574" y="260" width="146" height="72" rx="8"/><text class="dg-name" x="586" y="284">Workers stop</text><text class="dg-body" x="586" y="302">2 minutes after the</text><text class="dg-body" x="586" y="318">last unit finishes</text>
+            </svg>
+        </div><figcaption>A job is accepted against a committed SHA, split into one unit per game or test, and played on workers that start for it and stop two minutes after the last unit.</figcaption></figure>
+        <p>Accepted is not passed: the result comes from <code>dunecity-queue report JOB --follow</code>.</p>
+        <p>Two commands cover most use. <code>dunecity-queue ctest --rev SHA --machines aws aws-mel2 -L integration</code> runs registered tests, and <code>dunecity-queue submit --rev SHA -- python3 tests/ai/vanilla-match.py ...</code> plays a batch of AI games.</p>
+    </section>
+
+    <section class="pipeline-panel" id="release"><h3>Release path</h3>
+        <p>A release is a commit that has already passed qualification, tagged and then published channel by channel.</p>
+        <ol>
+            <li><strong>CI.</strong> Every push to <code>integrate/feature-batch</code> runs the <strong>Build Dune Legacy</strong> workflow: tests on Linux, plus Windows, macOS, Linux and browser builds.</li>
+            <li><strong>Staging packages.</strong> A green batch becomes an immutable staging pre-release on GitHub (two-hour debounce, daily safety net). Staging builds carry a <code>dev</code> version label, never become Latest, and their browser copy goes to <code>/play-staging</code>, separate from the stable <code>/play</code>.</li>
+            <li><strong>Qualification.</strong> Green CI also triggers <strong>Qualify release candidate</strong>: the broad nightly headless suite, once per frozen commit, on the Mini with a GitHub-hosted Mac as fallback. On the Mini it sends its test games to AWS.</li>
+            <li><strong>Tag.</strong> Pushing <code>vX.Y.Z</code> builds the official packages. The Mini signs and notarises the Mac build and signs the update feeds.</li>
+            <li><strong>Publish.</strong> The release job publishes to GitHub; SourceForge and the browser build follow automatically. A channel counts as done only after its live destination is checked.</li>
+        </ol>
+        <div class="pipeline-scroll"><table class="pipeline-table">
+            <thead><tr><th scope="col">Channel</th><th scope="col">How it is produced</th></tr></thead>
+            <tbody>
+                <tr><th scope="row">Windows, macOS, Linux</th><td>Tag build on GitHub Releases: Windows EXE and ZIP, macOS DMG and ZIP, Linux AppImage, DEB, RPM and tar.gz</td></tr>
+                <tr><th scope="row">SourceForge</th><td><strong>Sync SourceForge release</strong> workflow, automatic after the stable build</td></tr>
+                <tr><th scope="row">Browser</th><td><strong>Publish browser build</strong> workflow commits to the website repo, which then deploys to the web server</td></tr>
+                <tr><th scope="row">Website</th><td>Links and changelog updated by the release job; the "New in" text is written by hand</td></tr>
+                <tr><th scope="row">iPhone and iPad</th><td><code>scripts/build-ios.sh --testflight</code> on the Mini, then TestFlight review</td></tr>
+                <tr><th scope="row">Android</th><td>Separate version line; needs the existing upgrade signing key, a phone test and explicit approval to publish</td></tr>
+            </tbody>
+        </table></div>
+    </section>
+
+    <section class="pipeline-panel" id="where"><h3>Where things live</h3>
+        <div class="pipeline-scroll"><table class="pipeline-table">
+            <thead><tr><th scope="col">What</th><th scope="col">Where</th></tr></thead>
+            <tbody>
+                <tr><th scope="row">Game source and CI</th><td><a href="https://github.com/dunecity-project/dunecity">dunecity-project/dunecity</a>; workflows in <a href="https://github.com/dunecity-project/dunecity/tree/main/.github/workflows"><code>.github/workflows/</code></a> (<code>build.yml</code>, <code>qualify-release.yml</code>, <code>web.yml</code>, <code>sourceforge.yml</code>)</td></tr>
+                <tr><th scope="row">Integration branch</th><td><code>integrate/feature-batch</code>; stable releases are tagged <code>vX.Y.Z</code></td></tr>
+                <tr><th scope="row">Test registration and labels</th><td><a href="https://github.com/dunecity-project/dunecity/blob/main/tests/CMakeLists.txt"><code>tests/CMakeLists.txt</code></a>; AI harnesses in <code>tests/ai/</code></td></tr>
+                <tr><th scope="row">Release runbook</th><td><a href="https://github.com/dunecity-project/dunecity/blob/main/docs/release-operations.md"><code>docs/release-operations.md</code></a></td></tr>
+                <tr><th scope="row">Which test runs where, and why</th><td><a href="https://github.com/dunecity-project/dunecity/blob/main/docs/ai-scenario-matrix.md"><code>docs/ai-scenario-matrix.md</code></a>, section "Where the gates run"</td></tr>
+                <tr><th scope="row">Mac signing runner</th><td><a href="https://github.com/dunecity-project/dunecity/blob/main/docs/macos-release-runner.md"><code>docs/macos-release-runner.md</code></a></td></tr>
+                <tr><th scope="row">Queue scheduler and workspace rules</th><td>On the Mac mini, outside the game repo</td></tr>
+            </tbody>
+        </table></div>
+    </section>
+</main>
+<footer><div class="container"><p><a href="/">Dune Legacy &amp; Dune City</a> · <a href="usage.html">Usage statistics</a> · <a href="privacy.html">Privacy</a></p></div></footer>
+</body>
+</html>
