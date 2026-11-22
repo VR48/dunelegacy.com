@@ -36,6 +36,11 @@ QUICK_QUIT_SECONDS = 60
 REPEAT_GAMES = 3            # a player who played something this many times kept playing it
 VERDICT_MIN_GAMES = 20      # rows with fewer games or identified players get no verdict
 VERDICT_MIN_PLAYERS = 5
+# Wins. Games before 1.0.865 usually sent no end report when a campaign mission was won and the
+# next one started, so most of their wins are missing; win figures use later games only.
+WIN_MIN_VERSION = (1, 0, 865)
+TRY_SECONDS = 300           # leaving a game earlier than this is not counted as a try at it
+DIFFICULTIES = ('easiest', 'easy', 'medium', 'hard', 'brutal', 'defend')   # easiest: QuantBot Easiest, added 2026-11-22
 # A game qualifies only on recorded controllers: two or more player rows that the reporting
 # client called human.  Unknown or missing controllers never qualify a game.
 HISTORY_WHERE = '''FROM analytics_matches AS m WHERE m.game_type = 'multiplayer'
@@ -178,7 +183,7 @@ def bot_stats(rows, players):
                 if relation == 'same_house':
                     counts[('assistance', 'Support AI' if bot['ai_support'] else 'Regular AI sharing control', relation, rt)].add(mid)
                 if relation == 'opponent' and bot['ai_type'] == 'qbot':
-                    difficulty = bot['ai_difficulty'] if bot['ai_difficulty'] in ('easy','medium','hard','brutal','defend') else 'unknown'
+                    difficulty = bot['ai_difficulty'] if bot['ai_difficulty'] in DIFFICULTIES else 'unknown'
                     counts[('difficulty', difficulty, relation, rt)].add(mid)
     output = {}
     for category in ('ai', 'assistance', 'difficulty'):
@@ -371,6 +376,104 @@ def engagement(rows, identities, key, progression=False):
     return {'baseline': base, 'rows': table}
 
 
+def version_tuple(value):
+    match = re.fullmatch(r'(\d+)\.(\d+)\.(\d+)', value or '')
+    return tuple(int(part) for part in match.groups()) if match else None
+
+
+def game_seconds(row):
+    """Game time the client reported at the end, else the observed wall interval, else None."""
+    if row.get('duration_seconds') is not None:
+        return row['duration_seconds']
+    if row['has_start'] and row['ended_at'] is not None and row['started_at'] is not None:
+        return max(0, row['ended_at'] - row['started_at'])
+    return None
+
+
+def game_result(row, players):
+    """won, lost, undecided (finished, no human result), quit, quit_early or no_end for one game.
+
+    A game counts once: a multiplayer game in which any human won is won.
+    """
+    if row['outcome'] == 'finished':
+        results = {p['result'] for p in players[row['match_id']] if p['controller'] == 'human'}
+        return 'won' if 'winner' in results else 'lost' if 'defeated' in results else 'undecided'
+    if row['outcome'] == 'abandoned':
+        seconds = game_seconds(row)
+        return 'quit_early' if seconds is not None and seconds < TRY_SECONDS else 'quit'
+    return 'no_end'
+
+
+def opponent_difficulty(row, players):
+    """The QuantBot difficulty the humans played against: one level, 'mixed', or None."""
+    people = players[row['match_id']]
+    humans = [p for p in people if p['controller'] == 'human']
+    found = set()
+    for bot in people:
+        if bot['controller'] != 'qbot' and bot['ai_type'] != 'qbot':
+            continue
+        if any(bot['house_slot'] is not None and bot['house_slot'] == h['house_slot'] for h in humans):
+            continue
+        if any(bot['team'] is not None and h['team'] is not None and bot['team'] != h['team'] for h in humans):
+            found.add(bot['ai_difficulty'] if bot['ai_difficulty'] in DIFFICULTIES else 'unknown')
+    return None if not found else next(iter(found)) if len(found) == 1 else 'mixed'
+
+
+def win_row(label, rows, players, identities):
+    """How one group of games ended.
+
+    A try is a game that was won, lost, or quit after TRY_SECONDS of game time; the win rate is
+    wins per try. `players` are identified players with at least one try, `players_won` those of
+    them who won at least once.
+    """
+    counts = collections.Counter()
+    tried, winners = set(), set()
+    for row in rows:
+        result = game_result(row, players)
+        counts[result] += 1
+        if result in ('won', 'lost', 'quit'):
+            tried.update(identities.get(row['match_id'], ()))
+        if result == 'won':
+            winners.update(identities.get(row['match_id'], ()))
+    return {'label': label, 'games': len(rows), 'won': counts['won'], 'lost': counts['lost'],
+            'undecided': counts['undecided'], 'quit': counts['quit'], 'quit_early': counts['quit_early'],
+            'no_end': counts['no_end'], 'tries': counts['won'] + counts['lost'] + counts['quit'],
+            'players': len(tried), 'players_won': len(winners)}
+
+
+def win_table(rows, players, identities, key, order=None):
+    groups = collections.defaultdict(list)
+    for row in rows:
+        label = key(row)
+        if label is not None:
+            groups[str(label)].append(row)
+    table = [win_row(label, subset, players, identities) for label, subset in groups.items()]
+    rank = {label: i for i, label in enumerate(order or ())}
+    table.sort(key=(lambda r: (rank.get(r['label'], len(rank)), r['label'])) if order else (lambda r: (-r['games'], r['label'])))
+    return table
+
+
+def wins(rows, players, identities):
+    """How often players win, from games new enough to report every ending (WIN_MIN_VERSION)."""
+    counted = [r for r in rows if (version_tuple(r.get('game_version')) or (0,)) >= WIN_MIN_VERSION]
+    for row in counted:
+        if 'difficulty' not in row:
+            row['difficulty'] = opponent_difficulty(row, players)
+    campaign = [r for r in counted if r['mode'] == 'campaign']
+    numbered = [str(n) for n in range(1, 23)]
+    return {'min_version': '.'.join(map(str, WIN_MIN_VERSION)), 'try_seconds': TRY_SECONDS,
+            'since': iso(min(r['started_at'] for r in counted)) if counted else None,
+            'games': len(counted), 'older_games': len(rows) - len(counted),
+            'overall': win_row('all', counted, players, identities),
+            'modes': win_table(counted, players, identities, lambda r: r['mode']),
+            'mods': win_table(counted, players, identities, lambda r: r['mod']),
+            'difficulty': win_table(counted, players, identities, lambda r: r['difficulty'], DIFFICULTIES + ('mixed', 'unknown')),
+            'levels': win_table(campaign, players, identities, lambda r: level(r['map_name']), numbered),
+            'levels_easy': win_table([r for r in campaign if r['difficulty'] == 'easy'], players, identities,
+                                     lambda r: level(r['map_name']), numbered),
+            'dunecity_missions': win_table(counted, players, identities, lambda r: r['mission'], numbered)}
+
+
 def empty_player_count(label):
     return dict(label=label, **dict.fromkeys(RUNTIMES, 0), total=0, install_ids=0, sessions=0,
                 unidentified_sessions=0)
@@ -499,9 +602,11 @@ def build_report(connection, now=None, content_dir=CONTENT_DIR):
     connection.row_factory = sqlite3.Row
     connection.execute('PRAGMA query_only=ON')
     connection.execute('BEGIN')
+    match_columns = {row[1] for row in connection.execute('PRAGMA table_info(analytics_matches)')}
     rows = [dict(r) for r in connection.execute('''SELECT match_id, client_runtime, started_at, ended_at,
-        outcome, game_type, map_name, mod_name, start_json IS NOT NULL AS has_start
-        FROM analytics_matches WHERE started_at IS NOT NULL AND started_at <= ?''', (now,))]
+        outcome, game_type, map_name, mod_name, game_version, start_json IS NOT NULL AS has_start, '''
+        + ('duration_seconds' if 'duration_seconds' in match_columns else 'NULL AS duration_seconds')
+        + ''' FROM analytics_matches WHERE started_at IS NOT NULL AND started_at <= ?''', (now,))]
     for row in rows:   # UTC day and month labels, formatted once for every chart and period
         row['day'] = iso(row['started_at'])[:10]
         row['month'] = row['day'][:7]
@@ -570,6 +675,7 @@ def build_report(connection, now=None, content_dir=CONTENT_DIR):
                                  lambda r: level(r['map_name']), progression=True),
             'dunecity_missions': engagement(selected, identities, lambda r: r['mission'], progression=True),
             'maps': engagement(custom, identities, lambda r: clean_map(r['map_name']) if clean_map(r['map_name']) in top_maps else None)}
+        period['wins'] = wins(selected, players, identities)
         period['dunecity_campaign'] = dunecity_campaign([r for r in selected if r['mission']], players, identities, end)
         for rt in RUNTIMES:
             cohort = [r for r in selected if runtime(r['client_runtime']) == rt]

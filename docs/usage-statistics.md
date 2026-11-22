@@ -115,6 +115,39 @@ A game without an end report is neither a quit nor finished. In the 24-hour
 view almost nobody can return on another day, so a zero baseline gives no
 returning signal.
 
+## How often players win
+
+Each period has `wins`: `overall` and one table each for `modes`, `mods`,
+`difficulty`, `levels` (Dune Legacy campaign), `levels_easy` (the same levels
+against Easy QuantBot opponents) and `dunecity_missions`.
+
+Per row: `games`; `won` (finished, a human won); `lost` (finished, the human was
+defeated); `undecided` (finished without a human result); `quit` (early exit
+after at least `TRY_SECONDS`, 300, of game time); `quit_early` (early exit before
+that); `no_end`; `tries` = won + lost + quit; identified `players` with at least
+one try and `players_won`, those of them who won at least once. The page's win
+rate is `won / tries`.
+
+- Players almost never play on to a defeat (about 2% of tries end as `lost`), so
+  a quit after five minutes is the practical sign of a game that was not won.
+  Leaving earlier is mostly restarting or looking around and is not a try.
+- Game time is the client's `duration_seconds`, which excludes pauses; without
+  it, the observed start-to-end interval.
+- A game continued from a save is reported as a new game of its original type.
+  One mission played over two sittings is one quit and one win, so wins per try
+  understate how many missions players eventually win; `players_won` does not
+  have that problem.
+- Only games from version 1.0.865 (`WIN_MIN_VERSION`) onward are counted;
+  `older_games` is how many the period leaves out. Earlier versions usually sent
+  no end report when a campaign mission was won and the next one started: in
+  1.0.864 desktop campaign games, 74% had no end report and wins of levels 1–8
+  were almost never recorded, against 1% without an end report from 1.0.865.
+  Browser games still lose the end report when the tab is closed.
+- Difficulty is the QuantBot difficulty of the opponents of the human players
+  (not same-house or allied bots): one level (`easiest`, `easy`, `medium`,
+  `hard`, `brutal`, `defend`), or `mixed`. Games without a
+  QuantBot opponent are in no difficulty row.
+
 ## DuneCity Campaign
 
 Each period has `dunecity_campaign`: games, players (as above), human wins and
