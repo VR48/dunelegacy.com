@@ -233,6 +233,41 @@ class UsageTests(unittest.TestCase):
         self.assertNotIn('repeat',levels[0]['good']);self.assertNotIn('returning',levels[0]['good'])
         self.assertIn('stopped',levels[1]['bad'])
 
+    def test_wins_count_tries_and_leave_out_older_games(self):
+        n=0
+        def game(name,outcome,length,result='alive',map_name='SCENA001',version='1.0.865',mode='campaign'):
+            nonlocal n;n+=1;mid='w%d'%n
+            self.match(mid,rt='native',mode=mode,start=NOW-5000,end=None if outcome=='started' else NOW-5000+length,outcome=outcome,map_name=map_name,version=version)
+            self.player(mid,name=name,result=result)
+            self.player(mid,house=2,team=2,controller='qbot',ai='qbot')
+        game('Ann','finished',900,'winner')
+        game('Ann','abandoned',600)                              # quit after ten minutes: a try, not won
+        game('Bob','abandoned',60)                               # left in the first five minutes: not a try
+        game('Bob','finished',1200,'defeated',map_name='SCENA020')
+        game('Cid','started',0)                                  # no end report
+        game('Dee','finished',700,'winner',version='1.0.864')    # older game: its end reports are unreliable
+        game('Eve','finished',800,'winner',mode='skirmish',map_name='Map')
+        w=self.report()['periods']['day']['wins']
+        self.assertEqual((w['games'],w['older_games'],w['min_version'],w['try_seconds']),(6,1,'1.0.865',300))
+        o=w['overall']
+        self.assertEqual((o['won'],o['lost'],o['quit'],o['quit_early'],o['no_end'],o['tries']),(2,1,1,1,1,4))
+        self.assertEqual((o['players'],o['players_won']),(3,2))   # Ann, Bob and Eve tried; Ann and Eve won
+        modes={r['label']:r for r in w['modes']}
+        self.assertEqual((modes['campaign']['won'],modes['campaign']['tries'],modes['skirmish']['won']),(1,3,1))
+        self.assertEqual([(r['label'],r['tries'],r['won']) for r in w['difficulty']],[('easy',4,2)])
+        self.assertEqual([(r['label'],r['won'],r['lost'],r['quit'],r['quit_early']) for r in w['levels']],[('1',1,0,1,1),('8',0,1,0,0)])
+        self.assertEqual(w['levels'],w['levels_easy'])
+        self.assertNotIn('Ann',json.dumps(w))
+
+    def test_opponent_difficulty_ignores_teammates_and_flags_mixed(self):
+        human={'controller':'human','house_slot':0,'team':1,'ai_type':None,'ai_difficulty':None}
+        bot=lambda house,team,difficulty,kind='qbot':{'controller':kind,'house_slot':house,'team':team,'ai_type':kind,'ai_difficulty':difficulty}
+        check=lambda *bots:usage.opponent_difficulty({'match_id':'m'},{'m':[human,*bots]})
+        self.assertEqual(check(bot(1,2,'easy'),bot(2,2,'easy')),'easy')
+        self.assertEqual(check(bot(1,2,'easy'),bot(2,2,'hard')),'mixed')
+        self.assertEqual(check(bot(0,1,'brutal'),bot(1,1,'hard'),bot(2,2,'medium')),'medium')   # same house and ally do not count
+        self.assertIsNone(check(bot(1,2,None,'campaign')))
+
     def history(self,page=1):
         self.db.commit()
         return usage.build_history_page(self.db,page,NOW)

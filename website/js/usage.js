@@ -117,6 +117,7 @@ function renderUsage() {
     document.getElementById('platform-note').textContent=usageReport.platform_since?'Browser/desktop identification available from '+date(usageReport.platform_since)+'; Android and iPhone/iPad from engine 1.0.857. Android app 0.2.32 and earlier (engine 1.0.855) report as Desktop. Older or unmarked clients remain unknown.':'';
     renderPlayersByPlay(p);
     renderEngagement(p);
+    renderWins(p);
     comparison('levels-table',p.levels,'Level',x=>'Level '+x);comparison('maps-table',p.maps.slice(0,15),'Map');
     renderDuneCityCampaign(p.dunecity_campaign);
     comparison('opponents-table',p.bots.ai.filter(r=>r.relation==='opponent'),'Opponent');
@@ -197,6 +198,37 @@ function renderEngagement(p){
 }
 document.querySelectorAll('[data-engagement]').forEach(button=>button.addEventListener('click',()=>{
     engagementGroup=button.dataset.engagement;if(usageReport)renderEngagement(usageReport.periods[usagePeriod]);}));
+// How often players win (usage_stats.wins): wins per try, by mode, difficulty, level, mission and mod.
+let winsGroup='modes';
+const WINS_GROUPS={modes:'Mode',difficulty:'Opponent difficulty',levels:'Campaign level',levels_easy:'Campaign level on Easy',dunecity_missions:'DuneCity mission',mods:'Mod'};
+function winsLabel(group,value,p){
+    if(group==='levels'||group==='levels_easy')return 'Level '+value;
+    if(group==='dunecity_missions')return engagementLabel(group,value,p);
+    if(group==='difficulty')return value[0].toUpperCase()+value.slice(1);
+    return label(value);
+}
+function renderWins(p){
+    const panel=document.getElementById('wins');panel.hidden=!p.wins;
+    if(!p.wins)return;
+    const w=p.wins,o=w.overall,minutes=Math.round(w.try_seconds/60);
+    const cards=document.getElementById('wins-cards');cards.replaceChildren();
+    [['Win rate',pct(o.won,o.tries),count(o.won)+' wins in '+count(o.tries)+' tries'],
+     ['Lost',count(o.lost),'Games played to a defeat'],
+     ['Quit after '+minutes+'+ minutes',count(o.quit),pct(o.quit,o.tries)+' of tries'],
+     ['Players who won',pct(o.players_won,o.players),count(o.players_won)+' of '+count(o.players)+' identified players with a try']].forEach(([title,value,note])=>{
+        const card=element('article',undefined,'usage-card');card.append(element('h3',title),element('strong',value),element('p',note));cards.append(card);
+    });
+    document.querySelectorAll('[data-wins]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.wins===winsGroup)));
+    const title=WINS_GROUPS[winsGroup];
+    table('wins-table',[title,'Tries','Won','Lost','Quit after '+minutes+'+ min','Win rate','Left in first '+minutes+' min','Players who won'],
+        (w[winsGroup]||[]).map(r=>[winsLabel(winsGroup,r.label,p),count(r.tries),count(r.won),count(r.lost),count(r.quit),pct(r.won,r.tries),count(r.quit_early),
+            r.players?count(r.players_won)+' of '+count(r.players):'—']),title+' wins');
+    const since=w.since?new Date(w.since).toLocaleString('en-GB',{timeZone:'UTC',dateStyle:'medium'}):null;
+    document.getElementById('wins-note').textContent=(since?count(w.games)+' games from version '+w.min_version+' onward in this view, the first on '+since+'. ':'No games from version '+w.min_version+' onward in this view. ')
+        +count(w.older_games)+' games from earlier versions are left out. '+count(o.no_end)+' counted games have no end report and '+count(o.undecided)+' finished without a human result; neither is a try.';
+}
+document.querySelectorAll('[data-wins]').forEach(button=>button.addEventListener('click',()=>{
+    winsGroup=button.dataset.wins;if(usageReport)renderWins(usageReport.periods[usagePeriod]);}));
 // The DuneCity Campaign (DCITY_M01..M10): games, players and results per mission within this view.
 function renderDuneCityCampaign(c) {
     const panel=document.getElementById('dunecity-campaign');panel.hidden=!c;

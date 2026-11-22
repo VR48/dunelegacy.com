@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="css/style.css?v=20260915-usage">
     <link rel="stylesheet" href="css/usage.css?v=20261121-likes">
     <link rel="icon" href="img/favicon.ico">
-    <script src="js/usage.js?v=20261121-likes" defer></script>
+    <script src="js/usage.js?v=20261122-wins" defer></script>
 </head>
 <body>
 <header><div class="container">
@@ -24,7 +24,7 @@
     <div id="usage-content" hidden>
         <div class="usage-cards" id="usage-cards"></div>
         <p class="usage-note">Session counts are recorded games, not installs or downloads. Player counts are distinct identified players; see <a href="#players-section">how players are counted</a>. Repeat attempts and development games are included.</p>
-        <nav class="usage-jump" aria-label="Statistics sections"><a href="#activity">Activity</a><a href="#players-section">Players</a><a href="#modes">Modes &amp; mods</a><a href="#players-by">What players play</a><a href="#likes">What players like</a><a href="#campaign">Campaign</a><a href="#dunecity-campaign">DuneCity Campaign</a><a href="#bots">AI players</a><a href="#outcomes">Outcomes &amp; duration</a><a href="#history">Multiplayer history</a></nav>
+        <nav class="usage-jump" aria-label="Statistics sections"><a href="#activity">Activity</a><a href="#players-section">Players</a><a href="#modes">Modes &amp; mods</a><a href="#players-by">What players play</a><a href="#likes">What players like</a><a href="#wins">Wins</a><a href="#campaign">Campaign</a><a href="#dunecity-campaign">DuneCity Campaign</a><a href="#bots">AI players</a><a href="#outcomes">Outcomes &amp; duration</a><a href="#history">Multiplayer history</a></nav>
         <section class="usage-panel" id="activity"><h3>Activity over time</h3>
             <div class="usage-legend"><span class="browser-key">Browser</span><span class="native-key">Desktop</span><span class="android-key">Android</span><span class="ios-key">iPhone &amp; iPad</span><span class="unknown-key">Platform unknown</span></div>
             <h4>Daily sessions</h4><p id="daily-note" class="usage-note"></p><div id="daily-chart" class="usage-chart-scroll"></div>
@@ -57,6 +57,14 @@
             <p id="likes-baseline" class="usage-note"></p>
             <p id="likes-day-note" class="usage-note" hidden>“Came back another day” needs a longer view: choose Last 30 days or All time.</p>
             <details><summary>How these signals are measured</summary><p class="usage-note">Quit: a game that reported an early exit, as a share of games with an end report; a game without an end report is neither quit nor finished. Quit within 1 minute uses games with an observed start and end. Players, played 3+ times and came back on another day (UTC) count identified players only, as described under Players. For campaign levels and DuneCity missions, replaying is often retrying a hard mission, so they use “went on to next” instead: players of a level who also started the next level in this period. Typical finished game is the median length of finished games. A verdict needs at least 20 games and 5 identified players. Liked: players come back or play again at least 20% more often than across the table, go on 20% more often, or quit 20% less. Disliked: quit 25% more, quit within a minute 50% more, or come back or go on 40% less. Rows with signs both ways are mixed.</p></details>
+        </section>
+        <section class="usage-panel" id="wins" hidden><h3>How often players win</h3>
+            <p class="usage-note">A try is a game that was won, lost, or quit after at least five minutes of game time. The win rate is wins per try. Games left in the first five minutes are listed apart and are not tries.</p>
+            <div class="usage-cards" id="wins-cards"></div>
+            <fieldset class="usage-switch"><legend>Compare</legend><button type="button" data-wins="modes" aria-pressed="true">Modes</button><button type="button" data-wins="difficulty" aria-pressed="false">Difficulty</button><button type="button" data-wins="levels" aria-pressed="false">Campaign levels</button><button type="button" data-wins="levels_easy" aria-pressed="false">Campaign levels on Easy</button><button type="button" data-wins="dunecity_missions" aria-pressed="false">DuneCity missions</button><button type="button" data-wins="mods" aria-pressed="false">Mods</button></fieldset>
+            <div id="wins-table"></div>
+            <p id="wins-note" class="usage-note"></p>
+            <details><summary>How wins are counted</summary><p class="usage-note">Won: the game finished and a human player won. Lost: it finished and the human was defeated. Players rarely play on to a defeat, so quitting after five minutes or more counts as a try that was not won. Game time is the time the game itself reports, which excludes pauses. A game continued from a save is recorded as a new game, so a mission played over two sittings appears as one quit and one win; win rates per game are therefore lower than the share of missions players eventually win. “Players who won” counts identified players with at least one try, and those of them who won at least once. Difficulty is the QuantBot difficulty of the opponents; games against several different difficulties are “Mixed”, and games without a QuantBot opponent are not listed there. Only games from version 1.0.865 onward are counted: earlier versions usually sent no end report when a campaign mission was won, so their wins are missing.</p></details>
         </section>
         <div class="usage-pair" id="campaign">
             <section class="usage-panel"><h3>Campaign levels</h3><p class="usage-note">House and scenario variations combined into the game’s nine campaign levels. Select a platform column to rank by its starts. These are not individual player progression rates.</p><div id="levels-table"></div><details><summary>How scenarios are grouped</summary><p class="usage-note">Level 1: scenario 1 · Level 2: 2–4 · Level 3: 5–7 · Level 4: 8–10 · Level 5: 11–13 · Level 6: 14–16 · Level 7: 17–19 · Level 8: 20–21 · Level 9: 22.</p></details></section>
