@@ -144,7 +144,8 @@ rate is `won / tries`.
   were almost never recorded, against 1% without an end report from 1.0.865.
   Browser games still lose the end report when the tab is closed.
 - Difficulty is the QuantBot difficulty of the opponents of the human players
-  (not same-house or allied bots): one level, or `mixed`. Games without a
+  (not same-house or allied bots): one level (`easiest`, `easy`, `medium`,
+  `hard`, `brutal`, `defend`), or `mixed`. Games without a
   QuantBot opponent are in no difficulty row.
 
 ## DuneCity Campaign

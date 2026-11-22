@@ -40,7 +40,7 @@ VERDICT_MIN_PLAYERS = 5
 # next one started, so most of their wins are missing; win figures use later games only.
 WIN_MIN_VERSION = (1, 0, 865)
 TRY_SECONDS = 300           # leaving a game earlier than this is not counted as a try at it
-DIFFICULTIES = ('easy', 'medium', 'hard', 'brutal', 'defend')
+DIFFICULTIES = ('easiest', 'easy', 'medium', 'hard', 'brutal', 'defend')   # easiest: QuantBot Easiest, added 2026-11-22
 # A game qualifies only on recorded controllers: two or more player rows that the reporting
 # client called human.  Unknown or missing controllers never qualify a game.
 HISTORY_WHERE = '''FROM analytics_matches AS m WHERE m.game_type = 'multiplayer'
@@ -183,7 +183,7 @@ def bot_stats(rows, players):
                 if relation == 'same_house':
                     counts[('assistance', 'Support AI' if bot['ai_support'] else 'Regular AI sharing control', relation, rt)].add(mid)
                 if relation == 'opponent' and bot['ai_type'] == 'qbot':
-                    difficulty = bot['ai_difficulty'] if bot['ai_difficulty'] in ('easy','medium','hard','brutal','defend') else 'unknown'
+                    difficulty = bot['ai_difficulty'] if bot['ai_difficulty'] in DIFFICULTIES else 'unknown'
                     counts[('difficulty', difficulty, relation, rt)].add(mid)
     output = {}
     for category in ('ai', 'assistance', 'difficulty'):

@@ -264,6 +264,8 @@ class UsageTests(unittest.TestCase):
         bot=lambda house,team,difficulty,kind='qbot':{'controller':kind,'house_slot':house,'team':team,'ai_type':kind,'ai_difficulty':difficulty}
         check=lambda *bots:usage.opponent_difficulty({'match_id':'m'},{'m':[human,*bots]})
         self.assertEqual(check(bot(1,2,'easy'),bot(2,2,'easy')),'easy')
+        self.assertEqual(check(bot(1,2,'easiest')),'easiest')   # QuantBot Easiest is its own row, not unknown
+        self.assertEqual(usage.DIFFICULTIES[0],'easiest')
         self.assertEqual(check(bot(1,2,'easy'),bot(2,2,'hard')),'mixed')
         self.assertEqual(check(bot(0,1,'brutal'),bot(1,1,'hard'),bot(2,2,'medium')),'medium')   # same house and ally do not count
         self.assertIsNone(check(bot(1,2,None,'campaign')))
