@@ -1,4 +1,98 @@
-Special,256,1655,64,Area Guard
+nemyFaction1=7
+EnemyPresent1=1
+EnemyDeclared1=1
+EnemyDeferred1=0
+SourceOpponent1=Kleshmersh
+EnemyFaction2=1
+EnemyPresent2=1
+EnemyDeclared2=1
+EnemyDeferred2=0
+SourceOpponent2=Atreides
+EnemyFaction3=5
+EnemyPresent3=0
+EnemyDeclared3=0
+EnemyDeferred3=1
+SourceOpponent3=Mercenary
+; Original campaign terrain and forces; cooperative starts only.
+[BASIC]
+LosePicture=LOSTBILD.WSA
+WinPicture=WIN2.WSA
+BriefPicture=SARDUKAR.WSA
+TimeOut=0
+TechLevel=9
+MapScale=0
+CursorPos=3422
+TacticalPos=3160
+LoseFlags=1
+WinFlags=3
+
+[MAP]
+Bloom=983,1762,2015,3343,3383
+Field=83,130,156,177,231,381,567,1080
+Seed=392
+
+[Player3]
+Quota=0
+Credits=1500
+Brain=Team 2
+MaxUnit=20
+
+[Player1]
+Quota=0
+Credits=1500
+Brain=Team 1
+MaxUnit=25
+
+[Player4]
+Quota=2500
+Credits=1000
+Brain=Team 2
+MaxUnit=20
+
+[Player5]
+Quota=0
+Credits=2500
+Brain=Team 2
+MaxUnit=20
+
+[CHOAM]
+Trike=5
+Quad=5
+Tank=6
+Launcher=5
+Siege Tank=6
+Harvester=4
+MCV=2
+Thopter=5
+Carryall=2
+
+[TEAMS]
+1=Player4,Kamikaze,Foot,4,6
+2=Player4,Kamikaze,Track,4,6
+3=Player4,Normal,Track,4,6
+4=Player4,Kamikaze,Wheel,3,5
+5=Player3,Normal,Foot,3,5
+6=Player3,Kamikaze,Wheel,4,6
+7=Player3,Kamikaze,Track,5,7
+8=Player3,Normal,Track,4,6
+9=Player5,Kamikaze,Foot,4,6
+10=Player5,Normal,Foot,3,5
+11=Player5,Kamikaze,Foot,4,6
+12=Player5,Kamikaze,Track,4,6
+13=Player5,Normal,Track,3,5
+
+[UNITS]
+ID026=Player1,Siege Tank,256,3547,64,Guard
+ID025=Player1,Siege Tank,256,3552,64,Guard
+ID027=Player1,Special,256,3420,64,Guard
+ID024=Player1,Siege Tank,256,3360,64,Guard
+ID060=Player1,Special,256,3294,64,Guard
+ID023=Player1,Siege Tank,256,3292,64,Guard
+ID019=Player5,Sandworm,256,2515,64,Ambush
+ID020=Player5,Sandworm,256,1951,64,Ambush
+ID059=Player4,Siege Tank,256,1787,64,Area Guard
+ID058=Player4,Siege Tank,256,1721,64,Area Guard
+ID057=Player4,Special,256,1655,64,Area Guard
 ID029=Player4,Siege Tank,256,1209,64,Ambush
 ID030=Player4,Siege Tank,256,1014,64,Ambush
 ID031=Player3,Special,256,849,64,Area Guard
@@ -1107787,11 +1107881,4 @@ H”Š8¸G#E0±Øy"§yvÕ#]9=GU6AxZŒÇŸùÊÓ˜òYÖîý*Eø=|ï×ÝÂ¾ï=\XÙ¤=²8"D €ÄZ¢ÅW}	®v
 ªÚ1ÛKq,AÕc¬Ãû€rŽÊT(¥hŒÃ¶Tð_srÁýã;öB¾4xëè¦GàÀžiF%,Ï÷Z)Ê²œym=‰Ucé¶ªÆð™/>L"&Ô5»7&=²ø’¡¼Q=¨×Èà‹¨”¿Kofšr4ÂØ R1Æqïƒ'YYÝæÕ¯¸{:ÍÚÚÒOt>ØÛù«m½EKëàŽa*dœ€á£Cn½õ&üÊWxÿçÎ‘èˆÚ4Ì-.O²Ï›ïZæóg»°¹Î#§6ØªSzÓó<»qä|p}×k÷SW‘DZ†4‡¾º®²8b0,˜žÊØÝê³wï<gŸ;>àyíù•_ÿ÷?y‘+«Ä‘æÌjÆ/½ï3¬ö+¤dÚ3.,UcÐQDÉ`âä ª:í”h"óÂã&š<+Ô[fáž®oð‰F·45­VÆÝw\Ã×¿îV¢8¥©rÜÄ3ÒŠ4IÀ[ªªëÐZã¬ew4æO?ò•ÀaÁékùTgQ’à¾l©LCÓ¸ç‹Gç=ôŸßÍÛ¾ùëyî‘Çiu²‰ˆUò•GÎraeŸÎryu@+Ë&ÿFL°[yõ5@Ëœ</*šº¢ñàlÀðÅnÍé­3ä£œÎ;1uý,ù‰õ…1ºÔôO6|ìYE¿¿ŽmjZ²aãÊ9ÖWÎÓë´yî)˜›ió®¯ù–À°DñÞ U„š8v+‰âPTê,ÃT9ZÇè¦`lµ1\Þ!”dÿ(!ç›E$åIŒFxÒNª,9i=ËË”Eó‚ªñÈ¢Æ¸àø)k"è¹„~™ÓÝ¿Û&°lªÀ|ðø®lî’×ÁFÆ¨ë:p…s“ öôZ)£ZÚahV˜ÁÎ6íH1zv†9IQC«à'Ð45¯|Ù-|òC_ämßõ&ÌÎ÷~îY~÷O¿ÌýŸ •F\¾t‘å¥=ôû»¼é%×ra·ÁNdìòj§MdÎívB4(Pš&l®ô‡ÔUEéKê/®03±¾:B·Z8/®à­¥iþñw½‰Ùé.ãÂp`y†Û®]ÂziÊ˜ÆŠªjå­9EK†#‡’eá›iGäuÌÚÖeö/w¸²;f8':ŠyËë^ÃâtÊOæåwÜÄgî{ ˆ>Œáµ/½‘GN_áÖý³üòï~ˆHIz1q1±ÖSWa=N	¼ñ˜Â cIç[à‡‘)tn‡á¸äáãgyð©ðïÅ„V&‚ÇÛ„E„ž <}ó+oC§Áa$Ž#´¼óõ·P5a’j$Ë"¼œ])Ek¬qýmŽ]ÓáOßûþëÜÏÅõŒ	poY7¤ûÛ%WVs´Ê‚C¨ÖÉ½ZÀ™`†\Vo¥šQ’pÃ¡yÚòY¶v·‰UDU¡ÄözÅx4fy:ákßx­,¦ÓŠh·;AÓn-iÓëuÈë:)K¬yY‘%1=‘RÖ†81H­ÉÇMS¦1yíqÎrýûX»²úoëqH¶vúŒšÓ<R•†cò¢àâÊ*£Ñ8è¡ßï³½¹EY–”µÁëïÔGoãÍ†ö¦aêŒãü-[4 $ÅZÎÝjÍö12$×CÒjgc¨ëfbh!ÑJN<	ÔD a9{î<·›åì•Q(2qàµðµ­nò¶Æ*&¯ƒO²’Ûîù]>û5ßNš&Üvý”\XÝaTlú‚ÅºáÔV„©ë‰v1`	á'½Ê h&Ä¥E°PEr`ÿ®\ÙàGþæ]Hïó ßvë‚§ÏáýóìŒÆTµ§ÛÉí,FO»“rÍR„Þÿ&I¬¸õå!3í`-7.H“%#²Hreu‡¬Ó&M””Lµc"¥p¦akk—bu€µ–"ÏÙÙÜÀ9ƒë+—.¡TÄ•|Äi‚hÆDZ ¥›˜Aò'w¹ÕµéL?½‚¯ƒ½ùÒ¯ýñ»ùÌoü)É]s$:°*‚—ÑÄ.ÂÚ`‡è¯zÚàzpy–ëA¨* ã‰Ž¨¬žH…g‰’¤QŸ!<õ…†¯ÿòñÎr/Ë2Bgªm†QŽŒ`}í
 kkA5ÔŽ5£2G¸ Û¼jJ˜&jœ“$‰¦Ýî’ç#¦gÚ8ï«`V_ÞV¢xòÆÓiw˜™² bºSÓLw"fÛŽí1èHcl :ÒV„±ÁN­ªûÚŒÆ%ÏžqäàL7$can®;!8:Z6^ŽîŸâw?öÂ;^s,u-úTÊ{”^ñì–â%9÷^Œ¨kÃ·½Äñ››BÖ¶Çx˜¸ˆ„¢püè¦#T¯Ç­—3ŽXDÊˆS7·¹xiv³g›Ò³³»‹óî°³	…W0n´ñ0Í4c˜êõ°~ò½ðÎÕb%°‘ÂXAãAOì`­Á¿á]|Ï¥/ðGÛgÙ9µ•EÄ5Y®˜‹ç0û"ðžåÅ9¼0¤©kž>³ŠP¥¯2HfÎXš²â©'žáÀÁe¢8b~až^kˆ›ïÑŽpÎ³Ý¯é¤‚ªqL÷ý1Ý7Ã°¤±ÂÇ’ƒ½ˆ¼¨‰´Ä+I—d­ŒÍ>ÓSÖV·@
 Žœ¡0)THk”4^“DÐmIÖÖr¾íõ7óª›¯á+Ï^âÇ_ö,ówg¸uoÍ»nw|ÏRþÑ[,+[-ôšäßZðÃë!lMQ”t[Â{lc)ªçßpð0»yÅÚÚ6ÇÏ­óøÉËØ\wpž(J¨6Â
-á&S¼Ç;|„š Ç{ŠºÜ|B-UåãÀß÷ÁÒXÐ2¸ Hº œ	v5Î’D©øØ×|ùÝØHÀ®åeÑ2MZShÍ|óË8¹–ó~èkùÙ÷~™VÒð¾?ÁV³enÜfÖX»Š6pòƒ¶SÁå•MæÎ±³»ËÂÂ\ðÀ×)I¤9´°@>ÜÅø>O¿Ì‹n=À5G÷ðì³—@(†ƒz–ig	W6vØXÛâúk÷²¶ºÉìLÓXf¦Z9”¦ÌN%DiÊåk,ÌÍL
-5È²ÔÁàYÄfgÇ¬¬9¶ŠV,øÃ+s¼óµ-áY-ù{o7\ÕÈ)Ç»^“p%ø¦W5ü·>‚µ†qi(›`YVZ%,Ïw°›žO~á$óós¤IJ¤55|á©uææ¦étÚ”'A4jƒc¨qŽXkŒiÂÝ?Y!¥bgg‹¼v”uC¬cÆãš8*8:aª‚¢vÑ8pUMQ‡]ue¨óšûÞü­|ø³Ç9íðÜÙuúÃ1qÖã#_:Åî¨äû~òý<snƒc‡xýË®£ÿ¹B×¶y‚]nû‹3‚¼c°½ÍSÍ…+Cæ»)½$áäåmî[ –1£AÃôtíÝ’×Þu”™ÙÆã’C‡–Ic8zx™QeÙØ°0Ó!VÁJí¹ó[¼õè>òÇŽí¡iæ¦[až>*˜›ŸáÌÙUâX³8ÓÂ»À–M… ’ž={–Ø»Ðåø‰®Ù7ÍÜtF·cœ$K$Ã¼a8.¸´1dy*£ÛŽØÕDZ£¢˜þî.ZxÖGžƒ­ëj¢8&Ãlnn¯îÁÅY#¥ÆÙ"†‘“lY£•"Èÿ%`Q
-¬ï!Í¸
-›NÛð‘/>ÉÜt‡a\P­iRÙ7¡²÷ÎÓîö(ËL‰ŒºÆÔ¢‡R‚^§ÅÉó+ìì)Ë’µµí€«$)®Œ8²Øb¼»«ô’d.K3’ã§WÙ¿8ÇÉKCÎ¯9´w–ÚûfA'œ<µÂT7c~q†ªªètÛa±…ÆT$Jb&Fa¹ï“h©øøçžâå·íCNüëÆÐë¶‚%kmØÚrhÿ§Î­³wïS½”~^© qÑ¢;Û%­s
-iý< hN‡ëâÀÒŽn+¦•fÈ‰Ãçî°dïL',t@°Ý†n¤Ûâ;ïnsÃÌ6¿òð2qÔáï½r…^ÔçïáÙ­o9ºÆ[®Ýáøz›÷>qÎùÙ·>‡±–ŸøÄ¬läü×o}ŽÕ¾àGþ &Öš8Òë¸þÚk(Ê!7_O?ÃT·Ëâž½Xg9{î
-¯ºuSWFÄIÌ3»Û|øž'øûG1‘ÞWsë"íTÑI[€e·²;0ÛëpneïýíW‡:Ð:AP0ÝI¸¸Þ0ÝËˆ¼£(k.oŒ8{yÀÑýSìYêÑë%”e…÷/ÞQ5"Ü•J3ÓMÉ‹nÞ‹På-ÃÞ®¤ÈƒÕÌp‡BòâÛŽ€·,,âÑ'ÎsÇ­û‘XÜ„ó—d	û÷Îãê‚UÍÒl‡Sç7èub"•Q6Ðxƒñ‚Žtôóš;o:À=Ÿæ}’+;#ž>¿Éâl'‰#67ÍU¼t>ç¿<¼È`Üðo¿þÌY~ýþî?mxÃ‘ËÜ}`À¥aÄÏ|v†A¹Æï}Û
-¾òüý?:Â ðÞo>Ãx(øùû®Á³Å`“U u®^fœ×¬nì"<ìÖ¶ÆÁˆR(îyt·•¡Õêð;;Î;ÞòJR¥ÂB*çqÆ°²¾…ñŠ…^‹¹^Bi¨Jîè^âMwdüêýVvÊ«[÷ú[ßìoºkŠWâ±gÏsýYÖ¶Šp×)ÉòlÆî¸áä¥>K³	¯¾óZ´/Iša­¥©¢DQÇè4C« +»¼>âàžívÊÅ•>ËKSTUC+‹Ã‚%(ª¡‚@Ó}â27ß¼—4RßG!”Dù)ƒÓ¶Tš'Ÿ>G]×di„3kÛ³Ý€ÉeÃã'Wøò3«aÄìÂxï˜Ÿ_`T”¬^YáÚË¯_æZa›É ŽW·-6œß±xÝ&Ò	³mmJÖwk¢´EUW,OÅljZ­˜ãg×¹öèN_Þes}—Þx èý…¢“j”p ‘Äè¸²Ž3Wv™Ý=O=ý4?ù=¯åÜÊ€ã§/sqm›‹kCðŽÌ3?£•æã_~†Ã‡ryeƒ8‰ñ»)kÕEñ€Wßü:ç›®åu‡%'/m3ŸÀžåyž9½Î¾¹„û¿ÂT¯M'‹ˆ4F5û3Ž;Äp\27ÓFiEeÂXÊ¦a¦×b\ÔH)‰´ 1žV§ÍÆÆ€v"@j„sô¦[Œóêù–ÉYƒ÷’Hÿ™;;2
-å,õÄÛ§iéDf6æTÅ˜K+»K¦-±äÆ„Ù@	œ—”¥!I4ç.oc ‡–gƒ–_:äW™9Ö
+á&S¼Ç;|„š Ç{ŠºÜ|B-UåãÀß÷ÁÒXÐ2¸ Hº œ	v5Î’D©øØ×|ùÝØHÀ®åeÑ2MZShÍ|óË8¹–ó~èkùÙ÷~™VÒð¾?ÁV³enÜfÖX»Š6pòƒ¶SÁå•MæÎ±³»ËÂÂ\ðÀ×)I¤9´°@>
